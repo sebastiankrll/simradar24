@@ -1,0 +1,27 @@
+{
+    "name": "@sk/ingestion",
+    "type": "module",
+    "scripts": {
+        "start": "node dist/index.js",
+        "dev": "tsup --watch --onSuccess \"node dist/index.cjs\"",
+        "build": "tsup"
+    },
+    "exports": {
+        "./add": {
+            "types": "./src/add.ts",
+            "default": "./dist/add.js"
+        },
+        "./subtract": {
+            "types": "./src/subtract.ts",
+            "default": "./dist/subtract.js"
+        }
+    },
+    "devDependencies": {
+        "@sk/typescript-config": "*",
+        "tsup": "^8.5.0",
+        "typescript": "^5.9.3"
+    },
+    "dependencies": {
+        "axios": "^1.13.2"
+    }
+}
