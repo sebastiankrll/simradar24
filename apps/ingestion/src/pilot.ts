@@ -7,7 +7,9 @@ export function mapPilots(latestVatsimData: VatsimData): void {
         const transceiverData = latestVatsimData.transceivers.find(transceiver => transceiver.callsign === pilot.callsign)
         const transceiver = transceiverData?.transceivers[0]
 
-        return {
+        const prevPilotLong = prev.find(p => p.cid === pilot.cid)
+
+        const pilotLong = {
             // v TrackPoint v
             cid: pilot.cid,
             latitude: pilot.latitude,
@@ -15,7 +17,7 @@ export function mapPilots(latestVatsimData: VatsimData): void {
             altitude_agl: transceiver?.heightAglM ? Math.round(transceiver.heightAglM * 3.28084) : pilot.altitude,
             altitude_ms: transceiver?.heightMslM ? Math.round(transceiver.heightMslM * 3.28084) : pilot.altitude,
             groundspeed: pilot.groundspeed,
-            vertical_speed: 0, // TODO: v/s calculation
+            vertical_speed: 0,
             heading: pilot.heading,
             timestamp: new Date(pilot.last_updated),
             // v PilotShort v
@@ -34,9 +36,30 @@ export function mapPilots(latestVatsimData: VatsimData): void {
             logon_time: new Date(pilot.logon_time),
             times: mapPilotTimes(pilot.flight_plan)
         }
+
+        pilotLong.vertical_speed = calculateVerticalSpeed(pilotLong, prevPilotLong)
+        return pilotLong
     })
 
+    prev = pilotsLong
+
     // console.log(pilotsLong[0])
+}
+
+function calculateVerticalSpeed(current: PilotLong, prev: PilotLong | undefined): number {
+    if (!prev) return 0
+
+    const prevTime = new Date(prev.timestamp).getTime()
+    const currTime = new Date(current.timestamp).getTime()
+    const diffSeconds = (currTime - prevTime) / 1000
+
+    // Avoid divide-by-zero or extremely small timestamp differences
+    if (diffSeconds < 1) return 0
+
+    const deltaFeet = current.altitude_ms - prev.altitude_ms
+    const vs = deltaFeet / diffSeconds * 60
+
+    return Math.round(vs)
 }
 
 function mapPilotFlightPlan(fp?: VatsimPilotFlightPlan): PilotFlightPlan | null {
