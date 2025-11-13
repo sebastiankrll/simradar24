@@ -106,22 +106,29 @@ interface VatsimMetaName extends VatsimMetaBase {
     long_name: string;
 }
 
-interface PilotDataShort {
-    cid: number;
-    callsign: string;
-    aircraft: string,
-    coordinates: number[];
-    altitude: number;
+interface TrackPoint {
+    _id: string;
+    latitude: number;
+    longitude: number;
+    altitude_agl: number;
+    altitude_ms: number;
     groundspeed: number;
-    transponder: number;
+    vertical_speed: number;
     heading: number;
     connected: boolean;
     timestamp: Date;
 }
 
-interface PilotDataLong extends PilotDataShort {
-    name: string;
+interface PilotShort extends TrackPoint {
+    callsign: string;
+    aircraft: string;
+    transponder: number;
     frequency: number;
+}
+
+interface PilotLong extends PilotShort {
+    cid: number;
+    name: string;
     server: string;
     pilot_rating: number;
     military_rating: number;
@@ -130,7 +137,7 @@ interface PilotDataLong extends PilotDataShort {
     flight_plan?: PilotFlightPlan;
     logon_time: Date;
     last_updated: Date;
-    flight_state: PilotFlightState;
+    times: PilotTimes;
 }
 
 interface PilotFlightPlan {
@@ -150,11 +157,7 @@ interface PilotFlightPlan {
     revision_id: number;
 }
 
-interface PilotFlightState {
-    state: string;
-    stops: 0;
-    departure_dist: number;
-    arrival_dist: number;
+interface PilotTimes {
     off_block: Date;
     scheduled_dep: Date;
     actual_dep: Date;
