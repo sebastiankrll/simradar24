@@ -19,7 +19,7 @@ interface VatsimGeneral {
     unique_users: number;
 }
 
-interface VatsimPilot {
+export interface VatsimPilot {
     cid: number;
     name: string;
     callsign: string;
@@ -39,7 +39,7 @@ interface VatsimPilot {
     last_updated: string;
 }
 
-type VatsimPilotFlightPlan = {
+export interface VatsimPilotFlightPlan {
     flight_rules: 'I' | 'V' | 'S';
     aircraft: string;
     aircraft_faa: string;
@@ -107,7 +107,7 @@ interface VatsimMetaName extends VatsimMetaBase {
     long_name: string;
 }
 
-interface VatsimTransceivers {
+export interface VatsimTransceivers {
     callsign: string;
     transceivers: VatsimTransceiver[];
 }
@@ -141,7 +141,7 @@ interface PilotShort extends TrackPoint {
     frequency: number;
 }
 
-interface PilotLong extends PilotShort {
+export interface PilotLong extends PilotShort {
     cid: number;
     name: string;
     server: string;
@@ -149,13 +149,12 @@ interface PilotLong extends PilotShort {
     military_rating: number;
     qnh_i_hg: number;
     qnh_mb: number;
-    flight_plan?: PilotFlightPlan;
+    flight_plan: PilotFlightPlan | null;
     logon_time: Date;
-    last_updated: Date;
     times: PilotTimes;
 }
 
-interface PilotFlightPlan {
+export interface PilotFlightPlan {
     flight_rules: 'IFR' | 'VFR';
     ac_reg: string; // Registration will be used to link to aircraft data in database
     departure: string; // ICAO will be used to link to airport data in database
@@ -163,7 +162,6 @@ interface PilotFlightPlan {
     alternate: string;
     filed_tas: number;
     filed_altitude: number;
-    dep_time: Date;
     enroute_time: number;
     fuel_time: number;
     enroute_dist: number;
@@ -172,7 +170,7 @@ interface PilotFlightPlan {
     revision_id: number;
 }
 
-interface PilotTimes {
+export interface PilotTimes {
     off_block: Date;
     scheduled_dep: Date;
     actual_dep: Date;
