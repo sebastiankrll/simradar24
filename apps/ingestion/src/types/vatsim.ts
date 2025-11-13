@@ -165,3 +165,35 @@ interface PilotTimes {
     actual_arr: Date;
     on_block: Date;
 }
+
+interface ControllerShort {
+    callsign: string;
+    frequency: number;
+    facility: string;
+    atis: string;
+    connections: number;
+}
+
+interface ControllerLong extends ControllerShort {
+    cid: string;
+    name: string;
+    rating: string;
+    server: string;
+    visual_range: string;
+    logon_time: Date;
+    timestamp: Date;
+}
+
+interface Airport {
+    icao: string;
+    dep_traffic: AirportTraffic;
+    arr_traffic: AirportTraffic;
+    busiest_route: string;
+    total_routes: number;
+}
+
+interface AirportTraffic {
+    traffic_count: number;
+    average_delay: number;
+    flights_delayed: number;
+}
