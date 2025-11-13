@@ -197,7 +197,7 @@ export interface ControllerLong extends ControllerShort {
     timestamp: Date;
 }
 
-interface Airport {
+export interface Airport {
     icao: string;
     dep_traffic: AirportTraffic;
     arr_traffic: AirportTraffic;
@@ -205,7 +205,7 @@ interface Airport {
     total_routes: number;
 }
 
-interface AirportTraffic {
+export interface AirportTraffic {
     traffic_count: number;
     average_delay: number;
     flights_delayed: number;

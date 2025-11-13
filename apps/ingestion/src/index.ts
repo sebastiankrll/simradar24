@@ -2,6 +2,7 @@ import axios from "axios"
 import { VatsimData, VatsimTransceivers } from "./types/vatsim.js";
 import { mapPilots } from "./pilot.js";
 import { mapControllers } from "./controller.js";
+import { mapAirports } from "./airport.js";
 
 const VATSIM_DATA_URL = "https://data.vatsim.net/v3/vatsim-data.json"
 const VATSIM_TRANSCEIVERS_URL = "https://data.vatsim.net/v3/transceivers-data.json"
@@ -26,6 +27,7 @@ async function fetchVatsimData(): Promise<void> {
 
             mapPilots(vatsimData)
             mapControllers(vatsimData)
+            mapAirports(vatsimData)
 
             // TODO: Do something with the data (save to DB, process, etc.)
             console.log(`✅ Retrieved ${vatsimData.pilots.length} pilots and ${vatsimData.controllers.length} controllers.`)

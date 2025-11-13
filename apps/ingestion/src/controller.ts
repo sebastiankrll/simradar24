@@ -21,7 +21,7 @@ export function mapControllers(vatsimData: VatsimData): void {
         }
     })
 
-    console.log(controllersLong[0])
+    // console.log(controllersLong[0])
 }
 
 // "120.180 -> 120180000
