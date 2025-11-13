@@ -182,17 +182,17 @@ export interface PilotTimes {
 interface ControllerShort {
     callsign: string;
     frequency: number;
-    facility: string;
-    atis: string;
+    facility: number;
+    atis: string [] | null;
     connections: number;
 }
 
-interface ControllerLong extends ControllerShort {
-    cid: string;
+export interface ControllerLong extends ControllerShort {
+    cid: number;
     name: string;
-    rating: string;
+    rating: number;
     server: string;
-    visual_range: string;
+    visual_range: number;
     logon_time: Date;
     timestamp: Date;
 }
