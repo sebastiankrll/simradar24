@@ -66,7 +66,7 @@ function mapPilotFlightPlan(fp?: VatsimPilotFlightPlan): PilotFlightPlan | null 
     if (!fp) return null
     return {
         flight_rules: fp.flight_rules === "I" ? "IFR" : "VFR",
-        ac_reg: "D-ABON", // TODO: Assign random, individual aircraft from database
+        ac_reg: extractAircraftRegistration(fp.remarks),
         departure: fp.departure,
         arrival: fp.arrival,
         alternate: fp.alternate,
@@ -79,6 +79,11 @@ function mapPilotFlightPlan(fp?: VatsimPilotFlightPlan): PilotFlightPlan | null 
         route: fp.route,
         revision_id: fp.revision_id
     }
+}
+
+function extractAircraftRegistration(remarks: string): string | null {
+    const match = remarks.match(/REG\/([A-Z0-9]+)/i)
+    return match?.[1] ?? null
 }
 
 function mapPilotTimes(fp?: VatsimPilotFlightPlan): PilotTimes { // TODO: Calculate times

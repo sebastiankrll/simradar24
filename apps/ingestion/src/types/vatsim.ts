@@ -154,7 +154,7 @@ export interface PilotLong extends PilotShort {
 
 export interface PilotFlightPlan {
     flight_rules: 'IFR' | 'VFR';
-    ac_reg: string; // Registration will be used to link to aircraft data in database
+    ac_reg: string | null; // Registration will be used to link to aircraft data in database
     departure: string; // ICAO will be used to link to airport data in database
     arrival: string;
     alternate: string;
