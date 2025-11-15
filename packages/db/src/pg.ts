@@ -9,7 +9,7 @@ const pool = new Pool({
     port: Number(process.env.POSTGRES_PORT || 5432),
 })
 
-async function initAirports() {
+async function pgInitAirports() {
     const client = await pool.connect()
 
     try {
@@ -42,8 +42,8 @@ async function initAirports() {
     }
 }
 
-export async function upsertAirports(airports: OurAirportsCsv[]): Promise<void> {
-    await initAirports()
+export async function pgUpsertAirports(airports: OurAirportsCsv[]): Promise<void> {
+    await pgInitAirports()
     const client = await pool.connect()
 
     try {
@@ -89,7 +89,7 @@ export async function upsertAirports(airports: OurAirportsCsv[]): Promise<void> 
     }
 }
 
-export async function getAirportsDistance(batch: [string, string][]): Promise<Map<string, number>> {
+export async function pgGetAirportsDistance(batch: [string, string][]): Promise<Map<string, number>> {
     if (batch.length === 0) return new Map()
 
     const client = await pool.connect()
