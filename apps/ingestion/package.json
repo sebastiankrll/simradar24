@@ -12,6 +12,8 @@
         "typescript": "^5.9.3"
     },
     "dependencies": {
-        "axios": "^1.13.2"
+        "axios": "^1.13.2",
+        "@sk/db": "*",
+        "dotenv": "^17.2.3"
     }
 }

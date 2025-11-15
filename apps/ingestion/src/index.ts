@@ -25,7 +25,7 @@ async function fetchVatsimData(): Promise<void> {
             const transceiversResponse = await axios.get<VatsimTransceivers[]>(VATSIM_TRANSCEIVERS_URL)
             vatsimData.transceivers = transceiversResponse.data
 
-            mapPilots(vatsimData)
+            await mapPilots(vatsimData)
             mapControllers(vatsimData)
             mapAirports(vatsimData)
 

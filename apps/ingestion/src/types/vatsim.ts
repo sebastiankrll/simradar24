@@ -162,7 +162,7 @@ export interface PilotFlightPlan {
     filed_altitude: number;
     enroute_time: number;
     fuel_time: number;
-    enroute_dist: number;
+    enroute_dist_km: number;
     remarks: string;
     route: string;
     revision_id: number;

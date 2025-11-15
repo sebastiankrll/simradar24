@@ -1,8 +1,10 @@
+import 'dotenv/config'
+import { getAirportsDistance } from "@sk/db/pg"
 import { PilotFlightPlan, PilotLong, PilotTimes, VatsimData, VatsimPilot, VatsimPilotFlightPlan } from "./types/vatsim.js"
 
 let prev: PilotLong[] = []
 
-export function mapPilots(latestVatsimData: VatsimData): void {
+export async function mapPilots(latestVatsimData: VatsimData): Promise<void> {
     const pilotsLong: PilotLong[] = latestVatsimData.pilots.map(pilot => {
         const transceiverData = latestVatsimData.transceivers.find(transceiver => transceiver.callsign === pilot.callsign)
         const transceiver = transceiverData?.transceivers[0]
@@ -41,8 +43,17 @@ export function mapPilots(latestVatsimData: VatsimData): void {
         return pilotLong
     })
 
-    prev = pilotsLong
+    const airportPairs = getUniqueAirportPairs(pilotsLong)
+    const distanceMap = await getAirportsDistance(airportPairs)
 
+    for (const pilot of pilotsLong) {
+        const fp = pilot.flight_plan
+        if (fp?.departure && fp?.arrival) {
+            fp.enroute_dist_km = Math.round(distanceMap.get(`${fp.departure}_${fp.arrival}`) ?? 0)
+        }
+    }
+
+    prev = pilotsLong
     // console.log(pilotsLong[0])
 }
 
@@ -74,7 +85,7 @@ function mapPilotFlightPlan(fp?: VatsimPilotFlightPlan): PilotFlightPlan | null 
         filed_altitude: Number(fp.altitude),
         enroute_time: parseStrToSeconds(fp.enroute_time),
         fuel_time: parseStrToSeconds(fp.fuel_time),
-        enroute_dist: 0, // TODO: Calculate distance
+        enroute_dist_km: 0,
         remarks: fp.remarks,
         route: fp.route,
         revision_id: fp.revision_id
@@ -95,6 +106,23 @@ function mapPilotTimes(fp?: VatsimPilotFlightPlan): PilotTimes { // TODO: Calcul
         actual_arr: new Date(),
         on_block: new Date()
     }
+}
+
+function getUniqueAirportPairs(pilotsLong: PilotLong[]): [string, string][] {
+    const pairSet = new Set<string>()
+
+    for (const pilot of pilotsLong) {
+        const fp = pilot.flight_plan
+        if (!fp?.departure || !fp?.arrival) continue
+
+        const key = `${fp.departure}_${fp.arrival}`
+        pairSet.add(key)
+    }
+
+    return Array.from(pairSet).map(k => {
+        const [dep, arr] = k.split("_")
+        return [dep, arr] as [string, string]
+    })
 }
 
 // "0325" -> 12,300 seconds
