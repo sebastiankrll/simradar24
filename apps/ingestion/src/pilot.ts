@@ -1,11 +1,12 @@
 import 'dotenv/config'
 import { PilotFlightPlan, PilotLong, PilotTimes, VatsimData, VatsimPilot, VatsimPilotFlightPlan } from "./types/vatsim.js"
 import { pgGetAirportsByICAO } from '@sk/db/pg'
+import { haversineDistance } from './utils/index.js'
 
 const TAXI_TIME_MS = 5 * 60 * 1000
 let cachedPilots: PilotLong[] = []
 
-export async function mapPilots(latestVatsimData: VatsimData): Promise<void> {
+export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong[]> {
     const pilotsLong: PilotLong[] = latestVatsimData.pilots.map(pilot => {
         const _id = `${pilot.cid}_${pilot.callsign}_${pilot.logon_time}`
         const cachedPilot = cachedPilots.find(c => c._id === _id)
@@ -23,7 +24,7 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<void> {
             heading: pilot.heading,
             timestamp: new Date(pilot.last_updated),
             transponder: pilot.flight_plan?.assigned_transponder ? Number(pilot.flight_plan?.assigned_transponder) : 2000,
-            frequency: transceiver?.frequency || 122800000,
+            frequency: Number(transceiver?.frequency.toString().slice(0, 6)) || 122_800,
             qnh_i_hg: pilot.qnh_i_hg,
             qnh_mb: pilot.qnh_mb
         }
@@ -78,7 +79,8 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<void> {
     }
 
     cachedPilots = pilotsLong
-    console.log(pilotsLong[0])
+    // console.log(pilotsLong[0])
+    return pilotsLong
 }
 
 function calculateVerticalSpeed(current: PilotLong, cache: PilotLong | undefined): number {
@@ -270,25 +272,6 @@ function estimateTouchdown(current: PilotLong): Date | null {
     const timeToLooseEnergy = ((current.groundspeed - 100) / 1 + current.altitude_agl / 25) * 1000 // Time needed for 1 kt/s deacceleration and 25 ft/s (1500 ft/min) descent rate
 
     return timeToLooseEnergy > timeForRemainingDistance ? new Date(Date.now() + timeToLooseEnergy) : new Date(Date.now() + timeForRemainingDistance)
-}
-
-// [lat, long]
-function haversineDistance(start: number[], end: number[]): number {
-    const R = 3440.065
-    const toRad = (d: number) => d * Math.PI / 180
-
-    const lat1Rad = toRad(start[0])
-    const lat2Rad = toRad(end[0])
-    const dLat = lat2Rad - lat1Rad
-    const dLon = toRad(end[1] - start[1])
-
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1Rad) * Math.cos(lat2Rad) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2)
-
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-
-    return Math.round(R * c)
 }
 
 function getUniqueAirports(pilotsLong: PilotLong[]): string[] {

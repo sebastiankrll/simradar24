@@ -25,8 +25,8 @@ async function fetchVatsimData(): Promise<void> {
             const transceiversResponse = await axios.get<VatsimTransceivers[]>(VATSIM_TRANSCEIVERS_URL)
             vatsimData.transceivers = transceiversResponse.data
 
-            await mapPilots(vatsimData)
-            mapControllers(vatsimData)
+            const pilotsLong = await mapPilots(vatsimData)
+            const controllersLong = mapControllers(vatsimData, pilotsLong)
             mapAirports(vatsimData)
 
             console.log(`✅ Retrieved ${vatsimData.pilots.length} pilots and ${vatsimData.controllers.length} controllers.`)

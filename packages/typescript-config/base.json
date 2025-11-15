@@ -9,6 +9,7 @@
         "inlineSources": false,
         "isolatedModules": true,
         "module": "ESNext",
+        "target": "esnext",
         "moduleResolution": "Bundler",
         "noUnusedLocals": false,
         "noUnusedParameters": false,
