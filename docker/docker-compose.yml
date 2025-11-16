@@ -1,7 +1,7 @@
 services:
-  postgres:
-    image: postgis/postgis:18-3.6
-    container_name: sr24_postgres_postgis
+  timescaledb:
+    image: timescale/timescaledb:latest-pg17
+    container_name: sr24_timescaledb
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -10,7 +10,8 @@ services:
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - timescaledb_data:/var/lib/postgresql/data
+    command: ["postgres", "-c", "shared_preload_libraries=timescaledb"]
 
   pgadmin:
     image: dpage/pgadmin4
@@ -22,7 +23,7 @@ services:
     ports:
       - "8080:80"
     depends_on:
-      - postgres
+      - timescaledb
     volumes:
       - pgadmin_data:/var/lib/pgadmin
 
@@ -46,6 +47,6 @@ services:
       - redis
 
 volumes:
-  postgres_data:
+  timescaledb_data:
   pgadmin_data:
   redis_data:

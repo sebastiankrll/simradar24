@@ -2,6 +2,7 @@ import 'dotenv/config'
 import express from "express";
 import cors from "cors";
 import { rdsGetAirport, rdsGetController, rdsGetPilot } from "@sk/db/redis";
+import { pgGetTrackPointsByCID } from "@sk/db/pg";
 
 const app = express()
 app.use(cors())
@@ -52,12 +53,14 @@ app.get("/api/data/controller/:callsign", async (req, res) => {
     }
 })
 
-        // TODO: fetch track from DB
-        const track = "await getTrackByCallsign(callsign);"
+app.get("/api/data/track/:cid", async (req, res) => {
+    try {
+        const { cid } = req.params
+        console.log("Requested track:", cid)
 
-        if (!track) return res.status(404).json({ error: "Track not found" })
+        const trackPoints = await pgGetTrackPointsByCID(cid)
 
-        res.json(track)
+        res.json(trackPoints)
     } catch (err) {
         console.error(err)
         res.status(500).json({ error: "Internal server error" })

@@ -1,4 +1,5 @@
 import { OurAirportsCsv, PGAirport } from '@sk/types/db';
+import { TrackPoint } from '@sk/types/vatsim';
 import { Pool } from 'pg';
 
 const pool = new Pool({
@@ -9,11 +10,11 @@ const pool = new Pool({
     port: Number(process.env.POSTGRES_PORT || 5432),
 })
 
-async function pgInitAirports() {
+async function pgInitAirportsTable() {
     const client = await pool.connect()
 
     try {
-        await client.query(`CREATE EXTENSION IF NOT EXISTS postgis;`)
+        await client.query("BEGIN")
 
         const createTableQuery = `
       CREATE TABLE IF NOT EXISTS airports (
@@ -31,19 +32,18 @@ async function pgInitAirports() {
         icao TEXT,
         iata TEXT,
         home_link TEXT,
-        wikipedia_link TEXT,
-        geom GEOGRAPHY(Point, 4326)
+        wikipedia_link TEXT
       );
     `
         await client.query(createTableQuery)
-        console.log('airports table is ready ✅')
+        await client.query("COMMIT")
+        // console.log('airports table is ready ✅')
     } finally {
         client.release()
     }
 }
 
 export async function pgUpsertAirports(airports: OurAirportsCsv[]): Promise<void> {
-    await pgInitAirports()
     const client = await pool.connect()
 
     try {
@@ -54,10 +54,9 @@ export async function pgUpsertAirports(airports: OurAirportsCsv[]): Promise<void
       INSERT INTO airports (
         size, name, latitude, longitude, elevation,
         continent, iso_country, iso_region, municipality, scheduled_service,
-        icao, iata, home_link, wikipedia_link, geom
+        icao, iata, home_link, wikipedia_link
       ) VALUES (
-        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,
-        ST_SetSRID(ST_MakePoint($4, $3), 4326)
+        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
       )
     `
 
@@ -113,6 +112,109 @@ export async function pgGetAirportsByICAO(icaos: string[]): Promise<Map<string, 
         client.release()
     }
 }
+
+async function pgInitTrackPointsTable() {
+    const client = await pool.connect()
+
+    try {
+        await client.query("BEGIN")
+        await client.query(`CREATE EXTENSION IF NOT EXISTS timescaledb;`)
+
+        const createTableQuery = `
+      CREATE TABLE IF NOT EXISTS track_points (
+        cid INT NOT NULL,
+        timestamp TIMESTAMPTZ NOT NULL,
+        latitude DOUBLE PRECISION NOT NULL,
+        longitude DOUBLE PRECISION NOT NULL,
+        altitude_agl DOUBLE PRECISION,
+        altitude_ms DOUBLE PRECISION,
+        groundspeed DOUBLE PRECISION,
+        vertical_speed DOUBLE PRECISION,
+        heading DOUBLE PRECISION,
+        PRIMARY KEY (cid, timestamp)
+      );
+    `
+        await client.query(createTableQuery)
+        await client.query(`SELECT create_hypertable('track_points', 'timestamp', if_not_exists => TRUE);`)
+        await client.query("COMMIT")
+
+        console.log('airports table is ready ✅')
+    } finally {
+        client.release()
+    }
+}
+
+export async function pgInsertTrackPoints(trackPoints: TrackPoint[]) {
+    if (trackPoints.length === 0) return
+
+    const values: any[] = []
+    const placeholders: string[] = []
+
+    trackPoints.forEach((tp, i) => {
+        const idx = i * 9
+        placeholders.push(
+            `($${idx + 1}, $${idx + 2}, $${idx + 3}, $${idx + 4}, $${idx + 5}, $${idx + 6}, $${idx + 7}, $${idx + 8}, $${idx + 9})`
+        )
+        values.push(
+            tp.cid,
+            tp.latitude,
+            tp.longitude,
+            tp.altitude_agl,
+            tp.altitude_ms,
+            tp.groundspeed,
+            tp.vertical_speed,
+            tp.heading,
+            tp.timestamp
+        )
+    })
+
+    const query = `
+    INSERT INTO track_points (cid, latitude, longitude, altitude_agl, altitude_ms, groundspeed, vertical_speed, heading, timestamp)
+    VALUES ${placeholders.join(", ")}
+    ON CONFLICT (cid, timestamp) DO NOTHING
+  `
+
+    try {
+        await pool.query(query, values)
+        // console.log(`✅ Inserted ${trackPoints.length} track points`)
+    } catch (err) {
+        console.error("Error inserting track points:", err)
+    }
+}
+
+export async function pgGetTrackPointsByCID(cid: string): Promise<TrackPoint[]> {
+    const values: string[] = [cid]
+    const query = `
+    SELECT cid, timestamp, latitude, longitude, altitude_agl, altitude_ms, groundspeed, vertical_speed, heading
+    FROM track_points
+    WHERE cid = $1
+    ORDER BY timestamp ASC
+  `
+
+    try {
+        const { rows } = await pool.query(query, values)
+        return rows.map((r: any) => ({
+            _id: "",
+            cid: r.cid,
+            timestamp: r.timestamp,
+            latitude: r.latitude,
+            longitude: r.longitude,
+            altitude_agl: r.altitude_agl,
+            altitude_ms: r.altitude_ms,
+            groundspeed: r.groundspeed,
+            vertical_speed: r.vertical_speed,
+            heading: r.heading,
+        }))
+    } catch (err) {
+        console.error(`Error fetching track points for ${cid}:`, err)
+        return []
+    }
+}
+
+(async () => {
+    await pgInitAirportsTable()
+    await pgInitTrackPointsTable()
+})()
 
 // export async function pgGetAirportsDistance(batch: [string, string][]): Promise<Map<string, number>> {
 //     if (batch.length === 0) return new Map()

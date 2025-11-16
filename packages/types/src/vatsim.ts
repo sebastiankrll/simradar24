@@ -121,7 +121,7 @@ interface VatsimTransceiver {
     heightAglM: number;
 }
 
-interface TrackPoint {
+export interface TrackPoint {
     _id: string;
     cid: number;
     latitude: number;

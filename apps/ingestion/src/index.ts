@@ -112,5 +112,22 @@ function publishWsShort(pilotsLong: PilotLong[], controllersLong: ControllerLong
     rdsPubWsShort(wsShort)
 }
 
+function insertTrackPoints(pilotsLong: PilotLong[]): void {
+    const trackPoints: TrackPoint[] = pilotsLong.map(p => ({
+        _id: p._id,
+        cid: p.cid,
+        latitude: p.latitude,
+        longitude: p.longitude,
+        altitude_agl: p.altitude_agl,
+        altitude_ms: p.altitude_ms,
+        groundspeed: p.groundspeed,
+        vertical_speed: p.vertical_speed,
+        heading: p.heading,
+        timestamp: p.timestamp
+    }))
+
+    pgInsertTrackPoints(trackPoints)
+}
+
 fetchVatsimData()
 setInterval(fetchVatsimData, FETCH_INTERVAL)
