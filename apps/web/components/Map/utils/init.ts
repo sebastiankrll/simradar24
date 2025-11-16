@@ -2,8 +2,7 @@ import { Map, View } from "ol"
 import { initBaseLayer } from "./baseLayer"
 import { initSunLayer } from "./sunLayer"
 import { fromLonLat, toLonLat, transformExtent } from "ol/proj"
-
-let map: Map | null = null
+import { initDataLayers } from "./dataLayers"
 
 export function initMap(): Map {
     const savedView = localStorage.getItem("mapView")
@@ -25,12 +24,14 @@ export function initMap(): Map {
 
     const baseLayer = initBaseLayer()
     const sunLayer = initSunLayer()
+    const dataLayers = initDataLayers()
 
-    map = new Map({
+    const map = new Map({
         target: "map",
         layers: [
             baseLayer,
-            sunLayer
+            sunLayer,
+            ...dataLayers
         ],
         view: new View({
             center: fromLonLat(center),

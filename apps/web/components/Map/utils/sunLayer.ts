@@ -4,11 +4,11 @@ import { circular } from "ol/geom/Polygon"
 import WebGLVectorLayer from "ol/layer/WebGLVector"
 import VectorSource from "ol/source/Vector"
 
-const sunVectorSource = new VectorSource({
+const sunSource = new VectorSource({
     wrapX: false
 })
 const sunLayer = new WebGLVectorLayer({
-    source: sunVectorSource,
+    source: sunSource,
     style: {
         'fill-color': [77, 95, 131, 0.07]
     },
@@ -42,8 +42,8 @@ function updateSunFeatures(): void {
         return new Feature(polygon.transform('EPSG:4326', 'EPSG:3857'))
     })
 
-    sunVectorSource.clear()
-    sunVectorSource.addFeatures(newFeatures)
+    sunSource.clear()
+    sunSource.addFeatures(newFeatures)
 }
 
 function createCircularPolygon(center: number[], radius: number): MultiPolygon {
