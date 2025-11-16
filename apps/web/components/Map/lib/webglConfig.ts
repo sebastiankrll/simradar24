@@ -294,15 +294,6 @@ export const webglConfig = {
         variables: {
             show: 'all',
         },
-        filter: ['all', ['in', ['get', 'type'], [
-            'literal', [
-                ['case', ['<', ['resolution'], 3000], 'large_airport', 'none'],
-                ['case', ['<', ['resolution'], 1000], 'medium_airport', 'none'],
-                ['case', ['<', ['resolution'], 300], 'small_airport', 'none']
-            ]
-        ]],
-            ['==', ['var', 'show'], 'all']
-        ],
         'icon-src': airportSprite.src,
         'icon-size': [32, 32],
         'icon-offset': ['case',
@@ -310,9 +301,9 @@ export const webglConfig = {
             [0, 0]
         ],
         'icon-scale': ['case',
-            ['==', ['get', 'type'], 'small_airport'], 0.7,
-            ['==', ['get', 'type'], 'medium_airport'], 0.85,
-            1
+            ['==', ['get', 'type'], 'small_airport'], 0.65,
+            ['==', ['get', 'type'], 'medium_airport'], 0.75,
+            0.85
         ],
         'icon-rotate-with-view': false
     },

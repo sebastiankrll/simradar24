@@ -3,9 +3,15 @@ import VectorSource from "ol/source/Vector"
 import { webglConfig } from "../lib/webglConfig"
 import VectorLayer from "ol/layer/Vector"
 import Style, { StyleLike } from "ol/style/Style"
-import { FeatureLike } from "ol/Feature"
+import Feature, { FeatureLike } from "ol/Feature"
 import Text from "ol/style/Text"
 import Fill from "ol/style/Fill"
+import { Map } from "ol"
+import { dxGetAirportsByExtent } from "@/storage/dexie"
+import { Point } from "ol/geom"
+import { fromLonLat } from "ol/proj"
+
+const airportMainSource = new VectorSource()
 
 export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
     const firSource = new VectorSource()
@@ -68,7 +74,6 @@ export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
         zIndex: 6
     })
 
-    const airportMainSource = new VectorSource()
     const airportMainLayer = new WebGLVectorLayer({
         source: airportMainSource,
         style: webglConfig.airport_main,
@@ -127,4 +132,19 @@ function getFirLabelLayerStyle(feature: FeatureLike, resolution: number): StyleL
             textAlign: 'center'
         }),
     })
+}
+
+export async function setAirportFeatures(map: Map): Promise<void> {
+    const view = map.getView()
+    const resolution = view.getResolution()
+
+    const airports = await dxGetAirportsByExtent(view.calculateExtent(map.getSize()), resolution)
+    const features = airports.map(a => new Feature({
+        geometry: new Point(fromLonLat([a.longitude, a.latitude])),
+        name: a.feature.name,
+        type: a.size,
+        id: a.id,
+    }))
+    airportMainSource.clear()
+    airportMainSource.addFeatures(features)
 }

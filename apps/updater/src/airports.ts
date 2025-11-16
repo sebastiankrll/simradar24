@@ -25,9 +25,7 @@ export async function updateAirports(): Promise<void> {
             size: a.type,
             name: a.name,
             latitude: Number(a.latitude_deg),
-            longitude: Number(a.longitude_deg),
-            elevation: Number(a.elevation_ft),
-            iso_country: a.iso_country
+            longitude: Number(a.longitude_deg)
         }))
 
     await rdsSetMultiple(filteredAirports, "static_airport", a => a.id, "airports:static")

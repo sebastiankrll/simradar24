@@ -29,8 +29,6 @@ export interface StaticAirport {
     name: string;
     latitude: number;
     longitude: number;
-    elevation: number | null;
-    iso_country: string;
 }
 
 interface SimAwareTRACONProperties {
