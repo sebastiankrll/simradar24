@@ -35,9 +35,9 @@ async function fetchVatsimData(): Promise<void> {
             // Publish minimal websocket data on redis ws:short
             publishWsShort(pilotsLong, controllersLong, airportsLong)
             // Set pilots, controllers and airports data in redis
-            await rdsSetItems(pilotsLong, "pilot", p => p.callsign, "pilots:active")
-            await rdsSetItems(controllersLong, "controller", c => c.callsign, "controllers:active")
-            await rdsSetItems(airportsLong, "airport", a => a.icao, "airports:active")
+            await rdsSetItems(pilotsLong, "pilot", p => p.callsign, "pilots:active", 120)
+            await rdsSetItems(controllersLong, "controller", c => c.callsign, "controllers:active", 120)
+            await rdsSetItems(airportsLong, "airport", a => a.icao, "airports:active", 120)
             // Insert trackpoints in TimescaleDB
             insertTrackPoints(pilotsLong)
 

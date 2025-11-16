@@ -37,7 +37,7 @@ export async function rdsSetItems<T>(
     keyPrefix: string,
     keyExtractor: KeyExtractor<T>,
     activeSetName?: string,
-    ttlSeconds: number = 120
+    ttlSeconds: number | null = null
 ) {
     if (items.length === 0) return
 
@@ -50,14 +50,14 @@ export async function rdsSetItems<T>(
         for (const item of batch) {
             const key = `${keyPrefix}:${keyExtractor(item)}`
             pipeline.set(key, JSON.stringify(item))
-            pipeline.expire(key, ttlSeconds)
+            if (ttlSeconds) { pipeline.expire(key, ttlSeconds) }
             if (activeSetName) {
                 pipeline.sadd(activeSetName, keyExtractor(item))
             }
         }
 
         await pipeline.exec()
-        // console.log(`✅ ${items.length} items set in ${activeSetName || keyPrefix}.`)
+        console.log(`✅ ${items.length} items set in ${activeSetName || keyPrefix}.`)
     }
 }
 
