@@ -25,6 +25,23 @@ app.get("/api/static/versions", async (req, res) => {
     }
 })
 
+app.get("/api/static/:type", async (req, res) => {
+    try {
+        const { type } = req.params
+        const allowedTypes = ["airports", "tracons", "firs"]
+
+        if (!allowedTypes.includes(type)) return res.status(400).json({ error: "Invalid static data type" })
+
+        const data = await rdsGetSingle(`static_${type}:version`)
+        if (!data) return res.status(404).json({ error: "Static data not found" })
+
+        res.json(data)
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ error: "Internal server error" })
+    }
+})
+
 app.get("/api/data/pilot/:callsign", async (req, res) => {
     try {
         const { callsign } = req.params
