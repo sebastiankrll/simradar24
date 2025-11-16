@@ -63,7 +63,8 @@ export async function updateFirs(): Promise<void> {
 
         collection.features = newFeatures
 
-        await rdsSetSingle("firs", JSON.stringify(collection))
+        await rdsSetSingle("static_firs:all", JSON.stringify(collection))
+        await rdsSetSingle("static_firs:version", version?.replace(/^v/, '') || "1.0.0")
     } catch (error) {
         console.error(`Error checking for new FIR data: ${error}`)
     }
