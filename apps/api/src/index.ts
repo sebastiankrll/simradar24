@@ -1,8 +1,8 @@
 import 'dotenv/config'
 import express from "express";
 import cors from "cors";
-import { rdsGetAirport, rdsGetController, rdsGetPilot } from "@sk/db/redis";
 import { pgGetTrackPointsByUid } from '@sk/db/pg';
+import { rdsGetSingle } from '@sk/db/redis';
 
 const app = express()
 app.use(cors())
@@ -13,7 +13,7 @@ app.get("/api/data/pilot/:callsign", async (req, res) => {
         const { callsign } = req.params
         console.log("Requested pilot:", callsign)
 
-        const pilot = await rdsGetPilot(callsign)
+        const pilot = await rdsGetSingle(`pilot:${callsign}`)
         if (!pilot) return res.status(404).json({ error: "Pilot not found" })
 
         res.json(pilot)
@@ -28,7 +28,7 @@ app.get("/api/data/airport/:icao", async (req, res) => {
         const { icao } = req.params
         console.log("Requested airport:", icao)
 
-        const airport = await rdsGetAirport(icao)
+        const airport = await rdsGetSingle(`airport:${icao}`)
         if (!airport) return res.status(404).json({ error: "Airport not found" })
 
         res.json(airport)
@@ -43,7 +43,7 @@ app.get("/api/data/controller/:callsign", async (req, res) => {
         const { callsign } = req.params
         console.log("Requested controller:", callsign)
 
-        const controller = await rdsGetController(callsign)
+        const controller = await rdsGetSingle(`controller:${callsign}`)
         if (!controller) return res.status(404).json({ error: "Controller not found" })
 
         res.json(controller)
