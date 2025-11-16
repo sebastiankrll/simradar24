@@ -1,11 +1,8 @@
 'use client'
 
-import { Map as oMap, View } from "ol"
-import { fromLonLat, toLonLat, transformExtent } from "ol/proj"
 import { useEffect } from "react"
 import './Map.css'
-import { initSunLayer } from "./utils/sunLayer"
-import { initBaseLayer } from "./utils/baseLayer"
+import { initMap, onMoveEnd } from "./utils/init"
 
 export default function Map() {
     useEffect(() => {
@@ -22,59 +19,5 @@ export default function Map() {
         <>
             <div id="map" />
         </>
-    )
-}
-
-function initMap(): oMap {
-    const savedView = localStorage.getItem("mapView")
-    const initialCenter = [0, 0]
-    const initialZoom = 2
-
-    let center = initialCenter
-    let zoom = initialZoom
-
-    if (savedView) {
-        try {
-            const parsed = JSON.parse(savedView) as { center: [number, number]; zoom: number }
-            center = parsed.center
-            zoom = parsed.zoom
-        } catch {
-            // fallback to default
-        }
-    }
-
-    const baseLayer = initBaseLayer()
-    const sunLayer = initSunLayer()
-
-    const map = new oMap({
-        target: "map",
-        layers: [
-            baseLayer,
-            sunLayer
-        ],
-        view: new View({
-            center: fromLonLat(center),
-            zoom,
-            maxZoom: 18,
-            minZoom: 3,
-            extent: transformExtent([-190, -80, 190, 80], 'EPSG:4326', 'EPSG:3857')
-        }),
-        controls: []
-    })
-
-    return map
-}
-
-function onMoveEnd(evt: { map: oMap }) {
-    const map = evt.map
-    const view: View = map.getView()
-    if (!view) return
-
-    const center = toLonLat(view.getCenter() || [0, 0])
-    const zoom = view.getZoom() || 2
-
-    localStorage.setItem(
-        "mapView",
-        JSON.stringify({ center, zoom })
     )
 }
