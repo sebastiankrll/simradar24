@@ -11,116 +11,107 @@ const pool = new Pool({
 })
 
 async function pgInitAirportsTable() {
-    const client = await pool.connect()
-
-    try {
-        await client.query("BEGIN")
-
-        const createTableQuery = `
-      CREATE TABLE IF NOT EXISTS airports (
-        id SERIAL PRIMARY KEY,
-        size TEXT,
-        name TEXT,
-        latitude FLOAT,
-        longitude FLOAT,
-        elevation INT NULL,
-        continent TEXT,
-        iso_country TEXT,
-        iso_region TEXT,
-        municipality TEXT,
-        scheduled_service BOOLEAN,
-        icao TEXT,
-        iata TEXT,
-        home_link TEXT,
-        wikipedia_link TEXT
-      );
-    `
-        await client.query(createTableQuery)
-        await client.query("COMMIT")
-        console.log('airports table is ready ✅')
-    } finally {
-        client.release()
-    }
+    const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS airports (
+      id SERIAL PRIMARY KEY,
+      size TEXT,
+      name TEXT,
+      latitude FLOAT,
+      longitude FLOAT,
+      elevation INT NULL,
+      continent TEXT,
+      iso_country TEXT,
+      iso_region TEXT,
+      municipality TEXT,
+      scheduled_service BOOLEAN,
+      icao TEXT,
+      iata TEXT,
+      home_link TEXT,
+      wikipedia_link TEXT
+    );
+  `
+    await pool.query(createTableQuery)
+    console.log("airports table is ready ✅")
 }
 
+const BATCH_SIZE = 500
+
 export async function pgUpsertAirports(airports: OurAirportsCsv[]): Promise<void> {
-    const client = await pool.connect()
-
     try {
-        await client.query('BEGIN')
-        await client.query('TRUNCATE airports RESTART IDENTITY')
+        await pool.query('TRUNCATE airports RESTART IDENTITY')
+        if (airports.length === 0) return
 
-        const insertQuery = `
-      INSERT INTO airports (
-        size, name, latitude, longitude, elevation,
-        continent, iso_country, iso_region, municipality, scheduled_service,
-        icao, iata, home_link, wikipedia_link
-      ) VALUES (
-        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
-      )
-    `
+        for (let i = 0; i < airports.length; i += BATCH_SIZE) {
+            const batch = airports.slice(i, i + BATCH_SIZE)
 
-        for (const airport of airports) {
-            await client.query(insertQuery, [
-                airport.type,
-                airport.name,
-                airport.latitude_deg,
-                airport.longitude_deg,
-                airport.elevation_ft ? Number(airport.elevation_ft) : null,
-                airport.continent,
-                airport.iso_country,
-                airport.iso_region,
-                airport.municipality,
-                airport.scheduled_service === "yes",
-                airport.icao_code,
-                airport.iata_code,
-                airport.home_link,
-                airport.wikipedia_link
-            ])
+            const values: any[] = []
+            const placeholders: string[] = []
+
+            batch.forEach((airport, j) => {
+                const idx = j * 14
+                placeholders.push(
+                    `($${idx + 1}, $${idx + 2}, $${idx + 3}, $${idx + 4}, $${idx + 5}, $${idx + 6}, $${idx + 7}, $${idx + 8}, $${idx + 9}, $${idx + 10}, $${idx + 11}, $${idx + 12}, $${idx + 13}, $${idx + 14})`
+                )
+
+                values.push(
+                    airport.type,
+                    airport.name,
+                    airport.latitude_deg,
+                    airport.longitude_deg,
+                    airport.elevation_ft ? Number(airport.elevation_ft) : null,
+                    airport.continent,
+                    airport.iso_country,
+                    airport.iso_region,
+                    airport.municipality,
+                    airport.scheduled_service === "yes",
+                    airport.icao_code,
+                    airport.iata_code,
+                    airport.home_link,
+                    airport.wikipedia_link
+                )
+            })
+
+            const query = `
+        INSERT INTO airports (
+          size, name, latitude, longitude, elevation,
+          continent, iso_country, iso_region, municipality, scheduled_service,
+          icao, iata, home_link, wikipedia_link
+        ) VALUES ${placeholders.join(", ")}
+      `
+
+            await pool.query(query, values);
+            // console.log(`✅ Inserted batch of ${batch.length} airports`)
         }
 
-        await client.query('COMMIT')
+        console.log(`✅ Inserted total ${airports.length} airports`)
     } catch (err) {
-        await client.query('ROLLBACK')
+        console.error("Error inserting airports:", err)
         throw err
-    } finally {
-        client.release()
     }
 }
 
 export async function pgGetAirportsByICAO(icaos: string[]): Promise<Map<string, PGAirport>> {
     if (icaos.length === 0) return new Map()
-    const client = await pool.connect()
 
-    try {
-        const placeholders = icaos.map((_, i) => `$${i + 1}`).join(", ")
-        const sql = `
-            SELECT *
-            FROM airports
-            WHERE icao IN (${placeholders})
-        `
+    const placeholders = icaos.map((_, i) => `$${i + 1}`).join(", ")
+    const sql = `
+    SELECT *
+    FROM airports
+    WHERE icao IN (${placeholders})
+  `
 
-        const res = await client.query(sql, icaos)
+    const res = await pool.query(sql, icaos)
 
-        const airportMap = new Map<string, PGAirport>()
-        for (const row of res.rows) {
-            airportMap.set(row.icao, row)
-        }
-
-        return airportMap
-    } finally {
-        client.release()
+    const airportMap = new Map<string, PGAirport>()
+    for (const row of res.rows) {
+        airportMap.set(row.icao, row)
     }
+
+    return airportMap
 }
 
 async function pgInitTrackPointsTable() {
-    const client = await pool.connect()
-
-    try {
-        await client.query("BEGIN")
-        await client.query(`CREATE EXTENSION IF NOT EXISTS timescaledb;`)
-
-        const createTableQuery = `
+    const createTableQuery = `
       CREATE TABLE IF NOT EXISTS track_points (
         uid TEXT NOT NULL,
         timestamp TIMESTAMPTZ NOT NULL,
@@ -134,14 +125,22 @@ async function pgInitTrackPointsTable() {
         PRIMARY KEY (uid, timestamp)
       );
     `
-        await client.query(createTableQuery)
-        await client.query(`SELECT create_hypertable('track_points', 'timestamp', if_not_exists => TRUE);`)
-        await client.query("COMMIT")
+    await pool.query(`CREATE EXTENSION IF NOT EXISTS timescaledb;`)
+    await pool.query(createTableQuery)
+    await pool.query(`SELECT create_hypertable('track_points', 'timestamp', if_not_exists => TRUE);`)
 
-        console.log('track_points table is ready ✅')
-    } finally {
-        client.release()
+    const res = await pool.query(`
+  SELECT job_id
+  FROM timescaledb_information.jobs
+  WHERE hypertable_name = 'track_points'
+    AND proc_name = 'policy_retention'
+`
+    )
+    if (res.rows.length === 0) {
+        await pool.query(`SELECT add_retention_policy('track_points', INTERVAL '2 days')`)
     }
+
+    console.log('track_points table is ready ✅')
 }
 
 export async function pgInsertTrackPoints(trackPoints: TrackPoint[]) {
