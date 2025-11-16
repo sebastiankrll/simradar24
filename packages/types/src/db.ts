@@ -23,7 +23,7 @@ export interface OurAirportsCsv {
 }
 
 export interface StaticAirport {
-    icao: string;
+    id: string;
     iata: string;
     size: string;
     name: string;

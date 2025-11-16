@@ -20,7 +20,7 @@ export async function updateAirports(): Promise<void> {
     const filteredAirports: StaticAirport[] = airports
         .filter(a => a.icao_code && a.icao_code.trim() !== "")
         .map(a => ({
-            icao: a.icao_code,
+            id: a.icao_code,
             iata: a.iata_code,
             size: a.type,
             name: a.name,
@@ -30,7 +30,7 @@ export async function updateAirports(): Promise<void> {
             iso_country: a.iso_country
         }))
 
-    await rdsSetMultiple(filteredAirports, "static_airport", a => a.icao, "airports:static")
+    await rdsSetMultiple(filteredAirports, "static_airport", a => a.id, "airports:static")
     await rdsSetSingle("static_airports:all", filteredAirports)
     await rdsSetSingle("static_airports:version", "1.0.0")
 }

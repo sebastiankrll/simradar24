@@ -9,8 +9,7 @@ interface StaticVersions {
 }
 
 interface DexieItem {
-    id: number;
-    icao: string;
+    id: string;
 }
 
 const db = new Dexie('StaticDatabase') as Dexie & {
@@ -29,9 +28,9 @@ const db = new Dexie('StaticDatabase') as Dexie & {
 }
 
 db.version(1).stores({
-    airports: '++id, icao',
-    firs: '++id, icao',
-    tracons: '++id, icao'
+    airports: 'id',
+    firs: 'id',
+    tracons: 'id'
 })
 
 export async function initLocalDatabase(): Promise<void> {
@@ -51,20 +50,24 @@ async function dxCheckForNewVersions(): Promise<void> {
 
     if (serverVersions.firsVersion !== localVersions.firsVersion) {
         const collection = await fetchStaticData("firs") as FIRFeatureCollection
-        const features = collection.features.map(f => ({
-            icao: f.properties?.id,
-            feature: f as FIRFeature
-        }))
+        const features = collection.features
+            .filter(f => f.properties?.id && f.properties.id.trim() !== "")
+            .map(f => ({
+                id: f.properties.id,
+                feature: f as FIRFeature
+            }))
 
         storeFeatures(features, db.firs)
     }
 
     if (serverVersions.traconsVersion !== localVersions.traconsVersion) {
         const collection = await fetchStaticData("tracons") as SimAwareTraconFeatureCollection
-        const features = collection.features.map(f => ({
-            icao: f.properties?.id,
-            feature: f as SimAwareTraconFeature
-        }))
+        const features = collection.features
+            .filter(f => f.properties?.id && f.properties.id.trim() !== "")
+            .map(f => ({
+                id: f.properties.id,
+                feature: f as SimAwareTraconFeature
+            }))
 
         storeFeatures(features, db.tracons)
     }
@@ -76,13 +79,11 @@ async function fetchStaticData(type: string): Promise<StaticAirport[] | FeatureC
     const response = await fetch(`http://localhost:5000/api/static/${type}`)
     const data = await response.json()
 
-    console.log(data)
-
     return data
 }
 
 async function storeAirports(airports: StaticAirport[]): Promise<void> {
-    db.airports.bulkAdd(airports).then(() => {
+    db.airports.bulkPut(airports).then(() => {
         console.log("Done adding airports")
     }).catch(e => {
         if (e.name === "BulkError") {
@@ -94,10 +95,10 @@ async function storeAirports(airports: StaticAirport[]): Promise<void> {
 }
 
 async function storeFeatures(
-    features: { icao: string; feature: FIRFeature | SimAwareTraconFeature; }[],
+    features: { id: string; feature: FIRFeature | SimAwareTraconFeature; }[],
     db: EntityTable<DexieItem, "id">
 ): Promise<void> {
-    db.bulkAdd(features).then(() => {
+    db.bulkPut(features).then(() => {
         console.log("Done adding features")
     }).catch(e => {
         if (e.name === "BulkError") {

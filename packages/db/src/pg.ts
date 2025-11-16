@@ -112,35 +112,3 @@ export async function pgGetTrackPointsByUid(uid: string): Promise<TrackPoint[]> 
 (async () => {
     await pgInitTrackPointsTable()
 })()
-
-// export async function pgGetAirportsDistance(batch: [string, string][]): Promise<Map<string, number>> {
-//     if (batch.length === 0) return new Map()
-
-//     const client = await pool.connect()
-//     try {
-//         const valuesSql = batch.map((_, i) => `($${i * 2 + 1}, $${i * 2 + 2})`).join(", ")
-//         const values = batch.flat()
-
-//         const sql = `
-//             WITH pairs(dep_icao, arr_icao) AS (
-//                 VALUES ${valuesSql}
-//             )
-//             SELECT p.dep_icao, p.arr_icao,
-//                    ST_Distance(dep.geom, arr.geom)/1000 AS distance_km
-//             FROM pairs p
-//             JOIN airports dep ON dep.icao = p.dep_icao
-//             JOIN airports arr ON arr.icao = p.arr_icao;
-//         `
-
-//         const res = await client.query(sql, values)
-//         const distanceMap = new Map<string, number>()
-
-//         for (const row of res.rows) {
-//             distanceMap.set(`${row.dep_icao}_${row.arr_icao}`, Number(row.distance_km))
-//         }
-
-//         return distanceMap
-//     } finally {
-//         client.release()
-//     }
-// }

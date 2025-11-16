@@ -68,11 +68,11 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
         if (!fp) continue
 
         if (!fp.departure.latitude) {
-            const depInfo = airports.find(a => a?.icao === fp.departure.icao)
+            const depInfo = airports.find(a => a?.id === fp.departure.icao)
             fp.departure.latitude = Number(depInfo?.latitude)
             fp.departure.longitude = Number(depInfo?.longitude)
 
-            const arrInfo = airports.find(a => a?.icao === fp.arrival.icao)
+            const arrInfo = airports.find(a => a?.id === fp.arrival.icao)
             fp.arrival.latitude = Number(arrInfo?.latitude)
             fp.arrival.longitude = Number(arrInfo?.longitude)
         }
