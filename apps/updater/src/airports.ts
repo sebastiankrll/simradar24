@@ -18,6 +18,6 @@ export async function updateAirports(): Promise<void> {
     })
 
     await rdsSetMultiple(airports, "static_airport", a => a.icao_code, "airports:static")
-    await rdsSetSingle("static_airport:all", JSON.stringify(airports))
-    await rdsSetSingle("static_airport:version", "1.0.0")
+    await rdsSetSingle("static_airports:all", JSON.stringify(airports))
+    await rdsSetSingle("static_airports:version", "1.0.0")
 }

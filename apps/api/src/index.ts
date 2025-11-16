@@ -8,6 +8,23 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
+app.get("/api/static/versions", async (req, res) => {
+    try {
+        const airportsVersion = await rdsGetSingle("static_airports:version")
+        const firsVersion = await rdsGetSingle("static_firs:version")
+        const traconsVersion = await rdsGetSingle("static_tracons:version")
+
+        res.json({
+            airportsVersion,
+            firsVersion,
+            traconsVersion
+        })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ error: "Internal server error" })
+    }
+})
+
 app.get("/api/data/pilot/:callsign", async (req, res) => {
     try {
         const { callsign } = req.params

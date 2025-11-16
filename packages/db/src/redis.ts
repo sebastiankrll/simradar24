@@ -31,7 +31,7 @@ export async function rdsSubWsShort(callback: (data: WsShort) => void) {
 }
 
 export async function rdsSetSingle(key: string, value: string): Promise<void> {
-    await redis.set(key, value)
+    await redis.set(key, JSON.stringify(value))
     console.log(`✅ Item ${key} set.`)
 }
 
