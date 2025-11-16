@@ -7,8 +7,8 @@ let cachedPilots: PilotLong[] = []
 
 export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong[]> {
     const pilotsLong: PilotLong[] = latestVatsimData.pilots.map(pilot => {
-        const _id = `${pilot.cid}_${pilot.callsign}_${pilot.logon_time}`
-        const cachedPilot = cachedPilots.find(c => c._id === _id)
+        const uid = `${pilot.cid}_${pilot.callsign}_${pilot.logon_time}`
+        const cachedPilot = cachedPilots.find(c => c.uid === uid)
 
         const transceiverData = latestVatsimData.transceivers.find(transceiver => transceiver.callsign === pilot.callsign)
         const transceiver = transceiverData?.transceivers[0]
@@ -36,7 +36,7 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
         } else {
             // cache missed, re-create
             pilotLong = {
-                _id: `${pilot.cid}_${pilot.callsign}_${pilot.logon_time}`,
+                uid: `${pilot.cid}_${pilot.callsign}_${pilot.logon_time}`,
                 cid: pilot.cid,
                 callsign: pilot.callsign,
                 aircraft: pilot.flight_plan?.aircraft_short || "A320",

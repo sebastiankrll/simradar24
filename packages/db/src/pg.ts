@@ -37,7 +37,7 @@ async function pgInitAirportsTable() {
     `
         await client.query(createTableQuery)
         await client.query("COMMIT")
-        // console.log('airports table is ready ✅')
+        console.log('airports table is ready ✅')
     } finally {
         client.release()
     }
@@ -122,7 +122,7 @@ async function pgInitTrackPointsTable() {
 
         const createTableQuery = `
       CREATE TABLE IF NOT EXISTS track_points (
-        cid INT NOT NULL,
+        uid TEXT NOT NULL,
         timestamp TIMESTAMPTZ NOT NULL,
         latitude DOUBLE PRECISION NOT NULL,
         longitude DOUBLE PRECISION NOT NULL,
@@ -131,14 +131,14 @@ async function pgInitTrackPointsTable() {
         groundspeed DOUBLE PRECISION,
         vertical_speed DOUBLE PRECISION,
         heading DOUBLE PRECISION,
-        PRIMARY KEY (cid, timestamp)
+        PRIMARY KEY (uid, timestamp)
       );
     `
         await client.query(createTableQuery)
         await client.query(`SELECT create_hypertable('track_points', 'timestamp', if_not_exists => TRUE);`)
         await client.query("COMMIT")
 
-        console.log('airports table is ready ✅')
+        console.log('track_points table is ready ✅')
     } finally {
         client.release()
     }
@@ -156,7 +156,7 @@ export async function pgInsertTrackPoints(trackPoints: TrackPoint[]) {
             `($${idx + 1}, $${idx + 2}, $${idx + 3}, $${idx + 4}, $${idx + 5}, $${idx + 6}, $${idx + 7}, $${idx + 8}, $${idx + 9})`
         )
         values.push(
-            tp.cid,
+            tp.uid,
             tp.latitude,
             tp.longitude,
             tp.altitude_agl,
@@ -169,9 +169,9 @@ export async function pgInsertTrackPoints(trackPoints: TrackPoint[]) {
     })
 
     const query = `
-    INSERT INTO track_points (cid, latitude, longitude, altitude_agl, altitude_ms, groundspeed, vertical_speed, heading, timestamp)
+    INSERT INTO track_points (uid, latitude, longitude, altitude_agl, altitude_ms, groundspeed, vertical_speed, heading, timestamp)
     VALUES ${placeholders.join(", ")}
-    ON CONFLICT (cid, timestamp) DO NOTHING
+    ON CONFLICT (uid, timestamp) DO NOTHING
   `
 
     try {
@@ -182,20 +182,19 @@ export async function pgInsertTrackPoints(trackPoints: TrackPoint[]) {
     }
 }
 
-export async function pgGetTrackPointsByCID(cid: string): Promise<TrackPoint[]> {
-    const values: string[] = [cid]
+export async function pgGetTrackPointsByUid(uid: string): Promise<TrackPoint[]> {
+    const values: string[] = [uid]
     const query = `
-    SELECT cid, timestamp, latitude, longitude, altitude_agl, altitude_ms, groundspeed, vertical_speed, heading
+    SELECT uid, timestamp, latitude, longitude, altitude_agl, altitude_ms, groundspeed, vertical_speed, heading
     FROM track_points
-    WHERE cid = $1
+    WHERE uid = $1
     ORDER BY timestamp ASC
   `
 
     try {
         const { rows } = await pool.query(query, values)
         return rows.map((r: any) => ({
-            _id: "",
-            cid: r.cid,
+            uid: r.uid,
             timestamp: r.timestamp,
             latitude: r.latitude,
             longitude: r.longitude,
@@ -206,7 +205,7 @@ export async function pgGetTrackPointsByCID(cid: string): Promise<TrackPoint[]> 
             heading: r.heading,
         }))
     } catch (err) {
-        console.error(`Error fetching track points for ${cid}:`, err)
+        console.error(`Error fetching track points for ${uid}:`, err)
         return []
     }
 }

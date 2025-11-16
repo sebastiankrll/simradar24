@@ -54,7 +54,7 @@ function publishWsShort(pilotsLong: PilotLong[], controllersLong: ControllerLong
     const wsShort = {
         pilots: pilotsLong.map((
             {
-                _id,
+                uid,
                 cid,
                 latitude,
                 longitude,
@@ -69,7 +69,7 @@ function publishWsShort(pilotsLong: PilotLong[], controllersLong: ControllerLong
                 transponder,
                 frequency
             }) => ({
-                _id,
+                uid,
                 cid,
                 latitude,
                 longitude,
@@ -114,7 +114,7 @@ function publishWsShort(pilotsLong: PilotLong[], controllersLong: ControllerLong
 
 function insertTrackPoints(pilotsLong: PilotLong[]): void {
     const trackPoints: TrackPoint[] = pilotsLong.map(p => ({
-        _id: p._id,
+        uid: p.uid,
         cid: p.cid,
         latitude: p.latitude,
         longitude: p.longitude,
@@ -126,6 +126,7 @@ function insertTrackPoints(pilotsLong: PilotLong[]): void {
         timestamp: p.timestamp
     }))
 
+    console.log(trackPoints[0])
     pgInsertTrackPoints(trackPoints)
 }
 

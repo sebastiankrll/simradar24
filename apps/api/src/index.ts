@@ -2,7 +2,7 @@ import 'dotenv/config'
 import express from "express";
 import cors from "cors";
 import { rdsGetAirport, rdsGetController, rdsGetPilot } from "@sk/db/redis";
-import { pgGetTrackPointsByCID } from "@sk/db/pg";
+import { pgGetTrackPointsByUid } from '@sk/db/pg';
 
 const app = express()
 app.use(cors())
@@ -53,12 +53,12 @@ app.get("/api/data/controller/:callsign", async (req, res) => {
     }
 })
 
-app.get("/api/data/track/:cid", async (req, res) => {
+app.get("/api/data/track/:uid", async (req, res) => {
     try {
-        const { cid } = req.params
-        console.log("Requested track:", cid)
+        const { uid } = req.params
+        console.log("Requested track:", uid)
 
-        const trackPoints = await pgGetTrackPointsByCID(cid)
+        const trackPoints = await pgGetTrackPointsByUid(uid)
 
         res.json(trackPoints)
     } catch (err) {

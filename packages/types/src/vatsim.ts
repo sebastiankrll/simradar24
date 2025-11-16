@@ -122,8 +122,7 @@ interface VatsimTransceiver {
 }
 
 export interface TrackPoint {
-    _id: string;
-    cid: number;
+    uid: string;
     latitude: number;
     longitude: number;
     altitude_agl: number;
@@ -135,6 +134,7 @@ export interface TrackPoint {
 }
 
 export interface PilotShort extends TrackPoint {
+    cid: number;
     callsign: string;
     aircraft: string;
     transponder: number;
