@@ -11,8 +11,11 @@ import { dxGetAllAirports } from "@/storage/dexie"
 import { Point } from "ol/geom"
 import { fromLonLat, transformExtent } from "ol/proj"
 import RBush from "rbush"
+import { PilotShort } from "@sk/types/vatsim"
+import { PilotProperties } from "@/types/ol"
 
 const airportMainSource = new VectorSource()
+const pilotMainSource = new VectorSource()
 
 export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
     const firSource = new VectorSource()
@@ -44,9 +47,8 @@ export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
         zIndex: 3
     })
 
-    const pilotShadowSource = new VectorSource()
     const pilotShadowLayer = new WebGLVectorLayer({
-        source: pilotShadowSource,
+        source: pilotMainSource,
         style: webglConfig.pilot_shadow,
         properties: {
             type: 'pilot_shadow'
@@ -54,7 +56,6 @@ export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
         zIndex: 4
     })
 
-    const pilotMainSource = new VectorSource()
     const pilotMainLayer = new WebGLVectorLayer({
         source: pilotMainSource,
         style: webglConfig.pilot_main,
@@ -188,4 +189,25 @@ function getVisibleSizes(resolution: number | undefined): string[] {
     if (resolution < 1500) return ["medium_airport", "large_airport"]
     if (resolution < 10000) return ["large_airport"]
     return []
+}
+
+export function setPilotFeatures(pilotsShort: PilotShort[]): void {
+    const features: Feature[] = pilotsShort.map(p => {
+        const feature = new Feature({
+            geometry: new Point(fromLonLat([p.longitude, p.latitude]))
+        })
+        feature.setProperties({
+            callsign: p.callsign,
+            type: 'pilot',
+            aircraft: p.aircraft,
+            heading: p.heading / 180 * Math.PI,
+            altitude_ms: p.altitude_ms,
+            hover: false
+        } as PilotProperties)
+
+        return feature
+    })
+
+    pilotMainSource.clear()
+    pilotMainSource.addFeatures(features)
 }

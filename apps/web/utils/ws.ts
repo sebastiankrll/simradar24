@@ -22,9 +22,10 @@ class WsClient {
             try {
                 const compressed = new Uint8Array(e.data)
                 const decompressed = Pako.ungzip(compressed, { to: 'string' })
-                const parsed: WsShort = JSON.parse(decompressed)
+                const parsed = JSON.parse(decompressed)
+                const data: WsShort = parsed.data
 
-                this.listeners.forEach(fn => fn(parsed))
+                this.listeners.forEach(fn => fn(data))
             } catch (err) {
                 console.error('Failed to parse message', err)
             }

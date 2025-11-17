@@ -16,7 +16,7 @@ export const webglConfig = {
         'icon-size': [49, 44],
         'icon-offset': [
             'case', ['all', ['==', ['get', 'hover'], 0], ['==', ['get', 'connected'], 1]], [
-                'match', ['get', 'shape'],
+                'match', ['get', 'aircraft'],
                 'A225', [0, 44],
                 'A306', [0, 88],
                 'A310', [0, 132],
@@ -86,7 +86,7 @@ export const webglConfig = {
                 'CRJX', [0, 1980],
                 [0, 264]
             ], [
-                'match', ['get', 'shape'],
+                'match', ['get', 'aircraft'],
                 'A225', [49, 44],
                 'A306', [49, 88],
                 'A310', [49, 132],
@@ -162,19 +162,7 @@ export const webglConfig = {
             ['interpolate', ['exponential', 2], ['zoom'], 16.5, 1, 18, Math.pow(2, 1.5)],
             ['interpolate', ['exponential', 2], ['zoom'], 16.5, 1, 18, Math.pow(2, 1.5)]
         ],
-        'icon-rotation': ['+',
-            ['get', 'prevRotation'],
-            ['*',
-                ['clamp', ['-', ['time'], ['get', 'tOffset']], 0, 1],
-                ['case',
-                    ['>', ['-', ['get', 'rotation'], ['get', 'prevRotation']], Math.PI],
-                    ['-', ['-', ['get', 'rotation'], ['get', 'prevRotation']], ['*', 2, Math.PI]],
-                    ['<', ['-', ['get', 'rotation'], ['get', 'prevRotation']], -Math.PI],
-                    ['+', ['-', ['get', 'rotation'], ['get', 'prevRotation']], 2 * Math.PI],
-                    ['-', ['get', 'rotation'], ['get', 'prevRotation']]
-                ]
-            ]
-        ]
+        'icon-rotation': ['get', 'heading']
     },
     pilot_shadow: {
         variables: {
@@ -188,7 +176,7 @@ export const webglConfig = {
         'icon-src': aircraftSprite.src,
         'icon-size': [49, 44],
         'icon-offset': [
-            'match', ['get', 'shape'],
+            'match', ['get', 'aircraft'],
             'A225', [98, 44],
             'A306', [98, 88],
             'A310', [98, 132],
@@ -266,29 +254,17 @@ export const webglConfig = {
         ],
         'icon-displacement': ['array',
             ['interpolate', ['exponential', 2], ['zoom'], 16.5, [
-                'interpolate', ['linear'], ['get', 'altitude'], 3000, ['*', ['sqrt', 2], ['cos', ['-', ['get', 'rotation'], Math.PI / 4]]], 45000, ['*', 4, ['*', ['sqrt', 2], ['cos', ['-', ['get', 'rotation'], Math.PI / 4]]]]
+                'interpolate', ['linear'], ['get', 'altitude_ms'], 3000, ['*', ['sqrt', 2], ['cos', ['-', ['get', 'heading'], Math.PI / 4]]], 45000, ['*', 4, ['*', ['sqrt', 2], ['cos', ['-', ['get', 'heading'], Math.PI / 4]]]]
             ], 18, ['*', [
-                'interpolate', ['linear'], ['get', 'altitude'], 3000, ['*', ['sqrt', 2], ['cos', ['-', ['get', 'rotation'], Math.PI / 4]]], 45000, ['*', 4, ['*', ['sqrt', 2], ['cos', ['-', ['get', 'rotation'], Math.PI / 4]]]]
+                'interpolate', ['linear'], ['get', 'altitude_ms'], 3000, ['*', ['sqrt', 2], ['cos', ['-', ['get', 'heading'], Math.PI / 4]]], 45000, ['*', 4, ['*', ['sqrt', 2], ['cos', ['-', ['get', 'heading'], Math.PI / 4]]]]
             ], Math.pow(2, 1.5)]],
             ['interpolate', ['exponential', 2], ['zoom'], 16.5, [
-                'interpolate', ['linear'], ['get', 'altitude'], 3000, ['*', ['sqrt', 2], ['sin', ['-', ['get', 'rotation'], Math.PI / 4]]], 45000, ['*', 4, ['*', ['sqrt', 2], ['sin', ['-', ['get', 'rotation'], Math.PI / 4]]]]
+                'interpolate', ['linear'], ['get', 'altitude_ms'], 3000, ['*', ['sqrt', 2], ['sin', ['-', ['get', 'heading'], Math.PI / 4]]], 45000, ['*', 4, ['*', ['sqrt', 2], ['sin', ['-', ['get', 'heading'], Math.PI / 4]]]]
             ], 18, ['*', [
-                'interpolate', ['linear'], ['get', 'altitude'], 3000, ['*', ['sqrt', 2], ['sin', ['-', ['get', 'rotation'], Math.PI / 4]]], 45000, ['*', 4, ['*', ['sqrt', 2], ['sin', ['-', ['get', 'rotation'], Math.PI / 4]]]]
+                'interpolate', ['linear'], ['get', 'altitude_ms'], 3000, ['*', ['sqrt', 2], ['sin', ['-', ['get', 'heading'], Math.PI / 4]]], 45000, ['*', 4, ['*', ['sqrt', 2], ['sin', ['-', ['get', 'heading'], Math.PI / 4]]]]
             ], Math.pow(2, 1.5)]]
         ],
-        'icon-rotation': ['+',
-            ['get', 'prevRotation'],
-            ['*',
-                ['clamp', ['-', ['time'], ['get', 'tOffset']], 0, 1],
-                ['case',
-                    ['>', ['-', ['get', 'rotation'], ['get', 'prevRotation']], Math.PI],
-                    ['-', ['-', ['get', 'rotation'], ['get', 'prevRotation']], ['*', 2, Math.PI]],
-                    ['<', ['-', ['get', 'rotation'], ['get', 'prevRotation']], -Math.PI],
-                    ['+', ['-', ['get', 'rotation'], ['get', 'prevRotation']], 2 * Math.PI],
-                    ['-', ['get', 'rotation'], ['get', 'prevRotation']]
-                ]
-            ]
-        ]
+        'icon-rotation': ['get', 'heading']
     },
     airport_main: {
         variables: {
