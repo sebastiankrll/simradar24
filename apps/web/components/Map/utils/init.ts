@@ -3,6 +3,11 @@ import { initBaseLayer } from "./baseLayer"
 import { initSunLayer } from "./sunLayer"
 import { fromLonLat, toLonLat, transformExtent } from "ol/proj"
 import { initAirportFeatures, initDataLayers, setAirportFeatures } from "./dataLayers"
+import { wsClient } from "@/utils/ws"
+
+wsClient.addListener(msg => {
+    console.log(msg)
+})
 
 export function initMap(): Map {
     const savedView = localStorage.getItem("mapView")

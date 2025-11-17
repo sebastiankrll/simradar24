@@ -16,12 +16,12 @@ wss.on('connection', function connection(ws) {
     })
 })
 
-function sendWsShort(wsShort: WsShort) {
+function sendWsShort(data: WsShort) {
     const gzip = createGzip()
 
     gzip.write(JSON.stringify({
         event: 'ws:short',
-        data: wsShort,
+        data: data,
     }))
     gzip.end()
 
