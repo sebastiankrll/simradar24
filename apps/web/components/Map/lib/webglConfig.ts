@@ -15,7 +15,7 @@ export const webglConfig = {
         'icon-src': aircraftSprite.src,
         'icon-size': [49, 44],
         'icon-offset': [
-            'case', ['all', ['==', ['get', 'hover'], 0], ['==', ['get', 'connected'], 1]], [
+            'case', ['==', ['get', 'active'], 0], [
                 'match', ['get', 'aircraft'],
                 'A225', [0, 44],
                 'A306', [0, 88],
@@ -273,7 +273,7 @@ export const webglConfig = {
         'icon-src': airportSprite.src,
         'icon-size': [32, 32],
         'icon-offset': ['case',
-            ['==', ['get', 'hover'], 1], [32, 0],
+            ['==', ['get', 'active'], 1], [32, 0],
             [0, 0]
         ],
         'icon-scale': ['case',
@@ -287,7 +287,7 @@ export const webglConfig = {
         'icon-src': airportSprite.src,
         'icon-size': [32, 32],
         'icon-offset': ['case',
-            ['==', ['get', 'hover'], 1], [32, 0],
+            ['==', ['get', 'active'], 1], [32, 0],
             [0, 0]
         ],
         'icon-scale': ['case',
@@ -355,7 +355,7 @@ export const webglConfig = {
         'stroke-color': ['case', ['==', ['get', 'type'], 'tracon'], [222, 89, 234], [77, 95, 131]],
         'stroke-width': 1,
         'stroke-offset': 0,
-        'fill-color': ['case', ['==', ['get', 'hover'], 1],
+        'fill-color': ['case', ['==', ['get', 'active'], 1],
             ['case', ['==', ['get', 'type'], 'tracon'], [222, 89, 234, 0.4], [77, 95, 131, 0.4]],
             ['case', ['==', ['get', 'type'], 'tracon'], [222, 89, 234, 0.1], [77, 95, 131, 0.1]]
         ]

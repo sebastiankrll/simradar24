@@ -1,8 +1,8 @@
 import { Map, View } from "ol"
 import { initBaseLayer } from "./baseLayer"
 import { initSunLayer } from "./sunLayer"
-import { fromLonLat, toLonLat, transformExtent } from "ol/proj"
-import { initAirportFeatures, initDataLayers, setAirportFeatures } from "./dataLayers"
+import { fromLonLat, transformExtent } from "ol/proj"
+import { initAirportFeatures, initDataLayers } from "./dataLayers"
 
 export function initMap(): Map {
     const savedView = localStorage.getItem("mapView")
@@ -46,20 +46,4 @@ export function initMap(): Map {
     initAirportFeatures(map)
 
     return map
-}
-
-export async function onMoveEnd(evt: { map: Map }) {
-    const map = evt.map
-    const view: View = map.getView()
-    if (!view) return
-
-    const center = toLonLat(view.getCenter() || [0, 0])
-    const zoom = view.getZoom() || 2
-
-    localStorage.setItem(
-        "mapView",
-        JSON.stringify({ center, zoom })
-    )
-
-    setAirportFeatures(map)
 }

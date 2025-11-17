@@ -4,5 +4,11 @@ export interface PilotProperties {
     aircraft: string;
     heading: number;
     altitude_ms: number;
-    hover: boolean;
+    active: boolean;
+}
+
+export interface AirportProperties {
+    icao: string;
+    type: 'airport';
+    active: boolean;
 }

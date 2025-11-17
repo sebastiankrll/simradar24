@@ -12,7 +12,7 @@ import { Point } from "ol/geom"
 import { fromLonLat, transformExtent } from "ol/proj"
 import RBush from "rbush"
 import { PilotShort } from "@sk/types/vatsim"
-import { PilotProperties } from "@/types/ol"
+import { AirportProperties, PilotProperties } from "@/types/ol"
 
 const airportMainSource = new VectorSource()
 const pilotMainSource = new VectorSource()
@@ -150,19 +150,25 @@ const rbush = new RBush<IndexedAirportFeature>()
 export async function initAirportFeatures(map: Map) {
     const airports = await dxGetAllAirports()
 
-    const items: IndexedAirportFeature[] = airports.map(a => ({
-        minX: a.longitude,
-        minY: a.latitude,
-        maxX: a.longitude,
-        maxY: a.latitude,
-        size: a.size,
-        feature: new Feature({
-            geometry: new Point(fromLonLat([a.longitude, a.latitude])),
-            name: a.feature.name,
-            type: a.size,
-            id: a.id
+    const items: IndexedAirportFeature[] = airports.map(a => {
+        const feature = new Feature({
+            geometry: new Point(fromLonLat([a.longitude, a.latitude]))
         })
-    }))
+        feature.setProperties({
+            icao: a.id,
+            type: 'airport',
+            active: false
+        } as AirportProperties)
+
+        return {
+            minX: a.longitude,
+            minY: a.latitude,
+            maxX: a.longitude,
+            maxY: a.latitude,
+            size: a.size,
+            feature: feature
+        }
+    })
     rbush.load(items)
     setAirportFeatures(map)
 }
@@ -202,7 +208,7 @@ export function setPilotFeatures(pilotsShort: PilotShort[]): void {
             aircraft: p.aircraft,
             heading: p.heading / 180 * Math.PI,
             altitude_ms: p.altitude_ms,
-            hover: false
+            active: false
         } as PilotProperties)
 
         return feature
