@@ -99,10 +99,17 @@ export function onClick(
     clickedFeature = feature || null
 }
 
+const overlayComponents: Record<string, React.FC<any>> = {
+    pilot: PilotOverlay
+}
+
 function createOverlay(feature: Feature<Point>): Overlay {
     const element = document.createElement('div')
     const root = createRoot(element)
-    root.render(<PilotOverlay />)
+
+    const type = feature.get('type')
+    const Component = overlayComponents[type] ?? (() => null)
+    root.render(<Component feature={feature} />)
 
     const overlay = new Overlay({
         element,

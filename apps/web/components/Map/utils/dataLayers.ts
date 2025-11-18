@@ -229,7 +229,11 @@ export function setPilotFeatures(pilotsShort: PilotShort[]): void {
                 type: 'pilot',
                 aircraft: p.aircraft,
                 heading: p.heading / 180 * Math.PI,
-                altitude_agl: p.altitude_ms,
+                altitude_agl: p.altitude_agl,
+                altitude_ms: p.altitude_ms,
+                vertical_speed: p.vertical_speed,
+                groundspeed: p.groundspeed,
+                frequency: p.frequency,
                 clicked: false,
                 hovered: false
             } as PilotProperties)

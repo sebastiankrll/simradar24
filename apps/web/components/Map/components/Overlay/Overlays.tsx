@@ -1,13 +1,18 @@
+import { Feature } from 'ol'
 import './Overlays.css'
+import { Point } from 'ol/geom'
+import { PilotProperties } from '@/types/ol'
 
-export function PilotOverlay() {
+export function PilotOverlay({ feature }: { feature: Feature<Point> }) {
+    const data = feature.getProperties() as PilotProperties
+
     return (
         <div className='overlay'>
             <div className="popup-content-top flight">
-                <div className="popup-content-vnav"><span>ALT</span>{""}</div>
-                <div className="popup-content-vnav"><span>FPM</span>{""}</div>
-                <div className="popup-content-vnav"><span>GS</span>{""}</div>
-                <div className="popup-content-vnav"><span>HDG</span>{""}</div>
+                <div className="popup-content-vnav"><span>ALT</span>{data.altitude_ms}</div>
+                <div className="popup-content-vnav"><span>FPM</span>{data.vertical_speed}</div>
+                <div className="popup-content-vnav"><span>GS</span>{data.groundspeed}</div>
+                <div className="popup-content-vnav"><span>HDG</span>{Math.round(data.heading * (180 / Math.PI))}</div>
             </div>
             <div className="popup-content flight">
                 <figure className="popup-content-logo">
@@ -19,10 +24,10 @@ export function PilotOverlay() {
                     </p> */}
                 </figure>
                 <div className="popup-content-main flight">
-                    <div className="popup-content-header">{""}</div>
-                    <div className='popup-content-box ac'>{""}</div>
+                    <div className="popup-content-header">{data.callsign}</div>
+                    <div className='popup-content-box ac'>{data.aircraft}</div>
                     {/* <p>{airports ? `${airports[0]} - ${airports[1]}` : 'NaN - NaN'}</p> */}
-                    <div className='popup-content-box ac-fr'>{""}</div>
+                    <div className='popup-content-box ac-fr'>{data.frequency}</div>
                 </div>
             </div>
         </div>
