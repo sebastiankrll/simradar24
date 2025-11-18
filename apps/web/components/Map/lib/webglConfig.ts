@@ -254,14 +254,14 @@ export const webglConfig = {
         ],
         'icon-displacement': ['array',
             ['interpolate', ['exponential', 2], ['zoom'], 16.5, [
-                'interpolate', ['linear'], ['get', 'altitude_ms'], 3000, ['*', ['sqrt', 2], ['cos', ['-', ['get', 'heading'], Math.PI / 4]]], 45000, ['*', 4, ['*', ['sqrt', 2], ['cos', ['-', ['get', 'heading'], Math.PI / 4]]]]
+                'interpolate', ['linear'], ['get', 'altitude_agl'], 3000, ['*', ['sqrt', 2], ['cos', ['-', ['get', 'heading'], Math.PI / 4]]], 45000, ['*', 4, ['*', ['sqrt', 2], ['cos', ['-', ['get', 'heading'], Math.PI / 4]]]]
             ], 18, ['*', [
-                'interpolate', ['linear'], ['get', 'altitude_ms'], 3000, ['*', ['sqrt', 2], ['cos', ['-', ['get', 'heading'], Math.PI / 4]]], 45000, ['*', 4, ['*', ['sqrt', 2], ['cos', ['-', ['get', 'heading'], Math.PI / 4]]]]
+                'interpolate', ['linear'], ['get', 'altitude_agl'], 3000, ['*', ['sqrt', 2], ['cos', ['-', ['get', 'heading'], Math.PI / 4]]], 45000, ['*', 4, ['*', ['sqrt', 2], ['cos', ['-', ['get', 'heading'], Math.PI / 4]]]]
             ], Math.pow(2, 1.5)]],
             ['interpolate', ['exponential', 2], ['zoom'], 16.5, [
-                'interpolate', ['linear'], ['get', 'altitude_ms'], 3000, ['*', ['sqrt', 2], ['sin', ['-', ['get', 'heading'], Math.PI / 4]]], 45000, ['*', 4, ['*', ['sqrt', 2], ['sin', ['-', ['get', 'heading'], Math.PI / 4]]]]
+                'interpolate', ['linear'], ['get', 'altitude_agl'], 3000, ['*', ['sqrt', 2], ['sin', ['-', ['get', 'heading'], Math.PI / 4]]], 45000, ['*', 4, ['*', ['sqrt', 2], ['sin', ['-', ['get', 'heading'], Math.PI / 4]]]]
             ], 18, ['*', [
-                'interpolate', ['linear'], ['get', 'altitude_ms'], 3000, ['*', ['sqrt', 2], ['sin', ['-', ['get', 'heading'], Math.PI / 4]]], 45000, ['*', 4, ['*', ['sqrt', 2], ['sin', ['-', ['get', 'heading'], Math.PI / 4]]]]
+                'interpolate', ['linear'], ['get', 'altitude_agl'], 3000, ['*', ['sqrt', 2], ['sin', ['-', ['get', 'heading'], Math.PI / 4]]], 45000, ['*', 4, ['*', ['sqrt', 2], ['sin', ['-', ['get', 'heading'], Math.PI / 4]]]]
             ], Math.pow(2, 1.5)]]
         ],
         'icon-rotation': ['get', 'heading']

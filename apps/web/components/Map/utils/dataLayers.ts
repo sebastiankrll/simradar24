@@ -6,13 +6,13 @@ import Style, { StyleLike } from "ol/style/Style"
 import Feature, { FeatureLike } from "ol/Feature"
 import Text from "ol/style/Text"
 import Fill from "ol/style/Fill"
-import { Map } from "ol"
+import { Map as OMap } from "ol"
 import { dxGetAllAirports } from "@/storage/dexie"
 import { Point } from "ol/geom"
 import { fromLonLat, transformExtent } from "ol/proj"
 import RBush from "rbush"
 import { PilotShort } from "@sk/types/vatsim"
-import { AirportProperties, PilotProperties } from "@/types/ol"
+import { AirportProperties } from "@/types/ol"
 
 const airportMainSource = new VectorSource()
 const pilotMainSource = new VectorSource()
@@ -147,7 +147,7 @@ interface IndexedAirportFeature {
 
 const rbush = new RBush<IndexedAirportFeature>()
 
-export async function initAirportFeatures(map: Map) {
+export async function initAirportFeatures(map: OMap) {
     const airports = await dxGetAllAirports()
 
     const items: IndexedAirportFeature[] = airports.map(a => {
@@ -173,7 +173,7 @@ export async function initAirportFeatures(map: Map) {
     setAirportFeatures(map)
 }
 
-export function setAirportFeatures(map: Map): void {
+export function setAirportFeatures(map: OMap): void {
     const resolution = map.getView().getResolution()
     const visibleSizes = getVisibleSizes(resolution)
     if (visibleSizes.length === 0) {
@@ -197,23 +197,43 @@ function getVisibleSizes(resolution: number | undefined): string[] {
     return []
 }
 
-export function setPilotFeatures(pilotsShort: PilotShort[]): void {
-    const features: Feature[] = pilotsShort.map(p => {
-        const feature = new Feature({
-            geometry: new Point(fromLonLat([p.longitude, p.latitude]))
-        })
-        feature.setProperties({
-            callsign: p.callsign,
-            type: 'pilot',
-            aircraft: p.aircraft,
-            heading: p.heading / 180 * Math.PI,
-            altitude_ms: p.altitude_ms,
-            active: false
-        } as PilotProperties)
+const pilotFeatureMap = new Map<string, Feature<Point>>()
 
-        return feature
+export function setPilotFeatures(pilotsShort: PilotShort[]): void {
+    const newCallsigns = new Set(pilotsShort.map(p => p.callsign))
+
+    pilotFeatureMap.forEach((feature, callsign) => {
+        if (!newCallsigns.has(callsign)) {
+            pilotMainSource.removeFeature(feature)
+            pilotFeatureMap.delete(callsign)
+        }
     })
 
-    pilotMainSource.clear()
-    pilotMainSource.addFeatures(features)
+    pilotsShort.forEach(p => {
+        const feature = pilotFeatureMap.get(p.callsign)
+        const coords = fromLonLat([p.longitude, p.latitude])
+
+        if (feature) {
+            const geom = feature.getGeometry()
+            geom?.setCoordinates(coords)
+
+            feature.set('heading', p.heading / 180 * Math.PI)
+            feature.set('altitude_agl', p.altitude_ms)
+        } else {
+            const newFeature = new Feature({
+                geometry: new Point(coords),
+            })
+            newFeature.setProperties({
+                callsign: p.callsign,
+                type: 'pilot',
+                aircraft: p.aircraft,
+                heading: p.heading / 180 * Math.PI,
+                altitude_agl: p.altitude_ms,
+                active: false
+            })
+
+            pilotMainSource.addFeature(newFeature)
+            pilotFeatureMap.set(p.callsign, newFeature)
+        }
+    })
 }

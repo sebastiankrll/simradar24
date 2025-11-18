@@ -3,7 +3,7 @@ export interface PilotProperties {
     type: 'pilot';
     aircraft: string;
     heading: number;
-    altitude_ms: number;
+    altitude_agl: number;
     active: boolean;
 }
 

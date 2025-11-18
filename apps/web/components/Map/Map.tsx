@@ -12,7 +12,9 @@ dxInitLocalDatabase()
 
 wsClient.addListener(msg => {
     // console.log(msg)
+    console.time("setPilotFeatures")
     setPilotFeatures(msg.pilots)
+    console.timeEnd("setPilotFeatures")
 })
 
 export default function Map() {
