@@ -1,4 +1,4 @@
-.overlay {
+.popup {
     position: relative;
     background-color: var(--color-red);
     border: none;

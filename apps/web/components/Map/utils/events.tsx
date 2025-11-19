@@ -4,9 +4,9 @@ import { setAirportFeatures } from "./dataLayers"
 import { Pixel } from "ol/pixel"
 import { Point } from "ol/geom"
 import { createRoot } from "react-dom/client"
-import { PilotOverlay } from "../components/Overlay/Overlays"
-import { dxGetAirline } from "@/storage/dexie"
-import { StaticAirline } from "@sk/types/db"
+import { AirportOverlay, PilotOverlay } from "../components/Overlay/Overlays"
+import { dxGetAirline, dxGetAirport } from "@/storage/dexie"
+import { StaticAirline, StaticAirport } from "@sk/types/db"
 
 export function onMoveEnd(evt: { map: Map }): void {
     const map = evt.map
@@ -104,19 +104,26 @@ export async function onClick(
 async function createOverlay(feature: Feature<Point>): Promise<Overlay> {
     const element = document.createElement('div')
     const root = createRoot(element)
-
     const type = feature.get('type')
+
+    let id: string | undefined
+
     if (type === "pilot") {
-        const callsign = feature.get('callsign') as string
-        const icao = callsign.substring(0, 3)
+        id = feature.get('callsign') as string
+        const icao = id.substring(0, 3)
         const airline = await dxGetAirline(icao) as StaticAirline | undefined
 
         root.render(<PilotOverlay feature={feature} airline={airline} />)
     }
 
+    if (type === "airport") {
+        id = feature.get('icao') as string
+        root.render(<AirportOverlay feature={feature} />)
+    }
+
     const overlay = new Overlay({
         element,
-        id: feature.get('callsign'),
+        id: id,
         position: feature.getGeometry()?.getCoordinates(),
         positioning: 'bottom-center',
         offset: [0, -25]
