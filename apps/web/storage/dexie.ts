@@ -1,6 +1,5 @@
 import { FIRFeature, FIRFeatureCollection, SimAwareTraconFeature, SimAwareTraconFeatureCollection, StaticAirline, StaticAirport } from "@sk/types/db";
 import Dexie, { EntityTable } from "dexie";
-import { FeatureCollection } from "geojson";
 
 interface StaticVersions {
     airportsVersion: string;
@@ -14,27 +13,9 @@ interface DexieFeature {
     feature: FIRFeature | SimAwareTraconFeature;
 }
 
-interface DexieAirport {
-    id: string;
-    latitude: number;
-    longitude: number;
-    size: string;
-    feature: StaticAirport;
-}
-
-interface DexieAirline {
-    id: string;
-    iata: string;
-    name: string;
-    callsign: string;
-    country: string;
-    bg: string | null;
-    font: string | null;
-}
-
 const db = new Dexie('StaticDatabase') as Dexie & {
     airports: EntityTable<
-        DexieAirport,
+        StaticAirport,
         "id"
     >,
     firs: EntityTable<
@@ -46,7 +27,7 @@ const db = new Dexie('StaticDatabase') as Dexie & {
         "id"
     >,
     airlines: EntityTable<
-        DexieAirline,
+        StaticAirline,
         "id"
     >
 }
@@ -65,20 +46,10 @@ export async function dxInitLocalDatabase(): Promise<void> {
 async function checkForNewVersions(): Promise<void> {
     const response = await fetch(`http://localhost:5000/api/static/versions`)
     const serverVersions: StaticVersions = await response.json()
-
     const localVersions: StaticVersions = JSON.parse(localStorage.getItem("databaseVersions") || "{}")
 
     if (serverVersions.airportsVersion !== localVersions.airportsVersion) {
-        const data = await fetchStaticData("airports") as StaticAirport[]
-        const airports: DexieAirport[] = data
-            .map(a => ({
-                id: a.id,
-                latitude: a.latitude,
-                longitude: a.longitude,
-                size: a.size || "small_airport",
-                feature: a
-            }))
-
+        const airports = await fetchStaticData("airports") as StaticAirport[]
         storeData(airports, db.airports as EntityTable<any, "id">)
     }
 
@@ -133,10 +104,14 @@ async function storeData(data: any[], db: EntityTable<any, "id">): Promise<void>
     })
 }
 
-export async function dxGetAllAirports(): Promise<DexieAirport[]> {
+export async function dxGetAllAirports(): Promise<StaticAirport[]> {
     return await db.airports.toArray()
 }
 
-export async function dxGetAirline(id: string): Promise<DexieAirline | null> {
+export async function dxGetAirport(id: string): Promise<StaticAirport | null> {
+    return await db.airports.get(id) || null
+}
+
+export async function dxGetAirline(id: string): Promise<StaticAirline | null> {
     return await db.airlines.get(id) || null
 }

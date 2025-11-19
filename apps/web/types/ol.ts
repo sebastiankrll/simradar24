@@ -1,19 +1,13 @@
-export interface PilotProperties {
-    callsign: string;
+import { StaticAirport } from "@sk/types/db";
+import { PilotShort } from "@sk/types/vatsim";
+
+export type PilotProperties = Omit<PilotShort, "longitude" | "latitude"> & {
     type: 'pilot';
-    aircraft: string;
-    heading: number;
-    altitude_agl: number;
-    altitude_ms: number;
-    vertical_speed: number;
-    groundspeed: number;
-    frequency: number;
     clicked: boolean;
     hovered: boolean;
 }
 
-export interface AirportProperties {
-    icao: string;
+export interface AirportProperties extends StaticAirport {
     type: 'airport';
     clicked: boolean;
     hovered: boolean;

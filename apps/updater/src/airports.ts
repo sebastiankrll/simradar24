@@ -24,6 +24,7 @@ export async function updateAirports(): Promise<void> {
             iata: a.iata_code,
             size: a.type,
             name: a.name,
+            country: a.iso_country,
             latitude: Number(a.latitude_deg),
             longitude: Number(a.longitude_deg)
         }))

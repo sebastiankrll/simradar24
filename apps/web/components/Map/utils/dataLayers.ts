@@ -136,7 +136,7 @@ function getFirLabelLayerStyle(feature: FeatureLike, resolution: number): StyleL
     })
 }
 
-interface IndexedAirportFeature {
+interface RBushAirportFeature {
     minX: number;
     minY: number;
     maxX: number;
@@ -145,21 +145,22 @@ interface IndexedAirportFeature {
     feature: Feature<Point>;
 }
 
-const rbush = new RBush<IndexedAirportFeature>()
+const rbush = new RBush<RBushAirportFeature>()
 
 export async function initAirportFeatures(map: OMap) {
     const airports = await dxGetAllAirports()
 
-    const items: IndexedAirportFeature[] = airports.map(a => {
+    const items: RBushAirportFeature[] = airports.map(a => {
         const feature = new Feature({
             geometry: new Point(fromLonLat([a.longitude, a.latitude]))
         })
-        feature.setProperties({
-            icao: a.id,
-            type: 'airport',
+        const props: AirportProperties = {
+            ...a,
             clicked: false,
-            hovered: false
-        } as AirportProperties)
+            hovered: false,
+            type: 'airport'
+        }
+        feature.setProperties(props)
 
         return {
             minX: a.longitude,
@@ -224,7 +225,7 @@ export function setPilotFeatures(pilotsShort: PilotShort[]): void {
             const newFeature = new Feature({
                 geometry: new Point(coords),
             })
-            newFeature.setProperties({
+            const props: PilotProperties = {
                 callsign: p.callsign,
                 type: 'pilot',
                 aircraft: p.aircraft,
@@ -234,9 +235,11 @@ export function setPilotFeatures(pilotsShort: PilotShort[]): void {
                 vertical_speed: p.vertical_speed,
                 groundspeed: p.groundspeed,
                 frequency: p.frequency,
+                transponder: p.transponder,
                 clicked: false,
                 hovered: false
-            } as PilotProperties)
+            }
+            newFeature.setProperties(props)
 
             pilotMainSource.addFeature(newFeature)
             pilotFeatureMap.set(p.callsign, newFeature)
