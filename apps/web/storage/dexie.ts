@@ -111,7 +111,7 @@ async function checkForNewVersions(): Promise<void> {
         storeData(data, db.airlines as EntityTable<any, "id">)
     }
 
-    // localStorage.setItem("databaseVersions", JSON.stringify(serverVersions))
+    localStorage.setItem("databaseVersions", JSON.stringify(serverVersions))
 }
 
 async function fetchStaticData(type: string): Promise<any> {
@@ -135,4 +135,8 @@ async function storeData(data: any[], db: EntityTable<any, "id">): Promise<void>
 
 export async function dxGetAllAirports(): Promise<DexieAirport[]> {
     return await db.airports.toArray()
+}
+
+export async function dxGetAirline(id: string): Promise<DexieAirline | null> {
+    return await db.airlines.get(id) || null
 }

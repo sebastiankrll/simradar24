@@ -5,6 +5,8 @@ import { Pixel } from "ol/pixel"
 import { Point } from "ol/geom"
 import { createRoot } from "react-dom/client"
 import { PilotOverlay } from "../components/Overlay/Overlays"
+import { dxGetAirline } from "@/storage/dexie"
+import { StaticAirline } from "@sk/types/db"
 
 export function onMoveEnd(evt: { map: Map }): void {
     const map = evt.map
@@ -27,12 +29,12 @@ let hoveredFeature: Feature<Point> | null = null
 let clickedOverlay: Overlay | null = null
 let hoveredOverlay: Overlay | null = null
 
-export function onPointerMove(
+export async function onPointerMove(
     evt: {
         pixel: Pixel;
         map: Map;
     }
-): void {
+): Promise<void> {
     const map = evt.map
     const pixel = evt.pixel
 
@@ -51,7 +53,7 @@ export function onPointerMove(
     }
 
     if (feature && feature !== hoveredFeature && feature !== clickedFeature) {
-        hoveredOverlay = createOverlay(feature)
+        hoveredOverlay = await createOverlay(feature)
         map.addOverlay(hoveredOverlay)
     }
 
@@ -64,12 +66,12 @@ export function onPointerMove(
     hoveredFeature = feature || null
 }
 
-export function onClick(
+export async function onClick(
     evt: {
         pixel: Pixel;
         map: Map;
     }
-): void {
+): Promise<void> {
     const map = evt.map
     const pixel = evt.pixel
 
@@ -86,7 +88,7 @@ export function onClick(
     }
 
     if (feature && feature !== clickedFeature) {
-        clickedOverlay = createOverlay(feature)
+        clickedOverlay = await createOverlay(feature)
         map.addOverlay(clickedOverlay)
     }
 
@@ -99,17 +101,18 @@ export function onClick(
     clickedFeature = feature || null
 }
 
-const overlayComponents: Record<string, React.FC<any>> = {
-    pilot: PilotOverlay
-}
-
-function createOverlay(feature: Feature<Point>): Overlay {
+async function createOverlay(feature: Feature<Point>): Promise<Overlay> {
     const element = document.createElement('div')
     const root = createRoot(element)
 
     const type = feature.get('type')
-    const Component = overlayComponents[type] ?? (() => null)
-    root.render(<Component feature={feature} />)
+    if (type === "pilot") {
+        const callsign = feature.get('callsign') as string
+        const icao = callsign.substring(0, 3)
+        const airline = await dxGetAirline(icao) as StaticAirline | undefined
+
+        root.render(<PilotOverlay feature={feature} airline={airline} />)
+    }
 
     const overlay = new Overlay({
         element,

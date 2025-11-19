@@ -2,8 +2,9 @@ import { Feature } from 'ol'
 import './Overlays.css'
 import { Point } from 'ol/geom'
 import { PilotProperties } from '@/types/ol'
+import { StaticAirline } from '@sk/types/db'
 
-export function PilotOverlay({ feature }: { feature: Feature<Point> }) {
+export function PilotOverlay({ feature, airline }: { feature: Feature<Point>, airline: StaticAirline | undefined }) {
     const data = feature.getProperties() as PilotProperties
 
     return (
@@ -15,13 +16,13 @@ export function PilotOverlay({ feature }: { feature: Feature<Point> }) {
                 <div className="popup-content-vnav"><span>HDG</span>{Math.round(data.heading * (180 / Math.PI))}</div>
             </div>
             <div className="popup-content flight">
-                <figure className="popup-content-logo">
-                    {/* <p style={{
-                        color: airline.font ?? 'var(--color-green)',
-                        fontSize: airline.iata.length && airline.iata.length > 2 ? '.8rem' : ''
+                <figure className="popup-content-logo" style={{ backgroundColor: airline?.font ?? 'white' }}>
+                    <p style={{
+                        color: airline?.bg ?? 'var(--color-green)',
+                        fontSize: airline && airline.iata.length > 2 ? '.8rem' : ''
                     }}>
-                        {airline.iata}
-                    </p> */}
+                        {airline?.iata}
+                    </p>
                 </figure>
                 <div className="popup-content-main flight">
                     <div className="popup-content-header">{data.callsign}</div>
