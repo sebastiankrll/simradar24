@@ -28,6 +28,7 @@ let clickedFeature: Feature<Point> | null = null
 let hoveredFeature: Feature<Point> | null = null
 let clickedOverlay: Overlay | null = null
 let hoveredOverlay: Overlay | null = null
+let hovering = false
 
 export async function onPointerMove(
     evt: {
@@ -35,6 +36,9 @@ export async function onPointerMove(
         map: Map;
     }
 ): Promise<void> {
+    if (hovering) return
+    hovering = true
+
     const map = evt.map
     const pixel = evt.pixel
 
@@ -64,6 +68,8 @@ export async function onPointerMove(
 
     feature?.set('hovered', true)
     hoveredFeature = feature || null
+
+    hovering = false
 }
 
 export async function onClick(
