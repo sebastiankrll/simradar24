@@ -1,40 +1,36 @@
-'use client'
+"use client";
 
-import { useEffect } from "react"
-import './Map.css'
-import { initMap } from "./utils/init"
-import { dxInitLocalDatabase } from "@/storage/dexie"
-import { wsClient } from "@/utils/ws"
-import { setPilotFeatures } from "./utils/dataLayers"
-import { onClick, onMoveEnd, onPointerMove } from "./utils/events"
+import { useEffect } from "react";
+import "./Map.css";
+import { dxInitLocalDatabase } from "@/storage/dexie";
+import { wsClient } from "@/utils/ws";
+import { setPilotFeatures } from "./utils/dataLayers";
+import { onClick, onMoveEnd, onPointerMove } from "./utils/events";
+import { initMap } from "./utils/init";
 
-dxInitLocalDatabase()
+dxInitLocalDatabase();
 
-wsClient.addListener(msg => {
-    // console.log(msg)
-    console.time("setPilotFeatures")
-    setPilotFeatures(msg.pilots)
-    console.timeEnd("setPilotFeatures")
-})
+wsClient.addListener((msg) => {
+	// console.log(msg)
+	console.time("setPilotFeatures");
+	setPilotFeatures(msg.pilots);
+	console.timeEnd("setPilotFeatures");
+});
 
-export default function Map() {
-    useEffect(() => {
-        const map = initMap()
-        map.on('moveend', onMoveEnd)
-        map.on('pointermove', onPointerMove)
-        map.on('click', onClick)
+export default function OMap() {
+	useEffect(() => {
+		const map = initMap();
+		map.on("moveend", onMoveEnd);
+		map.on("pointermove", onPointerMove);
+		map.on("click", onClick);
 
-        return () => {
-            map.un('moveend', onMoveEnd)
-            map.un('pointermove', onPointerMove)
-            map.un('click', onClick)
-            map.setTarget(undefined)
-        }
-    }, [])
+		return () => {
+			map.un("moveend", onMoveEnd);
+			map.un("pointermove", onPointerMove);
+			map.un("click", onClick);
+			map.setTarget(undefined);
+		};
+	}, []);
 
-    return (
-        <>
-            <div id="map" />
-        </>
-    )
+	return <div id="map" />;
 }

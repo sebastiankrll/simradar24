@@ -1,109 +1,111 @@
-import 'dotenv/config'
-import express from "express";
+import "dotenv/config";
+import { pgGetTrackPointsByUid } from "@sk/db/pg";
+import { rdsGetSingle } from "@sk/db/redis";
 import cors from "cors";
-import { pgGetTrackPointsByUid } from '@sk/db/pg';
-import { rdsGetSingle } from '@sk/db/redis';
+import express from "express";
 
-const app = express()
-app.use(cors())
-app.use(express.json())
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-app.get("/api/static/versions", async (req, res) => {
-    try {
-        const airportsVersion = await rdsGetSingle("static_airports:version")
-        const firsVersion = await rdsGetSingle("static_firs:version")
-        const traconsVersion = await rdsGetSingle("static_tracons:version")
-        const airlinesVersion = await rdsGetSingle("static_airlines:version")
+app.get("/api/static/versions", async (_req, res) => {
+	try {
+		const airportsVersion = await rdsGetSingle("static_airports:version");
+		const firsVersion = await rdsGetSingle("static_firs:version");
+		const traconsVersion = await rdsGetSingle("static_tracons:version");
+		const airlinesVersion = await rdsGetSingle("static_airlines:version");
 
-        res.json({
-            airportsVersion,
-            firsVersion,
-            traconsVersion,
-            airlinesVersion
-        })
-    } catch (err) {
-        console.error(err)
-        res.status(500).json({ error: "Internal server error" })
-    }
-})
+		res.json({
+			airportsVersion,
+			firsVersion,
+			traconsVersion,
+			airlinesVersion,
+		});
+	} catch (err) {
+		console.error(err);
+		res.status(500).json({ error: "Internal server error" });
+	}
+});
 
 app.get("/api/static/:type", async (req, res) => {
-    try {
-        const { type } = req.params
-        const allowedTypes = ["airports", "tracons", "firs", "airlines"]
+	try {
+		const { type } = req.params;
+		const allowedTypes = ["airports", "tracons", "firs", "airlines"];
 
-        if (!allowedTypes.includes(type)) return res.status(400).json({ error: "Invalid static data type" })
+		if (!allowedTypes.includes(type))
+			return res.status(400).json({ error: "Invalid static data type" });
 
-        const data = await rdsGetSingle(`static_${type}:all`)
-        if (!data) return res.status(404).json({ error: "Static data not found" })
+		const data = await rdsGetSingle(`static_${type}:all`);
+		if (!data) return res.status(404).json({ error: "Static data not found" });
 
-        res.json(data)
-    } catch (err) {
-        console.error(err)
-        res.status(500).json({ error: "Internal server error" })
-    }
-})
+		res.json(data);
+	} catch (err) {
+		console.error(err);
+		res.status(500).json({ error: "Internal server error" });
+	}
+});
 
 app.get("/api/data/pilot/:callsign", async (req, res) => {
-    try {
-        const { callsign } = req.params
-        console.log("Requested pilot:", callsign)
+	try {
+		const { callsign } = req.params;
+		console.log("Requested pilot:", callsign);
 
-        const pilot = await rdsGetSingle(`pilot:${callsign}`)
-        if (!pilot) return res.status(404).json({ error: "Pilot not found" })
+		const pilot = await rdsGetSingle(`pilot:${callsign}`);
+		if (!pilot) return res.status(404).json({ error: "Pilot not found" });
 
-        res.json(pilot)
-    } catch (err) {
-        console.error(err)
-        res.status(500).json({ error: "Internal server error" })
-    }
-})
+		res.json(pilot);
+	} catch (err) {
+		console.error(err);
+		res.status(500).json({ error: "Internal server error" });
+	}
+});
 
 app.get("/api/data/airport/:icao", async (req, res) => {
-    try {
-        const { icao } = req.params
-        console.log("Requested airport:", icao)
+	try {
+		const { icao } = req.params;
+		console.log("Requested airport:", icao);
 
-        const airport = await rdsGetSingle(`airport:${icao}`)
-        if (!airport) return res.status(404).json({ error: "Airport not found" })
+		const airport = await rdsGetSingle(`airport:${icao}`);
+		if (!airport) return res.status(404).json({ error: "Airport not found" });
 
-        res.json(airport)
-    } catch (err) {
-        console.error(err)
-        res.status(500).json({ error: "Internal server error" })
-    }
-})
+		res.json(airport);
+	} catch (err) {
+		console.error(err);
+		res.status(500).json({ error: "Internal server error" });
+	}
+});
 
 app.get("/api/data/controller/:callsign", async (req, res) => {
-    try {
-        const { callsign } = req.params
-        console.log("Requested controller:", callsign)
+	try {
+		const { callsign } = req.params;
+		console.log("Requested controller:", callsign);
 
-        const controller = await rdsGetSingle(`controller:${callsign}`)
-        if (!controller) return res.status(404).json({ error: "Controller not found" })
+		const controller = await rdsGetSingle(`controller:${callsign}`);
+		if (!controller)
+			return res.status(404).json({ error: "Controller not found" });
 
-        res.json(controller)
-    } catch (err) {
-        console.error(err)
-        res.status(500).json({ error: "Internal server error" })
-    }
-})
+		res.json(controller);
+	} catch (err) {
+		console.error(err);
+		res.status(500).json({ error: "Internal server error" });
+	}
+});
 
 app.get("/api/data/track/:uid", async (req, res) => {
-    try {
-        const { uid } = req.params
-        console.log("Requested track:", uid)
+	try {
+		const { uid } = req.params;
+		console.log("Requested track:", uid);
 
-        const trackPoints = await pgGetTrackPointsByUid(uid)
+		const trackPoints = await pgGetTrackPointsByUid(uid);
 
-        res.json(trackPoints)
-    } catch (err) {
-        console.error(err)
-        res.status(500).json({ error: "Internal server error" })
-    }
-})
+		res.json(trackPoints);
+	} catch (err) {
+		console.error(err);
+		res.status(500).json({ error: "Internal server error" });
+	}
+});
 
-const PORT = process.env.PORT || 5000
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`Express API listening on port ${PORT}`)
-})
+	console.log(`Express API listening on port ${PORT}`);
+});

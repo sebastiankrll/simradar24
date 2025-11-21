@@ -1,21 +1,21 @@
-import Clock from './components/Clock'
-import Search from './components/Search'
-import './Header.css'
-import Image from 'next/image'
-import simradar24Logo from '@/assets/images/simradar24_logo.svg'
+import Clock from "./components/Clock";
+import Search from "./components/Search";
+import "./Header.css";
+import Image from "next/image";
+import simradar24Logo from "@/assets/images/simradar24_logo.svg";
 
 export default function Header() {
-    return (
-        <header>
-            <figure id="header-logo">
-                <Image src={simradar24Logo} alt='simradar24 logo' priority={true} />
-            </figure>
-            <div className="header-item">
-                <Clock />
-            </div>
-            <div className="header-item">
-                <Search />
-            </div>
-        </header>
-    )
+	return (
+		<header>
+			<figure id="header-logo">
+				<Image src={simradar24Logo} alt="simradar24 logo" priority={true} />
+			</figure>
+			<div className="header-item">
+				<Clock />
+			</div>
+			<div className="header-item">
+				<Search />
+			</div>
+		</header>
+	);
 }

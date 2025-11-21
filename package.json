@@ -1,18 +1,20 @@
 {
-    "name": "simradar24",
-    "version": "1.0.0",
-    "private": true,
-    "scripts": {
-        "build": "turbo run build",
-        "dev": "turbo run dev",
-        "lint": "turbo run lint"
-    },
-    "devDependencies": {
-        "turbo": "^2.6.1"
-    },
-    "packageManager": "npm@10.0.0",
-    "workspaces": [
-        "apps/*",
-        "packages/*"
-    ]
+	"name": "simradar24",
+	"version": "1.0.0",
+	"private": true,
+	"scripts": {
+		"build": "turbo run build",
+		"dev": "turbo run dev",
+		"format-and-lint": "biome check .",
+		"format-and-lint:fix": "biome check . --write"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.3.7",
+		"turbo": "^2.6.1"
+	},
+	"packageManager": "npm@10.0.0",
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	]
 }

@@ -1,29 +1,29 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react";
 
-export default function Search({ }) {
-    const [searchValue, setSearchValue] = useState('')
+export default function Search() {
+	const [searchValue, setSearchValue] = useState("");
 
-    useEffect(() => {
-        const resetInput = () => {
-            setSearchValue('')
-        }
+	useEffect(() => {
+		const resetInput = () => {
+			setSearchValue("");
+		};
 
-        document.addEventListener('click', resetInput)
+		document.addEventListener("click", resetInput);
 
-        return () => {
-            document.removeEventListener('click', resetInput)
-        }
-    }, [])
+		return () => {
+			document.removeEventListener("click", resetInput);
+		};
+	}, []);
 
-    return (
-        <input
-            id="header-search"
-            type="text"
-            placeholder="Not implemented yet."
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-        />
-    )
+	return (
+		<input
+			id="header-search"
+			type="text"
+			placeholder="Not implemented yet."
+			value={searchValue}
+			onChange={(e) => setSearchValue(e.target.value)}
+		/>
+	);
 }
