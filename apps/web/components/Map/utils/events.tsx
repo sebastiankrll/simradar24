@@ -5,7 +5,7 @@ import { toLonLat } from "ol/proj";
 import { createRoot, type Root } from "react-dom/client";
 import { dxGetAirline } from "@/storage/dexie";
 import { AirportOverlay, PilotOverlay } from "../components/Overlay/Overlays";
-import { setFeatures } from "./dataLayers";
+import { getAirportShort, setFeatures } from "./dataLayers";
 
 export function onMoveEnd(evt: { map: OlMap }): void {
 	const map = evt.map;
@@ -113,8 +113,9 @@ async function createOverlay(feature: Feature<Point>): Promise<Overlay> {
 	}
 
 	if (type === "airport") {
-		id = feature.get("icao") as string;
-		root.render(<AirportOverlay feature={feature} />);
+		id = feature.get("id") as string;
+        const airport = getAirportShort(id);
+		root.render(<AirportOverlay feature={feature} airport={airport} />);
 	}
 
 	const overlay = new Overlay({
@@ -163,7 +164,8 @@ async function updateOverlay(
 	}
 
 	if (type === "airport") {
-		id = feature.get("icao") as string;
-		root.render(<AirportOverlay feature={feature} />);
+		id = feature.get("id") as string;
+		const airport = getAirportShort(id);
+		root.render(<AirportOverlay feature={feature} airport={airport} />);
 	}
 }

@@ -64,6 +64,8 @@ export async function mapPilots(
 				pilot_rating: pilot.pilot_rating,
 				military_rating: pilot.military_rating,
 				flight_plan: mapPilotFlightPlan(pilot.flight_plan),
+				departure: pilot.flight_plan?.departure || null,
+				arrival: pilot.flight_plan?.arrival || null,
 				logon_time: new Date(pilot.logon_time),
 				times: null,
 				...updatedFields,

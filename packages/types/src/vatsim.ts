@@ -145,6 +145,8 @@ export interface PilotShort {
 	aircraft: string;
 	transponder: number;
 	frequency: number;
+	departure: string | null;
+	arrival: string | null;
 }
 
 export interface PilotLong extends PilotShort {

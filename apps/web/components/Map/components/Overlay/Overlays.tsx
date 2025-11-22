@@ -3,6 +3,7 @@ import "./Overlays.css";
 import type { StaticAirline } from "@sk/types/db";
 import type { Point } from "ol/geom";
 import type { AirportProperties, PilotProperties } from "@/types/ol";
+import type { AirportShort } from "@sk/types/vatsim";
 
 export function PilotOverlay({
 	feature,
@@ -50,7 +51,7 @@ export function PilotOverlay({
 				<div className="popup-content-main flight">
 					<div className="popup-content-header">{data.callsign}</div>
 					<div className="popup-content-box ac">{data.aircraft}</div>
-					<p>{"EDDL - EDDF"}</p>
+					<p>{`${data.departure || "N/A"} -- ${data.arrival || "N/A"}`}</p>
 					<div className="popup-content-box ac-fr">
 						{(data.frequency / 1000).toFixed(3)}
 					</div>
@@ -60,7 +61,13 @@ export function PilotOverlay({
 	);
 }
 
-export function AirportOverlay({ feature }: { feature: Feature<Point> }) {
+export function AirportOverlay({
+	feature,
+	airport,
+}: {
+	feature: Feature<Point>;
+	airport: AirportShort | null;
+}) {
 	const data = feature.getProperties() as AirportProperties;
 
 	return (
@@ -85,7 +92,9 @@ export function AirportOverlay({ feature }: { feature: Feature<Point> }) {
 							></path>
 						</svg>
 					</div>
-					{/* <div className='popup-airport-info-n'>{inOutBounds ? inOutBounds[0] : 0}</div> */}
+					<div className="popup-airport-info-n">
+						{airport?.dep_traffic.traffic_count || 0}
+					</div>
 					<div className="popup-airport-info-icon">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -100,7 +109,9 @@ export function AirportOverlay({ feature }: { feature: Feature<Point> }) {
 							></path>
 						</svg>
 					</div>
-					{/* <div className='popup-airport-info-n'>{inOutBounds ? inOutBounds[1] : 0}</div> */}
+					<div className="popup-airport-info-n">
+						{airport?.arr_traffic.traffic_count || 0}
+					</div>
 				</div>
 			</div>
 			<div className="popup-content-anchor"></div>

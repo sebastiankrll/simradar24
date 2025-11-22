@@ -106,6 +106,8 @@ function publishWsShort(
 				aircraft,
 				transponder,
 				frequency,
+                departure,
+                arrival
 			}) => ({
 				callsign,
 				latitude,
@@ -118,6 +120,8 @@ function publishWsShort(
 				aircraft,
 				transponder,
 				frequency,
+                departure,
+                arrival
 			}),
 		),
 		controllers: controllersLong.map(

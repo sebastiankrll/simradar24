@@ -1,4 +1,4 @@
-import type { PilotShort, WsShort } from "@sk/types/vatsim";
+import type { AirportShort, PilotShort, WsShort } from "@sk/types/vatsim";
 import type { Extent } from "ol/extent";
 import Feature from "ol/Feature";
 import { Point } from "ol/geom";
@@ -131,8 +131,15 @@ export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
 	];
 }
 
+let airportsShort: AirportShort[] = [];
+
+export function getAirportShort(id: string): AirportShort | null {
+	return airportsShort.find((a) => a.icao === id) || null;
+}
+
 export function updateDataLayers(wsShort: WsShort): void {
 	updatePilotFeatures(wsShort.pilots);
+	airportsShort = wsShort.airports;
 	updateOverlays();
 }
 
