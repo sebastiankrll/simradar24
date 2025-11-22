@@ -95,7 +95,6 @@ export async function onClick(evt: {
 
 	feature?.set("clicked", true);
 	clickedFeature = feature || null;
-    console.log(feature)
 }
 
 async function createOverlay(feature: Feature<Point>): Promise<Overlay> {
@@ -130,6 +129,15 @@ async function createOverlay(feature: Feature<Point>): Promise<Overlay> {
 	return overlay;
 }
 
+export function updateOverlays(): void {
+	if (clickedFeature && clickedOverlay) {
+		updateOverlay(clickedFeature, clickedOverlay);
+	}
+	if (hoveredFeature && hoveredOverlay) {
+		updateOverlay(hoveredFeature, hoveredOverlay);
+	}
+}
+
 async function updateOverlay(
 	feature: Feature<Point>,
 	overlay: Overlay,
@@ -157,14 +165,5 @@ async function updateOverlay(
 	if (type === "airport") {
 		id = feature.get("icao") as string;
 		root.render(<AirportOverlay feature={feature} />);
-	}
-}
-
-export function updateOverlays(): void {
-	if (clickedFeature && clickedOverlay) {
-		updateOverlay(clickedFeature, clickedOverlay);
-	}
-	if (hoveredFeature && hoveredOverlay) {
-		updateOverlay(hoveredFeature, hoveredOverlay);
 	}
 }

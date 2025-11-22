@@ -473,12 +473,34 @@ export const webglConfig = {
 					["linear"],
 					["get", "altitude_agl"],
 					3000,
-					["*", ["sqrt", 2], ["cos", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]]],
+					[
+						"*",
+						["sqrt", 2],
+						[
+							"cos",
+							[
+								"-",
+								["*", ["/", ["get", "heading"], 180], Math.PI],
+								Math.PI / 4,
+							],
+						],
+					],
 					45000,
 					[
 						"*",
 						4,
-						["*", ["sqrt", 2], ["cos", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]]],
+						[
+							"*",
+							["sqrt", 2],
+							[
+								"cos",
+								[
+									"-",
+									["*", ["/", ["get", "heading"], 180], Math.PI],
+									Math.PI / 4,
+								],
+							],
+						],
 					],
 				],
 				18,
@@ -489,7 +511,18 @@ export const webglConfig = {
 						["linear"],
 						["get", "altitude_agl"],
 						3000,
-						["*", ["sqrt", 2], ["cos", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]]],
+						[
+							"*",
+							["sqrt", 2],
+							[
+								"cos",
+								[
+									"-",
+									["*", ["/", ["get", "heading"], 180], Math.PI],
+									Math.PI / 4,
+								],
+							],
+						],
 						45000,
 						[
 							"*",
@@ -497,7 +530,14 @@ export const webglConfig = {
 							[
 								"*",
 								["sqrt", 2],
-								["cos", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]],
+								[
+									"cos",
+									[
+										"-",
+										["*", ["/", ["get", "heading"], 180], Math.PI],
+										Math.PI / 4,
+									],
+								],
 							],
 						],
 					],
@@ -514,12 +554,34 @@ export const webglConfig = {
 					["linear"],
 					["get", "altitude_agl"],
 					3000,
-					["*", ["sqrt", 2], ["sin", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]]],
+					[
+						"*",
+						["sqrt", 2],
+						[
+							"sin",
+							[
+								"-",
+								["*", ["/", ["get", "heading"], 180], Math.PI],
+								Math.PI / 4,
+							],
+						],
+					],
 					45000,
 					[
 						"*",
 						4,
-						["*", ["sqrt", 2], ["sin", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]]],
+						[
+							"*",
+							["sqrt", 2],
+							[
+								"sin",
+								[
+									"-",
+									["*", ["/", ["get", "heading"], 180], Math.PI],
+									Math.PI / 4,
+								],
+							],
+						],
 					],
 				],
 				18,
@@ -530,7 +592,18 @@ export const webglConfig = {
 						["linear"],
 						["get", "altitude_agl"],
 						3000,
-						["*", ["sqrt", 2], ["sin", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]]],
+						[
+							"*",
+							["sqrt", 2],
+							[
+								"sin",
+								[
+									"-",
+									["*", ["/", ["get", "heading"], 180], Math.PI],
+									Math.PI / 4,
+								],
+							],
+						],
 						45000,
 						[
 							"*",
@@ -538,7 +611,14 @@ export const webglConfig = {
 							[
 								"*",
 								["sqrt", 2],
-								["sin", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]],
+								[
+									"sin",
+									[
+										"-",
+										["*", ["/", ["get", "heading"], 180], Math.PI],
+										Math.PI / 4,
+									],
+								],
 							],
 						],
 					],

@@ -4,7 +4,11 @@ import { useEffect } from "react";
 import "./Map.css";
 import { dxInitDatabases } from "@/storage/dexie";
 import { wsClient } from "@/utils/ws";
-import { initAirportFeatures, initPilotFeatures, setFeatures } from "./utils/dataLayers";
+import {
+	initAirportFeatures,
+	setFeatures,
+	updateDataLayers,
+} from "./utils/dataLayers";
 import { onClick, onMoveEnd, onPointerMove } from "./utils/events";
 import { getMapView, initMap } from "./utils/init";
 
@@ -19,7 +23,7 @@ async function init() {
 init();
 
 wsClient.addListener((msg) => {
-	initPilotFeatures(msg.pilots);
+	updateDataLayers(msg);
 });
 
 export default function OMap() {

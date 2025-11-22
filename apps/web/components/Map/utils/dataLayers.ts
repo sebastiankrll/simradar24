@@ -1,4 +1,5 @@
-import type { PilotShort } from "@sk/types/vatsim";
+import type { PilotShort, WsShort } from "@sk/types/vatsim";
+import type { Extent } from "ol/extent";
 import Feature from "ol/Feature";
 import { Point } from "ol/geom";
 import VectorLayer from "ol/layer/Vector";
@@ -9,7 +10,7 @@ import RBush from "rbush";
 import { dxGetAllAirports } from "@/storage/dexie";
 import type { AirportProperties, PilotProperties } from "@/types/ol";
 import { webglConfig } from "../lib/webglConfig";
-import type { Extent } from "ol/extent";
+import { updateOverlays } from "./events";
 
 interface RBushPilotFeature {
 	minX: number;
@@ -130,6 +131,11 @@ export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
 	];
 }
 
+export function updateDataLayers(wsShort: WsShort): void {
+	updatePilotFeatures(wsShort.pilots);
+	updateOverlays();
+}
+
 const airportRBush = new RBush<RBushAirportFeature>();
 
 export async function initAirportFeatures(): Promise<void> {
@@ -163,7 +169,7 @@ export async function initAirportFeatures(): Promise<void> {
 const pilotRBush = new RBush<RBushPilotFeature>();
 const pilotFeaturesMap = new Map<string, RBushPilotFeature>();
 
-export function initPilotFeatures(pilots: PilotShort[]): void {
+function updatePilotFeatures(pilots: PilotShort[]): void {
 	for (const p of pilots) {
 		const item = pilotFeaturesMap.get(p.callsign);
 		const props: PilotProperties = {
