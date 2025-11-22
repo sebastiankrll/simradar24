@@ -1,5 +1,5 @@
 import type { PilotShort } from "@sk/types/vatsim";
-import type { Map as OMap } from "ol";
+import type { Map as OlMap } from "ol";
 import Feature, { type FeatureLike } from "ol/Feature";
 import { Point } from "ol/geom";
 import VectorLayer from "ol/layer/Vector";
@@ -155,7 +155,7 @@ interface RBushAirportFeature {
 
 const rbush = new RBush<RBushAirportFeature>();
 
-export async function initAirportFeatures(map: OMap) {
+export async function initAirportFeatures(map: OlMap) {
 	const airports = await dxGetAllAirports();
 
 	const items: RBushAirportFeature[] = airports.map((a) => {
@@ -183,7 +183,7 @@ export async function initAirportFeatures(map: OMap) {
 	setAirportFeatures(map);
 }
 
-export function setAirportFeatures(map: OMap): void {
+export function setAirportFeatures(map: OlMap): void {
 	const resolution = map.getView().getResolution();
 	const visibleSizes = getVisibleSizes(resolution);
 	if (visibleSizes.length === 0) {

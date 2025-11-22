@@ -1,4 +1,4 @@
-import { type Map as OlMap, View } from "ol";
+import { Map as OlMap, View } from "ol";
 import { fromLonLat, transformExtent } from "ol/proj";
 import { initBaseLayer } from "./baseLayer";
 import { initAirportFeatures, initDataLayers } from "./dataLayers";
@@ -29,7 +29,7 @@ export function initMap(): OlMap {
 	const sunLayer = initSunLayer();
 	const dataLayers = initDataLayers();
 
-	const map = new Map({
+	const map = new OlMap({
 		target: "map",
 		layers: [baseLayer, sunLayer, ...dataLayers],
 		view: new View({

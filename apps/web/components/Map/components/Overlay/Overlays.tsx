@@ -9,7 +9,7 @@ export function PilotOverlay({
 	airline,
 }: {
 	feature: Feature<Point>;
-	airline: StaticAirline | undefined;
+	airline: StaticAirline | null;
 }) {
 	const data = feature.getProperties() as PilotProperties;
 

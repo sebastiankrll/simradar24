@@ -1,9 +1,8 @@
-import type { StaticAirline } from "@sk/types/db";
 import { type Feature, type Map as OlMap, Overlay, type View } from "ol";
 import type { Point } from "ol/geom";
 import type { Pixel } from "ol/pixel";
 import { toLonLat } from "ol/proj";
-import { createRoot } from "react-dom/client";
+import { createRoot, type Root } from "react-dom/client";
 import { dxGetAirline } from "@/storage/dexie";
 import { AirportOverlay, PilotOverlay } from "../components/Overlay/Overlays";
 import { setAirportFeatures } from "./dataLayers";
@@ -110,7 +109,7 @@ async function createOverlay(feature: Feature<Point>): Promise<Overlay> {
 	if (type === "pilot") {
 		id = feature.get("callsign") as string;
 		const icao = id.substring(0, 3);
-		const airline = (await dxGetAirline(icao)) as StaticAirline | undefined;
+		const airline = await dxGetAirline(icao);
 
 		root.render(<PilotOverlay feature={feature} airline={airline} />);
 	}
@@ -130,4 +129,43 @@ async function createOverlay(feature: Feature<Point>): Promise<Overlay> {
 	overlay.set("root", root);
 
 	return overlay;
+}
+
+async function updateOverlay(
+	feature: Feature<Point>,
+	overlay: Overlay,
+): Promise<void> {
+	if (!feature || !overlay) return;
+
+	const geom = feature.getGeometry();
+	const coords = geom?.getCoordinates();
+	overlay.setPosition(coords);
+
+	const root = overlay.get("root") as Root | undefined;
+	const type = feature.get("type") as string | undefined;
+
+	if (!root || !type) return;
+	let id: string | undefined;
+
+	if (type === "pilot") {
+		id = feature.get("callsign") as string;
+		const icao = id.substring(0, 3);
+		const airline = await dxGetAirline(icao);
+
+		root.render(<PilotOverlay feature={feature} airline={airline} />);
+	}
+
+	if (type === "airport") {
+		id = feature.get("icao") as string;
+		root.render(<AirportOverlay feature={feature} />);
+	}
+}
+
+export function updateOverlays(): void {
+	if (clickedFeature && clickedOverlay) {
+		updateOverlay(clickedFeature, clickedOverlay);
+	}
+	if (hoveredFeature && hoveredOverlay) {
+		updateOverlay(hoveredFeature, hoveredOverlay);
+	}
 }
