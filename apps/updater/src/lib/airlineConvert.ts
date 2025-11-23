@@ -31,17 +31,10 @@ const STYLES_PATH = "./src/lib/airline_colors.json";
 const AIRLINES_PATH = "./src/lib/airline_data.json";
 const OUTPUT_PATH = "./src/lib/airline_DB.json";
 
-const airlines: AirlineInfo[] = JSON.parse(
-	readFileSync(path.resolve(AIRLINES_PATH), "utf8"),
-);
-const styles: Record<string, AirlineStyle> = JSON.parse(
-	readFileSync(path.resolve(STYLES_PATH), "utf8"),
-);
+const airlines: AirlineInfo[] = JSON.parse(readFileSync(path.resolve(AIRLINES_PATH), "utf8"));
+const styles: Record<string, AirlineStyle> = JSON.parse(readFileSync(path.resolve(STYLES_PATH), "utf8"));
 
-function mergeAirlines(
-	airlines: AirlineInfo[],
-	styles: Record<string, AirlineStyle>,
-): MergedAirline[] {
+function mergeAirlines(airlines: AirlineInfo[], styles: Record<string, AirlineStyle>): MergedAirline[] {
 	const out: MergedAirline[] = [];
 
 	for (const a of airlines) {
@@ -64,10 +57,6 @@ function mergeAirlines(
 }
 
 const merged = mergeAirlines(airlines, styles);
-writeFileSync(
-	path.resolve(OUTPUT_PATH),
-	JSON.stringify(merged, null, 2),
-	"utf8",
-);
+writeFileSync(path.resolve(OUTPUT_PATH), JSON.stringify(merged, null, 2), "utf8");
 
 console.log("✔ Merged airlines saved to:");

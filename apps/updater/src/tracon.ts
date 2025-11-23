@@ -1,11 +1,9 @@
 import { rdsSetSingle } from "@sk/db/redis";
-import type { SimAwareTraconFeatureCollection } from "@sk/types/db";
+import type { SimAwareTraconFeature, SimAwareTraconFeatureCollection } from "@sk/types/db";
 import axios from "axios";
 
-const RELEASE_URL =
-	"https://api.github.com/repos/vatsimnetwork/simaware-tracon-project/releases/latest";
-const BASE_DATA_URL =
-	"https://github.com/vatsimnetwork/simaware-tracon-project/releases/download/";
+const RELEASE_URL = "https://api.github.com/repos/vatsimnetwork/simaware-tracon-project/releases/latest";
+const BASE_DATA_URL = "https://github.com/vatsimnetwork/simaware-tracon-project/releases/download/";
 
 let version: string | null = null;
 
@@ -18,14 +16,10 @@ export async function updateTracons(): Promise<void> {
 		const response = await axios.get(traconBoundJsonUrl, {
 			responseType: "json",
 		});
-		const collection = response.data as SimAwareTraconFeatureCollection;
-		if (!collection) return;
+		const features = flattenCollection(response.data);
 
-		await rdsSetSingle("static_tracons:all", collection);
-		await rdsSetSingle(
-			"static_tracons:version",
-			version?.replace(/^v/, "") || "1.0.0",
-		);
+		await rdsSetSingle("static_tracons:all", features);
+		await rdsSetSingle("static_tracons:version", version?.replace(/^v/, "") || "1.0.0");
 	} catch (error) {
 		console.error(`Error checking for new TRACON data: ${error}`);
 	}
@@ -45,4 +39,18 @@ async function isNewRelease(): Promise<boolean> {
 	}
 
 	return false;
+}
+
+function flattenCollection(collection: any): SimAwareTraconFeature[] {
+	const features: SimAwareTraconFeature[] = [];
+
+	for (const item of collection.features) {
+		if (item.type === "Feature") {
+			features.push(item);
+		}
+		if (item.type === "FeatureCollection") {
+			features.push(...flattenCollection(item));
+		}
+	}
+	return features;
 }

@@ -26,9 +26,7 @@ async function pgInitTrackPointsTable() {
     `;
 	await pool.query(`CREATE EXTENSION IF NOT EXISTS timescaledb;`);
 	await pool.query(createTableQuery);
-	await pool.query(
-		`SELECT create_hypertable('track_points', 'timestamp', if_not_exists => TRUE);`,
-	);
+	await pool.query(`SELECT create_hypertable('track_points', 'timestamp', if_not_exists => TRUE);`);
 
 	const res = await pool.query(`
   SELECT job_id
@@ -37,9 +35,7 @@ async function pgInitTrackPointsTable() {
     AND proc_name = 'policy_retention'
 `);
 	if (res.rows.length === 0) {
-		await pool.query(
-			`SELECT add_retention_policy('track_points', INTERVAL '2 days')`,
-		);
+		await pool.query(`SELECT add_retention_policy('track_points', INTERVAL '2 days')`);
 	}
 
 	console.log("track_points table is ready ✅");
@@ -53,20 +49,8 @@ export async function pgInsertTrackPoints(trackPoints: TrackPoint[]) {
 
 	trackPoints.forEach((tp, i) => {
 		const idx = i * 9;
-		placeholders.push(
-			`($${idx + 1}, $${idx + 2}, $${idx + 3}, $${idx + 4}, $${idx + 5}, $${idx + 6}, $${idx + 7}, $${idx + 8}, $${idx + 9})`,
-		);
-		values.push(
-			tp.uid,
-			tp.latitude,
-			tp.longitude,
-			tp.altitude_agl,
-			tp.altitude_ms,
-			tp.groundspeed,
-			tp.vertical_speed,
-			tp.heading,
-			tp.timestamp,
-		);
+		placeholders.push(`($${idx + 1}, $${idx + 2}, $${idx + 3}, $${idx + 4}, $${idx + 5}, $${idx + 6}, $${idx + 7}, $${idx + 8}, $${idx + 9})`);
+		values.push(tp.uid, tp.latitude, tp.longitude, tp.altitude_agl, tp.altitude_ms, tp.groundspeed, tp.vertical_speed, tp.heading, tp.timestamp);
 	});
 
 	const query = `
@@ -83,9 +67,7 @@ export async function pgInsertTrackPoints(trackPoints: TrackPoint[]) {
 	}
 }
 
-export async function pgGetTrackPointsByUid(
-	uid: string,
-): Promise<TrackPoint[]> {
+export async function pgGetTrackPointsByUid(uid: string): Promise<TrackPoint[]> {
 	const values: string[] = [uid];
 	const query = `
     SELECT uid, timestamp, latitude, longitude, altitude_agl, altitude_ms, groundspeed, vertical_speed, heading

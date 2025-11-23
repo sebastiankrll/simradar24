@@ -1,4 +1,4 @@
-import type { AirportShort, PilotShort, WsShort } from "@sk/types/vatsim";
+import type { PilotShort } from "@sk/types/vatsim";
 import type { Extent } from "ol/extent";
 import Feature from "ol/Feature";
 import { Point } from "ol/geom";
@@ -8,9 +8,8 @@ import { fromLonLat, transformExtent } from "ol/proj";
 import VectorSource from "ol/source/Vector";
 import RBush from "rbush";
 import { dxGetAllAirports } from "@/storage/dexie";
-import type { AirportProperties, PilotProperties } from "@/types/ol";
+import type { AirportProperties, ControllerWithFeature, PilotProperties } from "@/types/ol";
 import { webglConfig } from "../lib/webglConfig";
-import { updateOverlays } from "./events";
 
 interface RBushPilotFeature {
 	minX: number;
@@ -118,29 +117,7 @@ export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
 		zIndex: 9,
 	});
 
-	return [
-		firLayer,
-		traconLayer,
-		trackLayer,
-		pilotShadowLayer,
-		pilotMainLayer,
-		airportLabelLayer,
-		airportMainLayer,
-		airportTopLayer,
-		firLabelLayer,
-	];
-}
-
-let airportsShort: AirportShort[] = [];
-
-export function getAirportShort(id: string): AirportShort | null {
-	return airportsShort.find((a) => a.icao === id) || null;
-}
-
-export function updateDataLayers(wsShort: WsShort): void {
-	updatePilotFeatures(wsShort.pilots);
-	airportsShort = wsShort.airports;
-	updateOverlays();
+	return [firLayer, traconLayer, trackLayer, pilotShadowLayer, pilotMainLayer, airportLabelLayer, airportMainLayer, airportTopLayer, firLabelLayer];
 }
 
 const airportRBush = new RBush<RBushAirportFeature>();
@@ -176,12 +153,12 @@ export async function initAirportFeatures(): Promise<void> {
 const pilotRBush = new RBush<RBushPilotFeature>();
 const pilotFeaturesMap = new Map<string, RBushPilotFeature>();
 
-function updatePilotFeatures(pilots: PilotShort[]): void {
+export function updatePilotFeatures(pilots: PilotShort[]): void {
 	const seen = new Set<string>();
 
 	for (const p of pilots) {
 		const callsign = p.callsign;
-		const item = pilotFeaturesMap.get(p.callsign);
+		const item = pilotFeaturesMap.get(callsign);
 		seen.add(callsign);
 
 		const props: PilotProperties = {
@@ -244,42 +221,25 @@ function setAirportFeatures(extent: Extent, zoom: number): void {
 		return;
 	}
 
-	const [minX, minY, maxX, maxY] = transformExtent(
-		extent,
-		"EPSG:3857",
-		"EPSG:4326",
-	);
+	const [minX, minY, maxX, maxY] = transformExtent(extent, "EPSG:3857", "EPSG:4326");
 	const airportsByExtent = airportRBush.search({ minX, minY, maxX, maxY });
-	const airportsBySize = airportsByExtent.filter((f) =>
-		visibleSizes.includes(f.size),
-	);
+	const airportsBySize = airportsByExtent.filter((f) => visibleSizes.includes(f.size));
 
 	airportMainSource.clear();
 	airportMainSource.addFeatures(airportsBySize.map((f) => f.feature));
 }
 
 function getVisibleSizes(zoom: number): string[] {
-	if (zoom > 8)
-		return ["heliport", "small_airport", "medium_airport", "large_airport"];
+	if (zoom > 8) return ["heliport", "small_airport", "medium_airport", "large_airport"];
 	if (zoom > 7) return ["medium_airport", "large_airport"];
 	if (zoom > 4.5) return ["large_airport"];
 	return [];
 }
 
 function setPilotFeatures(extent: Extent): void {
-	const [minX, minY, maxX, maxY] = transformExtent(
-		extent,
-		"EPSG:3857",
-		"EPSG:4326",
-	);
+	const [minX, minY, maxX, maxY] = transformExtent(extent, "EPSG:3857", "EPSG:4326");
 	const pilotsByExtent = pilotRBush.search({ minX, minY, maxX, maxY });
-	const pilotsByAltitude = pilotsByExtent
-		.sort(
-			(a, b) =>
-				(b.feature.get("altitude_agl") || 0) -
-				(a.feature.get("altitude_agl") || 0),
-		)
-		.slice(0, 300);
+	const pilotsByAltitude = pilotsByExtent.sort((a, b) => (b.feature.get("altitude_agl") || 0) - (a.feature.get("altitude_agl") || 0)).slice(0, 300);
 
 	pilotMainSource.clear();
 	pilotMainSource.addFeatures(pilotsByAltitude.map((f) => f.feature));

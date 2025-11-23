@@ -38,14 +38,8 @@ interface SimAwareTRACONProperties {
 	name: string;
 }
 
-export type SimAwareTraconFeature = Feature<
-	MultiPolygon,
-	SimAwareTRACONProperties
->;
-export type SimAwareTraconFeatureCollection = FeatureCollection<
-	MultiPolygon,
-	SimAwareTRACONProperties
->;
+export type SimAwareTraconFeature = Feature<MultiPolygon, SimAwareTRACONProperties>;
+export type SimAwareTraconFeatureCollection = FeatureCollection<MultiPolygon, SimAwareTRACONProperties>;
 
 export interface VatSpyDat {
 	icao: string;
@@ -63,10 +57,7 @@ interface VatSpyFIRProperties {
 	division: string;
 }
 
-export type VatSpyFIRFeatureCollection = FeatureCollection<
-	MultiPolygon,
-	VatSpyFIRProperties
->;
+export type VatSpyFIRFeatureCollection = FeatureCollection<MultiPolygon, VatSpyFIRProperties>;
 
 export interface FIRProperties extends VatSpyFIRProperties {
 	name: string;
@@ -74,10 +65,7 @@ export interface FIRProperties extends VatSpyFIRProperties {
 }
 
 export type FIRFeature = Feature<MultiPolygon, FIRProperties>;
-export type FIRFeatureCollection = FeatureCollection<
-	MultiPolygon,
-	FIRProperties
->;
+export type FIRFeatureCollection = FeatureCollection<MultiPolygon, FIRProperties>;
 
 export interface StaticAirline {
 	id: string;

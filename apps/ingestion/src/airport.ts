@@ -25,11 +25,7 @@ export function mapAirports(pilotsLong: PilotLong[]): AirportLong[] {
 		const depDelay = calculateDepartureDelay(pilotLong);
 		if (depDelay !== 0) {
 			depTraffic.flights_delayed++;
-			depTraffic.average_delay = Math.round(
-				(depTraffic.average_delay * (depTraffic.flights_delayed - 1) +
-					depDelay) /
-					depTraffic.flights_delayed,
-			);
+			depTraffic.average_delay = Math.round((depTraffic.average_delay * (depTraffic.flights_delayed - 1) + depDelay) / depTraffic.flights_delayed);
 		}
 
 		const arrTraffic = airportRecord[arrival.icao].arr_traffic;
@@ -38,11 +34,7 @@ export function mapAirports(pilotsLong: PilotLong[]): AirportLong[] {
 		const arrDelay = calculateArrivalDelay(pilotLong);
 		if (arrDelay !== 0) {
 			arrTraffic.flights_delayed++;
-			arrTraffic.average_delay = Math.round(
-				(arrTraffic.average_delay * (arrTraffic.flights_delayed - 1) +
-					arrDelay) /
-					arrTraffic.flights_delayed,
-			);
+			arrTraffic.average_delay = Math.round((arrTraffic.average_delay * (arrTraffic.flights_delayed - 1) + arrDelay) / arrTraffic.flights_delayed);
 		}
 
 		const setRoute = (icao: string, route: string) => {
@@ -95,8 +87,7 @@ function initAirportRecord(icao: string): AirportLong {
 function calculateDepartureDelay(pilot: PilotLong): number {
 	if (!pilot.times?.off_block) return 0;
 	const times = pilot.times;
-	const delay_min =
-		(times.off_block.getTime() - times.sched_off_block.getTime()) / 1000 / 60;
+	const delay_min = (times.off_block.getTime() - times.sched_off_block.getTime()) / 1000 / 60;
 
 	return Math.min(Math.max(delay_min, 0), 120);
 }
@@ -104,8 +95,7 @@ function calculateDepartureDelay(pilot: PilotLong): number {
 function calculateArrivalDelay(pilot: PilotLong): number {
 	if (!pilot.times?.on_block) return 0;
 	const times = pilot.times;
-	const delay_min =
-		(times.on_block.getTime() - times.sched_on_block.getTime()) / 1000 / 60;
+	const delay_min = (times.on_block.getTime() - times.sched_on_block.getTime()) / 1000 / 60;
 
 	return Math.min(Math.max(delay_min, 0), 120);
 }

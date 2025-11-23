@@ -10,11 +10,7 @@ header {
 	padding: 0 1rem;
 	box-sizing: border-box;
 	gap: 1rem;
-	background: linear-gradient(
-		180deg,
-		rgba(77, 95, 131, 0.4) 0%,
-		rgba(77, 95, 131, 0) 120%
-	);
+	background: linear-gradient(180deg, rgba(77, 95, 131, 0.4) 0%, rgba(77, 95, 131, 0) 120%);
 	border-bottom: 1px solid var(--color-border);
 	z-index: 1;
 }

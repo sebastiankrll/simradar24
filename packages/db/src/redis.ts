@@ -76,10 +76,7 @@ export async function rdsGetSingle(query: string): Promise<string | null> {
 	return JSON.parse(data);
 }
 
-export async function rdsGetMultiple(
-	keyPrefix: string,
-	values: string[],
-): Promise<any[]> {
+export async function rdsGetMultiple(keyPrefix: string, values: string[]): Promise<any[]> {
 	const keys = values.map((i) => `${keyPrefix}:${i}`);
 	const results = await redis.mget(...keys);
 

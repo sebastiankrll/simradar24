@@ -7,11 +7,7 @@ export const webglConfig = {
 		variables: {
 			callsign: "all",
 		},
-		filter: [
-			"any",
-			["==", ["var", "callsign"], "all"],
-			["==", ["var", "callsign"], ["get", "callsign"]],
-		],
+		filter: ["any", ["==", ["var", "callsign"], "all"], ["==", ["var", "callsign"], ["get", "callsign"]]],
 		"icon-src": aircraftSprite.src,
 		"icon-size": [49, 44],
 		"icon-offset": [
@@ -308,11 +304,7 @@ export const webglConfig = {
 		variables: {
 			callsign: "all",
 		},
-		filter: [
-			"any",
-			["==", ["var", "callsign"], "all"],
-			["==", ["var", "callsign"], ["get", "callsign"]],
-		],
+		filter: ["any", ["==", ["var", "callsign"], "all"], ["==", ["var", "callsign"], ["get", "callsign"]]],
 		"icon-src": aircraftSprite.src,
 		"icon-size": [49, 44],
 		"icon-offset": [
@@ -473,35 +465,9 @@ export const webglConfig = {
 					["linear"],
 					["get", "altitude_agl"],
 					3000,
-					[
-						"*",
-						["sqrt", 2],
-						[
-							"cos",
-							[
-								"-",
-								["*", ["/", ["get", "heading"], 180], Math.PI],
-								Math.PI / 4,
-							],
-						],
-					],
+					["*", ["sqrt", 2], ["cos", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]]],
 					45000,
-					[
-						"*",
-						4,
-						[
-							"*",
-							["sqrt", 2],
-							[
-								"cos",
-								[
-									"-",
-									["*", ["/", ["get", "heading"], 180], Math.PI],
-									Math.PI / 4,
-								],
-							],
-						],
-					],
+					["*", 4, ["*", ["sqrt", 2], ["cos", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]]]],
 				],
 				18,
 				[
@@ -511,35 +477,9 @@ export const webglConfig = {
 						["linear"],
 						["get", "altitude_agl"],
 						3000,
-						[
-							"*",
-							["sqrt", 2],
-							[
-								"cos",
-								[
-									"-",
-									["*", ["/", ["get", "heading"], 180], Math.PI],
-									Math.PI / 4,
-								],
-							],
-						],
+						["*", ["sqrt", 2], ["cos", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]]],
 						45000,
-						[
-							"*",
-							4,
-							[
-								"*",
-								["sqrt", 2],
-								[
-									"cos",
-									[
-										"-",
-										["*", ["/", ["get", "heading"], 180], Math.PI],
-										Math.PI / 4,
-									],
-								],
-							],
-						],
+						["*", 4, ["*", ["sqrt", 2], ["cos", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]]]],
 					],
 					2 ** 1.5,
 				],
@@ -554,35 +494,9 @@ export const webglConfig = {
 					["linear"],
 					["get", "altitude_agl"],
 					3000,
-					[
-						"*",
-						["sqrt", 2],
-						[
-							"sin",
-							[
-								"-",
-								["*", ["/", ["get", "heading"], 180], Math.PI],
-								Math.PI / 4,
-							],
-						],
-					],
+					["*", ["sqrt", 2], ["sin", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]]],
 					45000,
-					[
-						"*",
-						4,
-						[
-							"*",
-							["sqrt", 2],
-							[
-								"sin",
-								[
-									"-",
-									["*", ["/", ["get", "heading"], 180], Math.PI],
-									Math.PI / 4,
-								],
-							],
-						],
-					],
+					["*", 4, ["*", ["sqrt", 2], ["sin", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]]]],
 				],
 				18,
 				[
@@ -592,35 +506,9 @@ export const webglConfig = {
 						["linear"],
 						["get", "altitude_agl"],
 						3000,
-						[
-							"*",
-							["sqrt", 2],
-							[
-								"sin",
-								[
-									"-",
-									["*", ["/", ["get", "heading"], 180], Math.PI],
-									Math.PI / 4,
-								],
-							],
-						],
+						["*", ["sqrt", 2], ["sin", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]]],
 						45000,
-						[
-							"*",
-							4,
-							[
-								"*",
-								["sqrt", 2],
-								[
-									"sin",
-									[
-										"-",
-										["*", ["/", ["get", "heading"], 180], Math.PI],
-										Math.PI / 4,
-									],
-								],
-							],
-						],
+						["*", 4, ["*", ["sqrt", 2], ["sin", ["-", ["*", ["/", ["get", "heading"], 180], Math.PI], Math.PI / 4]]]],
 					],
 					2 ** 1.5,
 				],
@@ -634,39 +522,15 @@ export const webglConfig = {
 		},
 		"icon-src": airportSprite.src,
 		"icon-size": [32, 32],
-		"icon-offset": [
-			"case",
-			["all", ["==", ["get", "clicked"], 0], ["==", ["get", "hovered"], 0]],
-			[0, 0],
-			[32, 0],
-		],
-		"icon-scale": [
-			"case",
-			["==", ["get", "type"], "small_airport"],
-			0.65,
-			["==", ["get", "type"], "medium_airport"],
-			0.75,
-			0.85,
-		],
+		"icon-offset": ["case", ["all", ["==", ["get", "clicked"], 0], ["==", ["get", "hovered"], 0]], [0, 0], [32, 0]],
+		"icon-scale": ["case", ["==", ["get", "type"], "small_airport"], 0.65, ["==", ["get", "type"], "medium_airport"], 0.75, 0.85],
 		"icon-rotate-with-view": false,
 	},
 	airport_top: {
 		"icon-src": airportSprite.src,
 		"icon-size": [32, 32],
-		"icon-offset": [
-			"case",
-			["all", ["==", ["get", "clicked"], 0], ["==", ["get", "hovered"], 0]],
-			[0, 0],
-			[32, 0],
-		],
-		"icon-scale": [
-			"case",
-			["==", ["get", "type"], "small_airport"],
-			0.7,
-			["==", ["get", "type"], "medium_airport"],
-			0.85,
-			1,
-		],
+		"icon-offset": ["case", ["all", ["==", ["get", "clicked"], 0], ["==", ["get", "hovered"], 0]], [0, 0], [32, 0]],
+		"icon-scale": ["case", ["==", ["get", "type"], "small_airport"], 0.7, ["==", ["get", "type"], "medium_airport"], 0.85, 1],
 		"icon-rotate-with-view": false,
 	},
 	airport_label: {
@@ -674,33 +538,16 @@ export const webglConfig = {
 			dep: "",
 			arr: "",
 		},
-		filter: [
-			"any",
-			["==", ["var", "dep"], ["get", "icao"]],
-			["==", ["var", "arr"], ["get", "icao"]],
-			["==", ["var", "dep"], ""],
-		],
+		filter: ["any", ["==", ["var", "dep"], ["get", "icao"]], ["==", ["var", "arr"], ["get", "icao"]], ["==", ["var", "dep"], ""]],
 		"icon-src": airportLabelSprite.src,
 		"icon-size": [36, 36],
 		"icon-offset": [
 			"case",
 			[
 				"any",
-				[
-					"all",
-					["==", ["get", "type"], "small_airport"],
-					["<", ["resolution"], 300],
-				],
-				[
-					"all",
-					["==", ["get", "type"], "medium_airport"],
-					["<", ["resolution"], 1000],
-				],
-				[
-					"all",
-					["==", ["get", "type"], "large_airport"],
-					["<", ["resolution"], 3000],
-				],
+				["all", ["==", ["get", "type"], "small_airport"], ["<", ["resolution"], 300]],
+				["all", ["==", ["get", "type"], "medium_airport"], ["<", ["resolution"], 1000]],
+				["all", ["==", ["get", "type"], "large_airport"], ["<", ["resolution"], 3000]],
 				["==", ["var", "dep"], ["get", "icao"]],
 				["==", ["var", "arr"], ["get", "icao"]],
 			],
@@ -711,42 +558,20 @@ export const webglConfig = {
 			"array",
 			[
 				"*",
+				["case", ["==", ["get", "type"], "small_airport"], 0.7, ["==", ["get", "type"], "medium_airport"], 0.85, 1],
 				[
 					"case",
-					["==", ["get", "type"], "small_airport"],
-					0.7,
-					["==", ["get", "type"], "medium_airport"],
-					0.85,
-					1,
-				],
-				[
-					"case",
-					[
-						"any",
-						["==", ["var", "dep"], ["get", "icao"]],
-						["==", ["var", "arr"], ["get", "icao"]],
-					],
+					["any", ["==", ["var", "dep"], ["get", "icao"]], ["==", ["var", "arr"], ["get", "icao"]]],
 					1,
 					["interpolate", ["exponential", 2], ["zoom"], 3, 0.6, 5, 1],
 				],
 			],
 			[
 				"*",
+				["case", ["==", ["get", "type"], "small_airport"], 0.7, ["==", ["get", "type"], "medium_airport"], 0.85, 1],
 				[
 					"case",
-					["==", ["get", "type"], "small_airport"],
-					0.7,
-					["==", ["get", "type"], "medium_airport"],
-					0.85,
-					1,
-				],
-				[
-					"case",
-					[
-						"any",
-						["==", ["var", "dep"], ["get", "icao"]],
-						["==", ["var", "arr"], ["get", "icao"]],
-					],
+					["any", ["==", ["var", "dep"], ["get", "icao"]], ["==", ["var", "arr"], ["get", "icao"]]],
 					1,
 					["interpolate", ["exponential", 2], ["zoom"], 3, 0.6, 5, 1],
 				],
@@ -755,29 +580,14 @@ export const webglConfig = {
 		"icon-rotate-with-view": false,
 	},
 	fir: {
-		"stroke-color": [
-			"case",
-			["==", ["get", "type"], "tracon"],
-			[222, 89, 234],
-			[77, 95, 131],
-		],
+		"stroke-color": ["case", ["==", ["get", "type"], "tracon"], [222, 89, 234], [77, 95, 131]],
 		"stroke-width": 1,
 		"stroke-offset": 0,
 		"fill-color": [
 			"case",
 			["==", ["get", "active"], 1],
-			[
-				"case",
-				["==", ["get", "type"], "tracon"],
-				[222, 89, 234, 0.4],
-				[77, 95, 131, 0.4],
-			],
-			[
-				"case",
-				["==", ["get", "type"], "tracon"],
-				[222, 89, 234, 0.1],
-				[77, 95, 131, 0.1],
-			],
+			["case", ["==", ["get", "type"], "tracon"], [222, 89, 234, 0.4], [77, 95, 131, 0.4]],
+			["case", ["==", ["get", "type"], "tracon"], [222, 89, 234, 0.1], [77, 95, 131, 0.1]],
 		],
 	},
 };

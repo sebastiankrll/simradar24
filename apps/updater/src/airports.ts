@@ -29,12 +29,7 @@ export async function updateAirports(): Promise<void> {
 			longitude: Number(a.longitude_deg),
 		}));
 
-	await rdsSetMultiple(
-		filteredAirports,
-		"static_airport",
-		(a) => a.id,
-		"airports:static",
-	);
+	await rdsSetMultiple(filteredAirports, "static_airport", (a) => a.id, "airports:static");
 	await rdsSetSingle("static_airports:all", filteredAirports);
 	await rdsSetSingle("static_airports:version", "1.0.0");
 }

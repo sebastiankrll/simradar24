@@ -1,22 +1,14 @@
 import "dotenv/config";
 import { pgInsertTrackPoints } from "@sk/db/pg";
 import { rdsPubWsShort, rdsSetMultiple } from "@sk/db/redis";
-import type {
-	AirportLong,
-	ControllerLong,
-	PilotLong,
-	TrackPoint,
-	VatsimData,
-	VatsimTransceivers,
-} from "@sk/types/vatsim";
+import type { AirportLong, ControllerLong, PilotLong, TrackPoint, VatsimData, VatsimTransceivers } from "@sk/types/vatsim";
 import axios from "axios";
 import { mapAirports } from "./airport.js";
 import { mapControllers } from "./controller.js";
 import { mapPilots } from "./pilot.js";
 
 const VATSIM_DATA_URL = "https://data.vatsim.net/v3/vatsim-data.json";
-const VATSIM_TRANSCEIVERS_URL =
-	"https://data.vatsim.net/v3/transceivers-data.json";
+const VATSIM_TRANSCEIVERS_URL = "https://data.vatsim.net/v3/transceivers-data.json";
 const FETCH_INTERVAL = 5_000;
 
 let updating = false;
@@ -30,15 +22,10 @@ async function fetchVatsimData(): Promise<void> {
 		const vatsimResponse = await axios.get<VatsimData>(VATSIM_DATA_URL);
 		const vatsimData = vatsimResponse.data;
 
-		if (
-			new Date(vatsimData.general.update_timestamp) >
-			new Date(lastUpdateTimestamp)
-		) {
+		if (new Date(vatsimData.general.update_timestamp) > new Date(lastUpdateTimestamp)) {
 			lastUpdateTimestamp = vatsimData.general.update_timestamp;
 
-			const transceiversResponse = await axios.get<VatsimTransceivers[]>(
-				VATSIM_TRANSCEIVERS_URL,
-			);
+			const transceiversResponse = await axios.get<VatsimTransceivers[]>(VATSIM_TRANSCEIVERS_URL);
 			vatsimData.transceivers = transceiversResponse.data;
 
 			const pilotsLong = await mapPilots(vatsimData);
@@ -48,50 +35,23 @@ async function fetchVatsimData(): Promise<void> {
 			// Publish minimal websocket data on redis ws:short
 			publishWsShort(pilotsLong, controllersLong, airportsLong);
 			// Set pilots, controllers and airports data in redis
-			await rdsSetMultiple(
-				pilotsLong,
-				"pilot",
-				(p) => p.callsign,
-				"pilots:live",
-				120,
-			);
-			await rdsSetMultiple(
-				controllersLong,
-				"controller",
-				(c) => c.callsign,
-				"controllers:live",
-				120,
-			);
-			await rdsSetMultiple(
-				airportsLong,
-				"airport",
-				(a) => a.icao,
-				"airports:live",
-				120,
-			);
+			await rdsSetMultiple(pilotsLong, "pilot", (p) => p.callsign, "pilots:live", 120);
+			await rdsSetMultiple(controllersLong, "controller", (c) => c.callsign, "controllers:live", 120);
+			await rdsSetMultiple(airportsLong, "airport", (a) => a.icao, "airports:live", 120);
 			// Insert trackpoints in TimescaleDB
 			insertTrackPoints(pilotsLong);
 
-			console.log(
-				`✅ Retrieved ${vatsimData.pilots.length} pilots and ${vatsimData.controllers.length} controllers.`,
-			);
+			console.log(`✅ Retrieved ${vatsimData.pilots.length} pilots and ${vatsimData.controllers.length} controllers.`);
 		} else {
 			// console.log("Nothing changed.")
 		}
 	} catch (error) {
-		console.error(
-			"❌ Error fetching VATSIM data:",
-			error instanceof Error ? error.message : error,
-		);
+		console.error("❌ Error fetching VATSIM data:", error instanceof Error ? error.message : error);
 	}
 	updating = false;
 }
 
-function publishWsShort(
-	pilotsLong: PilotLong[],
-	controllersLong: ControllerLong[],
-	airportsLong: AirportLong[],
-): void {
+function publishWsShort(pilotsLong: PilotLong[], controllersLong: ControllerLong[], airportsLong: AirportLong[]): void {
 	const wsShort = {
 		pilots: pilotsLong.map(
 			({
@@ -106,8 +66,8 @@ function publishWsShort(
 				aircraft,
 				transponder,
 				frequency,
-                departure,
-                arrival
+				departure,
+				arrival,
 			}) => ({
 				callsign,
 				latitude,
@@ -120,19 +80,17 @@ function publishWsShort(
 				aircraft,
 				transponder,
 				frequency,
-                departure,
-                arrival
+				departure,
+				arrival,
 			}),
 		),
-		controllers: controllersLong.map(
-			({ callsign, frequency, facility, atis, connections }) => ({
-				callsign,
-				frequency,
-				facility,
-				atis,
-				connections,
-			}),
-		),
+		controllers: controllersLong.map(({ callsign, frequency, facility, atis, connections }) => ({
+			callsign,
+			frequency,
+			facility,
+			atis,
+			connections,
+		})),
 		airports: airportsLong.map(({ icao, dep_traffic, arr_traffic }) => ({
 			icao,
 			dep_traffic,

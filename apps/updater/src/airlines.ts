@@ -7,9 +7,7 @@ const PATH = "./src/lib/airline_DB.json";
 
 export async function updateAirlines(): Promise<void> {
 	try {
-		const airlines: StaticAirline[] = JSON.parse(
-			readFileSync(resolve(PATH), "utf8"),
-		);
+		const airlines: StaticAirline[] = JSON.parse(readFileSync(resolve(PATH), "utf8"));
 		await rdsSetSingle("static_airlines:all", airlines);
 		await rdsSetSingle("static_airlines:version", "1.0.0");
 	} catch {

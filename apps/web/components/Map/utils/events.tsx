@@ -3,9 +3,10 @@ import type { Point } from "ol/geom";
 import type { Pixel } from "ol/pixel";
 import { toLonLat } from "ol/proj";
 import { createRoot, type Root } from "react-dom/client";
+import { getCachedAirport } from "@/storage/cache";
 import { dxGetAirline } from "@/storage/dexie";
 import { AirportOverlay, PilotOverlay } from "../components/Overlay/Overlays";
-import { getAirportShort, setFeatures } from "./dataLayers";
+import { setFeatures } from "./dataLayers";
 
 export function onMoveEnd(evt: { map: OlMap }): void {
 	const map = evt.map;
@@ -24,10 +25,7 @@ let clickedOverlay: Overlay | null = null;
 let hoveredOverlay: Overlay | null = null;
 let hovering = false;
 
-export async function onPointerMove(evt: {
-	pixel: Pixel;
-	map: OlMap;
-}): Promise<void> {
+export async function onPointerMove(evt: { pixel: Pixel; map: OlMap }): Promise<void> {
 	if (hovering) return;
 	hovering = true;
 
@@ -35,9 +33,7 @@ export async function onPointerMove(evt: {
 	const pixel = evt.pixel;
 
 	const feature = map.forEachFeatureAtPixel(pixel, (f) => f, {
-		layerFilter: (layer) =>
-			layer.get("type") === "airport_main" ||
-			layer.get("type") === "pilot_main",
+		layerFilter: (layer) => layer.get("type") === "airport_main" || layer.get("type") === "pilot_main",
 		hitTolerance: 10,
 	}) as Feature<Point> | undefined;
 
@@ -64,17 +60,12 @@ export async function onPointerMove(evt: {
 	hovering = false;
 }
 
-export async function onClick(evt: {
-	pixel: Pixel;
-	map: OlMap;
-}): Promise<void> {
+export async function onClick(evt: { pixel: Pixel; map: OlMap }): Promise<void> {
 	const map = evt.map;
 	const pixel = evt.pixel;
 
 	const feature = map.forEachFeatureAtPixel(pixel, (f) => f, {
-		layerFilter: (layer) =>
-			layer.get("type") === "airport_main" ||
-			layer.get("type") === "pilot_main",
+		layerFilter: (layer) => layer.get("type") === "airport_main" || layer.get("type") === "pilot_main",
 		hitTolerance: 10,
 	}) as Feature<Point>;
 
@@ -114,7 +105,7 @@ async function createOverlay(feature: Feature<Point>): Promise<Overlay> {
 
 	if (type === "airport") {
 		id = feature.get("id") as string;
-        const airport = getAirportShort(id);
+		const airport = getCachedAirport(id);
 		root.render(<AirportOverlay feature={feature} airport={airport} />);
 	}
 
@@ -139,10 +130,7 @@ export function updateOverlays(): void {
 	}
 }
 
-async function updateOverlay(
-	feature: Feature<Point>,
-	overlay: Overlay,
-): Promise<void> {
+async function updateOverlay(feature: Feature<Point>, overlay: Overlay): Promise<void> {
 	if (!feature || !overlay) return;
 
 	const geom = feature.getGeometry();
@@ -165,7 +153,7 @@ async function updateOverlay(
 
 	if (type === "airport") {
 		id = feature.get("id") as string;
-		const airport = getAirportShort(id);
+		const airport = getCachedAirport(id);
 		root.render(<AirportOverlay feature={feature} airport={airport} />);
 	}
 }

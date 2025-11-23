@@ -32,8 +32,7 @@ app.get("/api/static/:type", async (req, res) => {
 		const { type } = req.params;
 		const allowedTypes = ["airports", "tracons", "firs", "airlines"];
 
-		if (!allowedTypes.includes(type))
-			return res.status(400).json({ error: "Invalid static data type" });
+		if (!allowedTypes.includes(type)) return res.status(400).json({ error: "Invalid static data type" });
 
 		const data = await rdsGetSingle(`static_${type}:all`);
 		if (!data) return res.status(404).json({ error: "Static data not found" });
@@ -81,8 +80,7 @@ app.get("/api/data/controller/:callsign", async (req, res) => {
 		console.log("Requested controller:", callsign);
 
 		const controller = await rdsGetSingle(`controller:${callsign}`);
-		if (!controller)
-			return res.status(404).json({ error: "Controller not found" });
+		if (!controller) return res.status(404).json({ error: "Controller not found" });
 
 		res.json(controller);
 	} catch (err) {

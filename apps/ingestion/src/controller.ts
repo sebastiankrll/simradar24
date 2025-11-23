@@ -1,30 +1,25 @@
 import type { ControllerLong, PilotLong, VatsimData } from "@sk/types/vatsim";
 import { haversineDistance } from "./utils/index.js";
 
-export function mapControllers(
-	vatsimData: VatsimData,
-	pilotsLong: PilotLong[],
-): ControllerLong[] {
-	const controllersLong: ControllerLong[] = vatsimData.controllers.map(
-		(controller) => {
-			return {
-				// v ControllerShort v
-				callsign: controller.callsign,
-				frequency: parseFrequencyToKHz(controller.frequency),
-				facility: controller.facility,
-				atis: controller.text_atis,
-				connections: 0,
-				// v ControllerLong v
-				cid: controller.cid,
-				name: controller.name,
-				rating: controller.rating,
-				server: controller.server,
-				visual_range: controller.visual_range,
-				logon_time: new Date(controller.logon_time),
-				timestamp: new Date(controller.last_updated),
-			};
-		},
-	);
+export function mapControllers(vatsimData: VatsimData, pilotsLong: PilotLong[]): ControllerLong[] {
+	const controllersLong: ControllerLong[] = vatsimData.controllers.map((controller) => {
+		return {
+			// v ControllerShort v
+			callsign: controller.callsign,
+			frequency: parseFrequencyToKHz(controller.frequency),
+			facility: controller.facility,
+			atis: controller.text_atis,
+			connections: 0,
+			// v ControllerLong v
+			cid: controller.cid,
+			name: controller.name,
+			rating: controller.rating,
+			server: controller.server,
+			visual_range: controller.visual_range,
+			logon_time: new Date(controller.logon_time),
+			timestamp: new Date(controller.last_updated),
+		};
+	});
 
 	getConnectionsCount(vatsimData, controllersLong, pilotsLong);
 	// console.log(controllersLong[0])
@@ -40,11 +35,7 @@ function parseFrequencyToKHz(freq: string): number {
 	return num;
 }
 
-function getConnectionsCount(
-	vatsimData: VatsimData,
-	controllersLong: ControllerLong[],
-	pilotsLong: PilotLong[],
-) {
+function getConnectionsCount(vatsimData: VatsimData, controllersLong: ControllerLong[], pilotsLong: PilotLong[]) {
 	const controllersByFreq = new Map<number, ControllerLong[]>();
 
 	for (const controllerLong of controllersLong) {
@@ -77,18 +68,11 @@ function getConnectionsCount(
 				let minDist = Infinity;
 
 				for (const controller of controllerList) {
-					const transceiverData = vatsimData.transceivers.find(
-						(t) => t.callsign === controller.callsign,
-					);
-					const transceiverByFreq = transceiverData?.transceivers.find(
-						(t) => Number(t.frequency.toString().slice(0, 6)) === freq,
-					);
+					const transceiverData = vatsimData.transceivers.find((t) => t.callsign === controller.callsign);
+					const transceiverByFreq = transceiverData?.transceivers.find((t) => Number(t.frequency.toString().slice(0, 6)) === freq);
 					if (!transceiverByFreq) continue;
 
-					const dist = haversineDistance(
-						[pilot.latitude, pilot.longitude],
-						[transceiverByFreq.latDeg, transceiverByFreq.lonDeg],
-					);
+					const dist = haversineDistance([pilot.latitude, pilot.longitude], [transceiverByFreq.latDeg, transceiverByFreq.lonDeg]);
 					if (dist < minDist) {
 						minDist = dist;
 						closestController = controller;
