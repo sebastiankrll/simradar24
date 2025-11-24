@@ -215,7 +215,7 @@ export interface ControllerLong extends ControllerShort {
 
 export interface ControllerMerged {
 	id: string;
-	type: "airport" | "tracon" | "fir";
+	facility: "airport" | "tracon" | "fir";
 	controllers: ControllerShort[];
 }
 

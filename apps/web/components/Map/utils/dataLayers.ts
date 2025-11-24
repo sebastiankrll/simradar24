@@ -1,15 +1,18 @@
-import type { PilotDelta, PilotShort } from "@sk/types/vatsim";
+import type { ControllerDelta, ControllerMerged, PilotDelta, PilotShort } from "@sk/types/vatsim";
 import type { Extent } from "ol/extent";
 import Feature from "ol/Feature";
-import { Point } from "ol/geom";
+import { Circle, type MultiPolygon, Point, type Polygon } from "ol/geom";
 import VectorLayer from "ol/layer/Vector";
 import WebGLVectorLayer from "ol/layer/WebGLVector";
 import { fromLonLat, transformExtent } from "ol/proj";
 import VectorSource from "ol/source/Vector";
 import RBush from "rbush";
-import { dxGetAllAirports } from "@/storage/dexie";
+import { dxGetAirport, dxGetAllAirports, dxGetTracons } from "@/storage/dexie";
 import type { AirportProperties, PilotProperties } from "@/types/ol";
 import { webglConfig } from "../lib/webglConfig";
+import type { SimAwareTraconFeature } from "@sk/types/db";
+import GeoJSON from "ol/format/GeoJSON";
+import { fromCircle } from "ol/geom/Polygon";
 
 interface RBushPilotFeature {
 	minX: number;
@@ -29,6 +32,9 @@ const airportMainSource = new VectorSource({
 const pilotMainSource = new VectorSource({
 	useSpatialIndex: false,
 });
+const traconSource = new VectorSource({
+	useSpatialIndex: false,
+});
 
 export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
 	const firSource = new VectorSource();
@@ -41,7 +47,6 @@ export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
 		zIndex: 1,
 	});
 
-	const traconSource = new VectorSource();
 	const traconLayer = new WebGLVectorLayer({
 		source: traconSource,
 		style: webglConfig.fir,
@@ -251,6 +256,110 @@ export function updatePilotFeatures(delta: PilotDelta): void {
 
 	pilotRBush.clear();
 	pilotRBush.load(items);
+}
+
+const cachedTracons: Map<string, Feature<MultiPolygon | Polygon>> = new Map();
+
+export async function initControllerFeatures(controllers: ControllerMerged[]): Promise<void> {
+	for (const c of controllers) {
+		const props = {
+			type: "controller",
+			...c,
+		};
+
+		const id = c.id.replace(/^(tracon_|airport_|fir_)/, "");
+
+		if (c.facility === "tracon") {
+			const geojson = (await dxGetTracons([id]).then((res) => res[0]?.feature)) as SimAwareTraconFeature | undefined;
+			if (geojson) {
+				const feature = new GeoJSON().readFeature(geojson, {
+					featureProjection: "EPSG:3857",
+				}) as Feature<MultiPolygon>;
+
+				feature.setProperties(props);
+				feature.setId(`controller_${id}`);
+
+				traconSource.addFeature(feature);
+				cachedTracons.set(id, feature);
+			} else {
+				const icao = id.split("_")[0];
+				const airport = await dxGetAirport(icao);
+
+				if (airport) {
+					const polygon = createCircleTracon(airport.longitude, airport.latitude);
+					const feature = new Feature(polygon);
+
+					feature.setProperties(props);
+					feature.setId(`controller_${id}`);
+
+					traconSource.addFeature(feature);
+					cachedTracons.set(id, feature);
+				}
+			}
+		}
+	}
+}
+
+export async function updateControllerFeatures(delta: ControllerDelta): Promise<void> {
+	for (const c of delta.updated) {
+		const props = {
+			type: "controller",
+			...c,
+		};
+
+		const id = c.id.replace(/^(tracon_|airport_|fir_)/, "");
+
+		if (c.facility === "tracon") {
+			const feature = cachedTracons.get(id);
+			if (feature) {
+				feature.setProperties(props);
+			}
+		}
+	}
+
+	for (const c of delta.added) {
+		const props = {
+			type: "controller",
+			...c,
+		};
+
+		const id = c.id.replace(/^(tracon_|airport_|fir_)/, "");
+
+		if (c.facility === "tracon") {
+			const geojson = (await dxGetTracons([id]).then((res) => res[0]?.feature)) as SimAwareTraconFeature | undefined;
+			if (geojson) {
+				const feature = new GeoJSON().readFeature(geojson, {
+					featureProjection: "EPSG:3857",
+				}) as Feature<MultiPolygon>;
+
+				feature.setProperties(props);
+				feature.setId(`controller_${id}`);
+
+				traconSource.addFeature(feature);
+				cachedTracons.set(id, feature);
+			}
+		}
+	}
+
+	for (const c of delta.deleted) {
+		const id = c.replace(/^(tracon_|airport_|fir_)/, "");
+		const tracon = cachedTracons.get(id);
+
+		if (tracon) {
+			traconSource.removeFeature(tracon);
+			cachedTracons.delete(id);
+			continue;
+		}
+	}
+}
+
+function createCircleTracon(lon: number, lat: number): Polygon {
+	const radiusMeters = 25 * 1852;
+	const center = fromLonLat([lon, lat]);
+	const circle = new Circle(center, radiusMeters);
+	const polygon = fromCircle(circle, 36);
+
+	return polygon;
 }
 
 export function setFeatures(extent: Extent, zoom: number): void {

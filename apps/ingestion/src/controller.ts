@@ -115,7 +115,7 @@ export async function mergeControllers(controllersLong: ControllerLong[]): Promi
 
 	for (const c of controllersLong) {
 		let id: string | null = null;
-		let type: ControllerMerged["type"] | null = null;
+		let facility: ControllerMerged["facility"] | null = null;
 
 		const parts = c.callsign.split("_");
 		const prefix1 = parts[0];
@@ -123,13 +123,13 @@ export async function mergeControllers(controllersLong: ControllerLong[]): Promi
 
 		if (c.facility === 6) {
 			id = firPrefixes.get(prefix1) || (prefix2 ? firPrefixes.get(prefix2) : null) || null;
-			type = "fir";
+			facility = "fir";
 		} else if (c.facility === 5) {
 			id = traconPrefixes.get(prefix1) || (prefix2 ? traconPrefixes.get(prefix2) : null) || null;
-			type = "tracon";
+			facility = "tracon";
 		} else {
 			id = prefix1;
-			type = "airport";
+			facility = "airport";
 		}
 
 		if (!id) continue;
@@ -142,13 +142,21 @@ export async function mergeControllers(controllersLong: ControllerLong[]): Promi
 			connections: c.connections,
 		};
 
+		if (c.facility === 6) {
+			id = `fir_${id}`;
+		} else if (c.facility === 5) {
+			id = `tracon_${id}`;
+		} else {
+			id = `airport_${id}`;
+		}
+
 		const existing = merged.get(id);
 		if (existing) {
 			existing.controllers.push(controllerShort);
 		} else {
 			merged.set(id, {
 				id,
-				type,
+				facility,
 				controllers: [controllerShort],
 			});
 		}
