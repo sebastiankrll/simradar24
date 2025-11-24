@@ -17,8 +17,9 @@ export async function updateTracons(): Promise<void> {
 			responseType: "json",
 		});
 		const features = flattenCollection(response.data);
+		const closedFeatures = closePolygons(features);
 
-		await rdsSetSingle("static_tracons:all", features);
+		await rdsSetSingle("static_tracons:all", closedFeatures);
 		await rdsSetSingle("static_tracons:version", version?.replace(/^v/, "") || "1.0.0");
 	} catch (error) {
 		console.error(`Error checking for new TRACON data: ${error}`);
@@ -53,4 +54,21 @@ function flattenCollection(collection: any): SimAwareTraconFeature[] {
 		}
 	}
 	return features;
+}
+
+function closePolygons(features: SimAwareTraconFeature[]): SimAwareTraconFeature[] {
+	return features.map((feature) => {
+		for (const multiPoly of feature.geometry.coordinates) {
+			for (const ring of multiPoly) {
+				const first = ring[0];
+				const last = ring[ring.length - 1];
+
+				if (first[0] !== last[0] || first[1] !== last[1]) {
+					ring.push(first);
+				}
+			}
+		}
+
+		return feature;
+	});
 }
