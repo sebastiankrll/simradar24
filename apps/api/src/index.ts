@@ -1,8 +1,8 @@
 import "dotenv/config";
+import { pgGetTrackPointsByid } from "@sk/db/pg";
 import { rdsGetSingle } from "@sk/db/redis";
 import cors from "cors";
 import express from "express";
-import { pgGetTrackPointsByid } from "@sk/db/pg";
 
 const app = express();
 app.use(cors());

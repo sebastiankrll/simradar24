@@ -1,3 +1,4 @@
+import type { StaticAirline, StaticAirport } from "@sk/types/db";
 import type { AirportShort, ControllerMerged, WsAll, WsDelta } from "@sk/types/vatsim";
 import {
 	initAirportFeatures,
@@ -7,11 +8,10 @@ import {
 	updateControllerFeatures,
 	updatePilotFeatures,
 } from "@/components/Map/utils/dataLayers";
-import { dxGetAirline, dxGetAirport, dxInitDatabases } from "./dexie";
-import { wsClient } from "@/utils/ws";
-import { getMapView } from "@/components/Map/utils/init";
 import { updateOverlays } from "@/components/Map/utils/events";
-import type { StaticAirline, StaticAirport } from "@sk/types/db";
+import { getMapView } from "@/components/Map/utils/init";
+import { wsClient } from "@/utils/ws";
+import { dxGetAirline, dxGetAirport, dxInitDatabases } from "./dexie";
 
 let airportsShort: AirportShort[] = [];
 let controllersMerged: ControllerMerged[] = [];
@@ -55,7 +55,7 @@ export function getControllerShort(id: string): ControllerMerged | null {
 }
 
 export async function getCachedAirport(id: string): Promise<StaticAirport | null> {
-    console.log(id)
+	console.log(id);
 	const cached = cachedAirports.get(id);
 	if (cached) return cached;
 

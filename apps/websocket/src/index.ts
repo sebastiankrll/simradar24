@@ -1,6 +1,6 @@
+import { createGzip } from "node:zlib";
 import { rdsSubWsDelta } from "@sk/db/redis";
 import type { WsDelta } from "@sk/types/vatsim";
-import { createGzip } from "node:zlib";
 import { WebSocketServer } from "ws";
 
 const wss = new WebSocketServer({

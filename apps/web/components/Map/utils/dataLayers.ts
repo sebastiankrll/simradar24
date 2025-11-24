@@ -1,7 +1,10 @@
+import type { FIRFeature, SimAwareTraconFeature } from "@sk/types/db";
 import type { ControllerDelta, ControllerMerged, PilotDelta, PilotShort } from "@sk/types/vatsim";
 import type { Extent } from "ol/extent";
 import Feature from "ol/Feature";
+import GeoJSON from "ol/format/GeoJSON";
 import { Circle, type MultiPolygon, Point, type Polygon } from "ol/geom";
+import { fromCircle } from "ol/geom/Polygon";
 import VectorLayer from "ol/layer/Vector";
 import WebGLVectorLayer from "ol/layer/WebGLVector";
 import { fromLonLat, transformExtent } from "ol/proj";
@@ -10,9 +13,6 @@ import RBush from "rbush";
 import { dxGetAirport, dxGetAllAirports, dxGetFirs, dxGetTracons } from "@/storage/dexie";
 import type { AirportProperties, PilotProperties } from "@/types/ol";
 import { webglConfig } from "../lib/webglConfig";
-import type { FIRFeature, SimAwareTraconFeature } from "@sk/types/db";
-import GeoJSON from "ol/format/GeoJSON";
-import { fromCircle } from "ol/geom/Polygon";
 
 interface RBushPilotFeature {
 	minX: number;

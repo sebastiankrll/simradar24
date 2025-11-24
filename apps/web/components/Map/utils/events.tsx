@@ -3,10 +3,9 @@ import type { Point } from "ol/geom";
 import type { Pixel } from "ol/pixel";
 import { toLonLat } from "ol/proj";
 import { createRoot, type Root } from "react-dom/client";
+import { getAirportShort, getCachedAirline, getCachedAirport } from "@/storage/cache";
 import { AirportOverlay, PilotOverlay } from "../components/Overlay/Overlays";
 import { setFeatures } from "./dataLayers";
-import { getAirportShort, getCachedAirline, getCachedAirport } from "@/storage/cache";
-import { get } from "http";
 
 export function onMoveEnd(evt: { map: OlMap }): void {
 	const map = evt.map;

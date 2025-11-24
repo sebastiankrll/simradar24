@@ -1,7 +1,7 @@
-import type { ControllerDelta, ControllerLong, ControllerMerged, ControllerShort, PilotLong, VatsimData } from "@sk/types/vatsim";
-import { haversineDistance } from "./utils/helpers.js";
 import { rdsGetSingle } from "@sk/db/redis";
 import type { FIRFeature, SimAwareTraconFeature } from "@sk/types/db";
+import type { ControllerDelta, ControllerLong, ControllerMerged, ControllerShort, PilotLong, VatsimData } from "@sk/types/vatsim";
+import { haversineDistance } from "./utils/helpers.js";
 
 let cachedMerged: ControllerMerged[] = [];
 let deleted: string[] = [];

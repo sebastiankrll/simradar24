@@ -1,6 +1,15 @@
 import { rdsGetMultiple } from "@sk/db/redis";
 import type { StaticAirport } from "@sk/types/db";
-import type { PilotDelta, PilotFlightPlan, PilotLong, PilotShort, PilotTimes, VatsimData, VatsimPilot, VatsimPilotFlightPlan } from "@sk/types/vatsim";
+import type {
+	PilotDelta,
+	PilotFlightPlan,
+	PilotLong,
+	PilotShort,
+	PilotTimes,
+	VatsimData,
+	VatsimPilot,
+	VatsimPilotFlightPlan,
+} from "@sk/types/vatsim";
 import { haversineDistance } from "./utils/helpers.js";
 
 const TAXI_TIME_MS = 5 * 60 * 1000;
