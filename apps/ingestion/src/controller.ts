@@ -113,22 +113,44 @@ export async function mergeControllers(controllersLong: ControllerLong[]): Promi
 
 	const merged = new Map<string, ControllerMerged>();
 
+	const reduceCallsign = (callsign: string): string[] => {
+		const parts = callsign.split("_");
+		const levels: string[] = [];
+
+		for (let i = parts.length; i > 0; i--) {
+			levels.push(parts.slice(0, i).join("_"));
+		}
+
+		return levels;
+	};
+
+	const findPrefixMatch = (levels: string[], facility: number): string | null => {
+		const lookup = facility === 6 ? firPrefixes : traconPrefixes;
+
+		for (const lvl of levels) {
+			const match = lookup.get(lvl);
+			if (match) return match;
+		}
+		return null;
+	};
+
 	for (const c of controllersLong) {
 		let id: string | null = null;
 		let facility: ControllerMerged["facility"] | null = null;
 
-		const parts = c.callsign.split("_");
-		const prefix1 = parts[0];
-		const prefix2 = parts.length > 1 ? `${parts[0]}_${parts[1]}` : null;
+		const levels = reduceCallsign(c.callsign);
 
 		if (c.facility === 6) {
-			id = firPrefixes.get(prefix1) || (prefix2 ? firPrefixes.get(prefix2) : null) || null;
+			// FIR
+			id = findPrefixMatch(levels, 6);
 			facility = "fir";
 		} else if (c.facility === 5) {
-			id = traconPrefixes.get(prefix1) || (prefix2 ? traconPrefixes.get(prefix2) : null) || null;
+			// TRACON
+			id = findPrefixMatch(levels, 5);
 			facility = "tracon";
 		} else {
-			id = prefix1;
+			// Airport: simply take the first segment
+			id = levels[levels.length - 1];
 			facility = "airport";
 		}
 
@@ -142,13 +164,7 @@ export async function mergeControllers(controllersLong: ControllerLong[]): Promi
 			connections: c.connections,
 		};
 
-		if (c.facility === 6) {
-			id = `fir_${id}`;
-		} else if (c.facility === 5) {
-			id = `tracon_${id}`;
-		} else {
-			id = `airport_${id}`;
-		}
+		id = facility === "fir" ? `fir_${id}` : facility === "tracon" ? `tracon_${id}` : `airport_${id}`;
 
 		const existing = merged.get(id);
 		if (existing) {

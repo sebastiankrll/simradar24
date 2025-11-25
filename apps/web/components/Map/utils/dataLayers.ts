@@ -303,7 +303,10 @@ export async function initControllerFeatures(controllers: ControllerMerged[]): P
 				traconSource.addFeature(feature);
 				cachedTracons.set(id, feature);
 
-				createControllerLabel(traconFeature, "tracon");
+				const longitude = Number(traconFeature.properties.label_lon);
+				const latitude = Number(traconFeature.properties.label_lat);
+				const label = traconFeature.properties.id;
+				createControllerLabel(longitude, latitude, label, "tracon");
 				continue;
 			}
 
@@ -319,7 +322,10 @@ export async function initControllerFeatures(controllers: ControllerMerged[]): P
 				traconSource.addFeature(feature);
 				cachedTracons.set(id, feature);
 
-				// Add label for circle tracon
+				const longitude = airport.longitude;
+				const latitude = airport.latitude - 25 / 60;
+				const label = id;
+				createControllerLabel(longitude, latitude, label, "tracon");
 			}
 		}
 
@@ -331,7 +337,10 @@ export async function initControllerFeatures(controllers: ControllerMerged[]): P
 			firSource.addFeature(feature);
 			cachedFirs.set(id, feature);
 
-			createControllerLabel(firFeature, "fir");
+			const longitude = Number(firFeature.properties.label_lon);
+			const latitude = Number(firFeature.properties.label_lat);
+			const label = firFeature.properties.id;
+			createControllerLabel(longitude, latitude, label, "fir");
 		}
 	}
 }
@@ -364,6 +373,11 @@ export async function updateControllerFeatures(delta: ControllerDelta): Promise<
 				const feature = readGeoJSONFeature(traconFeature, "tracon", id);
 				traconSource.addFeature(feature);
 				cachedTracons.set(id, feature);
+
+				const longitude = Number(traconFeature.properties.label_lon);
+				const latitude = Number(traconFeature.properties.label_lat);
+				const label = traconFeature.properties.id;
+				createControllerLabel(longitude, latitude, label, "tracon");
 				continue;
 			}
 
@@ -388,11 +402,21 @@ export async function updateControllerFeatures(delta: ControllerDelta): Promise<
 			const feature = readGeoJSONFeature(firFeature, "fir", id);
 			firSource.addFeature(feature);
 			cachedFirs.set(id, feature);
+
+			const longitude = Number(firFeature.properties.label_lon);
+			const latitude = Number(firFeature.properties.label_lat);
+			const label = firFeature.properties.id;
+			createControllerLabel(longitude, latitude, label, "fir");
 		}
 	}
 
 	for (const c of delta.deleted) {
 		const id = c.replace(/^(tracon_|airport_|fir_)/, "");
+
+		const labelFeature = controllerLabelSource.getFeatureById(`controller_${id}`);
+		if (labelFeature) {
+			controllerLabelSource.removeFeature(labelFeature);
+		}
 
 		const tracon = cachedTracons.get(id);
 		if (tracon) {
@@ -409,13 +433,9 @@ export async function updateControllerFeatures(delta: ControllerDelta): Promise<
 	}
 }
 
-function createControllerLabel(feature: SimAwareTraconFeature | FIRFeature, type: "tracon" | "fir"): void {
-	const label = feature.properties.id;
-	const longitude = Number(feature.properties.label_lon);
-	const latitude = Number(feature.properties.label_lat);
-
+function createControllerLabel(lon: number, lat: number, label: string, type: "tracon" | "fir"): void {
 	const labelFeature = new Feature({
-		geometry: new Point(fromLonLat([longitude, latitude])),
+		geometry: new Point(fromLonLat([lon, lat])),
 	});
 	labelFeature.setProperties({ type: type, label });
 	labelFeature.setId(`controller_${label}`);
