@@ -25,6 +25,9 @@ export const controllerLabelSource = new VectorSource({
 export const trackSource = new VectorSource({
 	useSpatialIndex: false,
 });
+export const airportLabelSource = new VectorSource({
+	useSpatialIndex: false,
+});
 
 export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
 	const firLayer = new WebGLVectorLayer({
@@ -72,7 +75,6 @@ export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
 	});
 	// mapStorage.layerInit = new Date()
 
-	const airportLabelSource = new VectorSource();
 	const airportLabelLayer = new WebGLVectorLayer({
 		source: airportLabelSource,
 		style: webglConfig.airport_label,

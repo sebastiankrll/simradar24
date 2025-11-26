@@ -8,6 +8,7 @@ export type PilotProperties = Omit<PilotShort, "longitude" | "latitude"> & {
 
 export interface AirportProperties {
 	type: "airport";
+    size: "s" | "m" | "l";
 	clicked: boolean;
 	hovered: boolean;
 }
@@ -17,4 +18,10 @@ export interface ControllerLabelProperties {
 	label: string;
 	clicked: boolean;
 	hovered: boolean;
+}
+
+export interface AirportLabelProperties {
+	type: "airport";
+    size: "s" | "m" | "l";
+	offset: number;
 }

@@ -9,8 +9,10 @@ import Fill from "ol/style/Fill";
 import Style from "ol/style/Style";
 import Text from "ol/style/Text";
 import { dxGetAirport, dxGetFirs, dxGetTracons } from "@/storage/dexie";
-import type { ControllerLabelProperties } from "@/types/ol";
-import { controllerLabelSource, firSource, traconSource } from "./dataLayers";
+import type { AirportLabelProperties, ControllerLabelProperties } from "@/types/ol";
+import { airportLabelSource, controllerLabelSource, firSource, traconSource } from "./dataLayers";
+import { getCachedAirport } from "@/storage/cache";
+import { getAirportSize } from "./airportFeatures";
 
 export function getControllerLabelStyle(feature: FeatureLike, resolution: number): Style {
 	const label = feature.get("label") as string;
@@ -100,6 +102,10 @@ export async function initControllerFeatures(controllers: ControllerMerged[]): P
 			const label = firFeature.properties.id;
 			createControllerLabel(longitude, latitude, label, "fir");
 		}
+
+		if (c.facility === "airport") {
+			createAirportLabel(c);
+		}
 	}
 }
 
@@ -114,6 +120,14 @@ export async function updateControllerFeatures(delta: ControllerDelta): Promise<
 
 		if (c.facility === "fir") {
 			feature = cachedFirs.get(id);
+		}
+
+		if (c.facility === "airport") {
+			const labelFeature = airportLabelSource.getFeatureById(`controller_${id}`);
+			if (labelFeature) {
+				airportLabelSource.removeFeature(labelFeature);
+			}
+			createAirportLabel(c);
 		}
 
 		if (feature) {
@@ -166,6 +180,10 @@ export async function updateControllerFeatures(delta: ControllerDelta): Promise<
 			const label = firFeature.properties.id;
 			createControllerLabel(longitude, latitude, label, "fir");
 		}
+
+		if (c.facility === "airport") {
+			createAirportLabel(c);
+		}
 	}
 
 	for (const c of delta.deleted) {
@@ -187,6 +205,14 @@ export async function updateControllerFeatures(delta: ControllerDelta): Promise<
 		if (fir) {
 			firSource.removeFeature(fir);
 			cachedFirs.delete(id);
+			continue;
+		}
+
+		if (c.startsWith("airport_")) {
+			const airportLabel = airportLabelSource.getFeatureById(`controller_${id}`);
+			if (airportLabel) {
+				airportLabelSource.removeFeature(airportLabel);
+			}
 		}
 	}
 }
@@ -214,4 +240,37 @@ function createCircleTracon(lon: number, lat: number): Polygon {
 	const polygon = fromCircle(circle, 36);
 
 	return polygon;
+}
+
+async function createAirportLabel(controllerMerged: ControllerMerged): Promise<void> {
+	const id = controllerMerged.id.replace(/^(tracon_|airport_|fir_)/, "");
+	const airport = await getCachedAirport(id);
+	if (!airport) return;
+
+	const stations = [0, 0, 0, 0];
+
+	controllerMerged.controllers.forEach((c) => {
+		if (c.facility === 2) {
+			stations[2] = 1;
+		}
+		if (c.facility === 3) {
+			stations[1] = 1;
+		}
+		if (c.facility === 4) {
+			stations[0] = 1;
+		}
+	});
+
+	const labelFeature = new Feature({
+		geometry: new Point(fromLonLat([airport.longitude, airport.latitude])),
+	});
+	const props: AirportLabelProperties = {
+		type: "airport",
+		size: getAirportSize(airport.size),
+		offset: parseInt(stations.join(""), 2) * 36,
+	};
+
+	labelFeature.setProperties(props);
+	labelFeature.setId(`controller_${id}`);
+	airportLabelSource.addFeature(labelFeature);
 }

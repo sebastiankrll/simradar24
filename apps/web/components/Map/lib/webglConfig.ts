@@ -517,32 +517,22 @@ export const webglConfig = {
 		"icon-rotation": ["*", ["/", ["get", "heading"], 180], Math.PI],
 	},
 	airport_main: {
-		variables: {
-			show: "all",
-		},
 		"icon-src": airportSprite.src,
 		"icon-size": [32, 32],
 		"icon-offset": ["case", ["all", ["==", ["get", "clicked"], 0], ["==", ["get", "hovered"], 0]], [0, 0], [32, 0]],
-		"icon-scale": ["case", ["==", ["get", "type"], "small_airport"], 0.65, ["==", ["get", "type"], "medium_airport"], 0.75, 0.85],
+		"icon-scale": ["case", ["==", ["get", "size"], "s"], 0.6, ["==", ["get", "size"], "m"], 0.7, 0.8],
 		"icon-rotate-with-view": false,
 	},
 	airport_label: {
-		variables: {
-			dep: "",
-			arr: "",
-		},
-		filter: ["any", ["==", ["var", "dep"], ["get", "icao"]], ["==", ["var", "arr"], ["get", "icao"]], ["==", ["var", "dep"], ""]],
 		"icon-src": airportLabelSprite.src,
 		"icon-size": [36, 36],
 		"icon-offset": [
 			"case",
 			[
 				"any",
-				["all", ["==", ["get", "type"], "small_airport"], ["<", ["resolution"], 300]],
-				["all", ["==", ["get", "type"], "medium_airport"], ["<", ["resolution"], 1000]],
-				["all", ["==", ["get", "type"], "large_airport"], ["<", ["resolution"], 3000]],
-				["==", ["var", "dep"], ["get", "icao"]],
-				["==", ["var", "arr"], ["get", "icao"]],
+				["all", ["==", ["get", "size"], "s"], [">", ["zoom"], 7.5]],
+				["all", ["==", ["get", "size"], "m"], [">", ["zoom"], 6.5]],
+				["all", ["==", ["get", "size"], "l"], [">", ["zoom"], 4.5]],
 			],
 			["array", 0, ["get", "offset"]],
 			["array", 36, ["get", "offset"]],
@@ -551,7 +541,7 @@ export const webglConfig = {
 			"array",
 			[
 				"*",
-				["case", ["==", ["get", "type"], "small_airport"], 0.7, ["==", ["get", "type"], "medium_airport"], 0.85, 1],
+				["case", ["==", ["get", "size"], "s"], 0.6, ["==", ["get", "size"], "m"], 0.7, 0.8],
 				[
 					"case",
 					["any", ["==", ["var", "dep"], ["get", "icao"]], ["==", ["var", "arr"], ["get", "icao"]]],
@@ -561,7 +551,7 @@ export const webglConfig = {
 			],
 			[
 				"*",
-				["case", ["==", ["get", "type"], "small_airport"], 0.7, ["==", ["get", "type"], "medium_airport"], 0.85, 1],
+				["case", ["==", ["get", "size"], "s"], 0.6, ["==", ["get", "size"], "m"], 0.7, 0.8],
 				[
 					"case",
 					["any", ["==", ["var", "dep"], ["get", "icao"]], ["==", ["var", "arr"], ["get", "icao"]]],
