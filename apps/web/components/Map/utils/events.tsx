@@ -87,6 +87,11 @@ export async function onClick(evt: MapBrowserEvent): Promise<void> {
 	if (feature && feature !== clickedFeature) {
 		clickedOverlay = await createOverlay(feature);
 		map.addOverlay(clickedOverlay);
+
+		if (hoveredOverlay) {
+			map.removeOverlay(hoveredOverlay);
+			hoveredOverlay = null;
+		}
 	}
 
 	if (feature !== clickedFeature) {
