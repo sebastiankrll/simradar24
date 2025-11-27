@@ -1,7 +1,7 @@
 import type { Feature } from "ol";
 import "./Overlays.css";
 import type { StaticAirline, StaticAirport } from "@sk/types/db";
-import type { AirportShort } from "@sk/types/vatsim";
+import type { AirportShort, ControllerMerged } from "@sk/types/vatsim";
 import type { Point } from "ol/geom";
 import type { PilotProperties } from "@/types/ol";
 import FlagSprite from "@/assets/images/sprites/flagSprite42.png";
@@ -63,27 +63,49 @@ export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; ai
 	);
 }
 
-export function AirportOverlay({ cached, short }: { cached: StaticAirport | null; short: AirportShort | null }) {
+export function AirportOverlay({
+	cached,
+	short,
+	merged,
+}: {
+	cached: StaticAirport | null;
+	short: AirportShort | null;
+	merged: ControllerMerged | null;
+}) {
+	const controllers = merged?.controllers;
+	const sortedControllers = controllers?.sort((a, b) => b.facility - a.facility);
+
+	const getControllerColor = (facility: number): string => {
+		switch (facility) {
+			case -1:
+				return "rgb(255, 138, 43)";
+			case 2:
+				return "rgb(60, 177, 255)";
+			case 3:
+				return "rgb(11, 211, 167)";
+			case 4:
+				return "rgb(234, 89, 121)";
+			default:
+				return "rgb(255, 138, 43)";
+		}
+	};
+
 	return (
 		<div className="overlay-wrapper">
-			{/* <div className="overlay-live pilot">
-				<div className="overlay-live-item">
-					<span>ALT</span>
-					{Math.round(data.altitude_ms / 250) * 250}
+			{sortedControllers && sortedControllers.length > 0 && (
+				<div className="overlay-live controller">
+					{sortedControllers?.map((c) => {
+						return (
+							<div key={c.callsign} className="overlay-live-item controller">
+								<div className="overlay-controller-color" style={{ backgroundColor: getControllerColor(c.facility) }}></div>
+								<div className="overlay-controller-callsign">{c.callsign}</div>
+								<div className="overlay-controller-frequency">{(c.frequency / 1000).toFixed(3)}</div>
+								<div className="overlay-controller-connections">{c.connections}</div>
+							</div>
+						);
+					})}
 				</div>
-				<div className="overlay-live-item">
-					<span>FPM</span>
-					{vs}
-				</div>
-				<div className="overlay-live-item">
-					<span>GS</span>
-					{data.groundspeed}
-				</div>
-				<div className="overlay-live-item">
-					<span>HDG</span>
-					{hdg}
-				</div>
-			</div> */}
+			)}
 			<div className="overlay-main-wrapper">
 				<div className="overlay-icon flag">
 					<div className={`fflag ff-lg fflag-${cached?.country}`} style={{ backgroundImage: `url(${FlagSprite.src})` }}></div>

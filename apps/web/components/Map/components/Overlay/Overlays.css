@@ -24,11 +24,37 @@
 	background-color: white;
 	font-size: 12px;
 	justify-content: space-between;
+    align-items: center;
 	padding: 0px 4px;
+}
+
+.overlay-live-item.controller {
+    justify-content: initial;
 }
 
 .overlay-live-item span {
 	font-weight: 700;
+}
+
+.overlay-controller-color {
+    height: 8px;
+    width: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.overlay-controller-callsign {
+    font-weight: 700;
+    margin-right: auto;
+}
+
+.overlay-controller-frequency {
+    font-weight: 700;
+}
+
+.overlay-controller-connections {
+    width: 25px;
+    text-align: end;
 }
 
 .overlay-main-wrapper {
@@ -121,7 +147,7 @@
 }
 
 .overlay-misc .overlay-airport-traffic {
-    gap: 4px;
+    gap: 2px;
     height: 50%;
     overflow: hidden;
     width: fit-content;
@@ -130,6 +156,8 @@
 
 .overlay-airport-traffic p {
     color: white;
+    width: 16px;
+    text-align: end;
 }
 
 .overlay-airport-traffic svg {

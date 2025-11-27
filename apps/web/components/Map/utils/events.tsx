@@ -3,7 +3,7 @@ import type { Point } from "ol/geom";
 import type { Pixel } from "ol/pixel";
 import { toLonLat } from "ol/proj";
 import { createRoot, type Root } from "react-dom/client";
-import { getAirportShort, getCachedAirline, getCachedAirport } from "@/storage/cache";
+import { getAirportShort, getCachedAirline, getCachedAirport, getControllerMerged } from "@/storage/cache";
 import { AirportOverlay, PilotOverlay } from "../components/Overlay/Overlays";
 import { firSource, setFeatures, trackSource, traconSource } from "./dataLayers";
 import { initTrackFeatures } from "./trackFeatures";
@@ -126,7 +126,8 @@ async function createOverlay(feature: Feature<Point>): Promise<Overlay> {
 
 		const cachedAirport = await getCachedAirport(id);
 		const shortAirport = getAirportShort(id);
-		root.render(<AirportOverlay cached={cachedAirport} short={shortAirport} />);
+		const controllerMerged = getControllerMerged(`airport_${id}`);
+		root.render(<AirportOverlay cached={cachedAirport} short={shortAirport} merged={controllerMerged} />);
 	}
 
 	const overlay = new Overlay({
@@ -180,7 +181,8 @@ async function updateOverlay(feature: Feature<Point>, overlay: Overlay): Promise
 
 		const cachedAirport = await getCachedAirport(id);
 		const shortAirport = getAirportShort(id);
-		root.render(<AirportOverlay cached={cachedAirport} short={shortAirport} />);
+		const controllerMerged = getControllerMerged(`airport_${id}`);
+		root.render(<AirportOverlay cached={cachedAirport} short={shortAirport} merged={controllerMerged} />);
 	}
 }
 

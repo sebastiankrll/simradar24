@@ -50,7 +50,7 @@ export function getAirportShort(id: string): AirportShort | null {
 	return airportsShort.find((a) => a.icao === id) || null;
 }
 
-export function getControllerShort(id: string): ControllerMerged | null {
+export function getControllerMerged(id: string): ControllerMerged | null {
 	return controllersMerged.find((c) => c.id === id) || null;
 }
 
