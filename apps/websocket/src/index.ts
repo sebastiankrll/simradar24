@@ -5,6 +5,7 @@ import { WebSocketServer } from "ws";
 
 const wss = new WebSocketServer({
 	port: Number(process.env.WEBSOCKET_PORT) || 3002,
+    host: process.env.WEBSOCKET_HOST || '0.0.0.0',
 	perMessageDeflate: false,
 });
 

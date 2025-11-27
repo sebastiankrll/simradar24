@@ -34,18 +34,16 @@ services:
     environment:
       NODE_ENV: production
       HOST: 0.0.0.0
-    depends_on:
-    - timescaledb
-    - redis
     networks:
       - traefik_proxy
-      - sr24_backend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.nextjs.rule=Host(`radar.skruellex.com`)"
       - "traefik.http.routers.nextjs.entrypoints=websecure"
       - "traefik.http.routers.nextjs.tls=true"
       - "traefik.http.routers.nextjs.tls.certresolver=letsencrypt"
+      - "traefik.http.services.nextjs.loadbalancer.server.port=3000"
+      - "traefik.docker.network=traefik_proxy"
 
   api:
     build:
@@ -64,8 +62,8 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
     depends_on:
-    - timescaledb
-    - redis
+      - timescaledb
+      - redis
     networks:
       - traefik_proxy
       - sr24_backend
@@ -75,6 +73,8 @@ services:
       - "traefik.http.routers.api.entrypoints=websecure"
       - "traefik.http.routers.api.tls=true"
       - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.api.loadbalancer.server.port=3001"
+      - "traefik.docker.network=traefik_proxy" 
 
   ws:
     build:
@@ -85,11 +85,12 @@ services:
     environment:
       NODE_ENV: production
       WEBSOCKET_PORT: 3002
+      WEBSOCKET_HOST: 0.0.0.0
       REDIS_HOST: redis
       REDIS_PORT: 6379
     depends_on:
-    - timescaledb
-    - redis
+      - timescaledb
+      - redis
     networks:
       - traefik_proxy
       - sr24_backend
@@ -99,6 +100,8 @@ services:
       - "traefik.http.routers.ws.entrypoints=websecure"
       - "traefik.http.routers.ws.tls=true"
       - "traefik.http.routers.ws.tls.certresolver=letsencrypt"
+      - "traefik.http.services.ws.loadbalancer.server.port=3002"
+      - "traefik.docker.network=traefik_proxy" 
 
   ingestion:
     build:
@@ -116,8 +119,8 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
     depends_on:
-    - timescaledb
-    - redis
+      - timescaledb
+      - redis
     networks:
       - sr24_backend
     labels:
@@ -139,8 +142,8 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
     depends_on:
-    - timescaledb
-    - redis
+      - timescaledb
+      - redis
     networks:
       - sr24_backend
     labels:
