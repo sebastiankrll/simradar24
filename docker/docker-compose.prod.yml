@@ -107,6 +107,8 @@ services:
       REDIS_PORT: 6379
     networks:
       - backend
+    labels:
+      - "traefik.enable=false"
 
   updater:
     build:
@@ -125,6 +127,8 @@ services:
       REDIS_PORT: 6379
     networks:
       - backend
+    labels:
+      - "traefik.enable=false"
 
 networks:
   traefik_proxy:
