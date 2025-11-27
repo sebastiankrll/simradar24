@@ -22,6 +22,13 @@ RUN npm run build
 
 FROM base AS runner
 ENV NODE_ENV=production
+EXPOSE 3000
+
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_WEBSOCKET_URL
+
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_WEBSOCKET_URL=$NEXT_PUBLIC_WEBSOCKET_URL
 
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static

@@ -32,6 +32,9 @@ services:
       NODE_ENV: production
       NEXT_PUBLIC_API_URL: "https://api.radar.skruellex.com"
       NEXT_PUBLIC_WEBSOCKET_URL: "wss://ws.radar.skruellex.com"
+    args:
+      NEXT_PUBLIC_API_URL: "https://api.radar.skruellex.com"
+      NEXT_PUBLIC_WEBSOCKET_URL: "wss://ws.radar.skruellex.com"
     networks:
       - traefik_proxy
       - backend
