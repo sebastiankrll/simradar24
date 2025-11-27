@@ -16,7 +16,7 @@ services:
     image: redis:latest
     container_name: sr24_redis
     restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes"]
+    command: [ "redis-server", "--appendonly", "yes" ]
     volumes:
       - redis_data:/data
     networks:
@@ -26,15 +26,13 @@ services:
     build:
       context: ..
       dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: "https://api.radar.skruellex.com"
+        NEXT_PUBLIC_WEBSOCKET_URL: "wss://ws.radar.skruellex.com"
     container_name: sr24_web
     restart: always
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: "https://api.radar.skruellex.com"
-      NEXT_PUBLIC_WEBSOCKET_URL: "wss://ws.radar.skruellex.com"
-    args:
-      NEXT_PUBLIC_API_URL: "https://api.radar.skruellex.com"
-      NEXT_PUBLIC_WEBSOCKET_URL: "wss://ws.radar.skruellex.com"
     networks:
       - traefik_proxy
       - backend
