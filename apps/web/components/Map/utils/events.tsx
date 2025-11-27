@@ -1,9 +1,9 @@
-import { type Feature, MapBrowserEvent, Overlay, type View } from "ol";
+import { type Feature, type MapBrowserEvent, Overlay, type View } from "ol";
 import type { Point } from "ol/geom";
 import { toLonLat } from "ol/proj";
 import { createRoot, type Root } from "react-dom/client";
-import { getAirportShort, getCachedAirline, getCachedAirport, getControllerMerged } from "@/storage/cache";
-import { AirportOverlay, PilotOverlay } from "../components/Overlay/Overlays";
+import { getAirportShort, getCachedAirline, getCachedAirport, getCachedFir, getCachedTracon, getControllerMerged } from "@/storage/cache";
+import { AirportOverlay, PilotOverlay, SectorOverlay } from "../components/Overlay/Overlays";
 import { firSource, setFeatures, trackSource, traconSource } from "./dataLayers";
 import { initTrackFeatures } from "./trackFeatures";
 
@@ -47,7 +47,6 @@ export async function onPointerMove(evt: MapBrowserEvent): Promise<void> {
 	if (feature !== hoveredFeature && hoveredOverlay) {
 		map.removeOverlay(hoveredOverlay);
 		hoveredOverlay = null;
-		toggleControllerSectorHover(hoveredFeature, false, "hovered");
 	}
 
 	if (feature && feature !== hoveredFeature && feature !== clickedFeature) {
@@ -56,6 +55,7 @@ export async function onPointerMove(evt: MapBrowserEvent): Promise<void> {
 	}
 
 	if (feature !== hoveredFeature) {
+		toggleControllerSectorHover(hoveredFeature, false, "hovered");
 		hoveredFeature?.set("hovered", false);
 		hoveredFeature = null;
 	}
@@ -75,7 +75,7 @@ export async function onClick(evt: MapBrowserEvent): Promise<void> {
 	const feature = map.forEachFeatureAtPixel(pixel, (f) => f, {
 		layerFilter: (layer) => layer.get("type") === "airport_main" || layer.get("type") === "pilot_main" || layer.get("type") === "controller_label",
 		hitTolerance: 10,
-	}) as Feature<Point>;
+	}) as Feature<Point> | undefined;
 
 	if (feature !== clickedFeature && clickedOverlay) {
 		map.removeOverlay(clickedOverlay);
@@ -140,6 +140,30 @@ async function createOverlay(feature: Feature<Point>): Promise<Overlay> {
 		root.render(<AirportOverlay cached={cachedAirport} short={shortAirport} merged={controllerMerged} />);
 	}
 
+	if (type === "tracon") {
+		id =
+			feature
+				.getId()
+				?.toString()
+				.replace(/^controller_/, "") || "";
+
+		const cachedTracon = await getCachedTracon(id);
+		const controllerMerged = getControllerMerged(`tracon_${id}`);
+		root.render(<SectorOverlay cached={cachedTracon} merged={controllerMerged} />);
+	}
+
+	if (type === "fir") {
+		id =
+			feature
+				.getId()
+				?.toString()
+				.replace(/^controller_/, "") || "";
+
+		const cachedFir = await getCachedFir(id);
+		const controllerMerged = getControllerMerged(`fir_${id}`);
+		root.render(<SectorOverlay cached={cachedFir} merged={controllerMerged} />);
+	}
+
 	const overlay = new Overlay({
 		element,
 		id: id,
@@ -194,6 +218,30 @@ async function updateOverlay(feature: Feature<Point>, overlay: Overlay): Promise
 		const shortAirport = getAirportShort(id);
 		const controllerMerged = getControllerMerged(`airport_${id}`);
 		root.render(<AirportOverlay cached={cachedAirport} short={shortAirport} merged={controllerMerged} />);
+	}
+
+	if (type === "tracon") {
+		id =
+			feature
+				.getId()
+				?.toString()
+				.replace(/^controller_/, "") || "";
+
+		const cachedTracon = await getCachedTracon(id);
+		const controllerMerged = getControllerMerged(`tracon_${id}`);
+		root.render(<SectorOverlay cached={cachedTracon} merged={controllerMerged} />);
+	}
+
+	if (type === "fir") {
+		id =
+			feature
+				.getId()
+				?.toString()
+				.replace(/^controller_/, "") || "";
+
+		const cachedFir = await getCachedFir(id);
+		const controllerMerged = getControllerMerged(`fir_${id}`);
+		root.render(<SectorOverlay cached={cachedFir} merged={controllerMerged} />);
 	}
 }
 

@@ -1,4 +1,4 @@
-import type { StaticAirline, StaticAirport } from "@sk/types/db";
+import type { FIRFeature, SimAwareTraconFeature, StaticAirline, StaticAirport } from "@sk/types/db";
 import type { AirportShort, ControllerMerged, TrackPoint, WsAll, WsDelta } from "@sk/types/vatsim";
 import { initAirportFeatures } from "@/components/Map/utils/airportFeatures";
 import { initControllerFeatures, updateControllerFeatures } from "@/components/Map/utils/controllerFeatures";
@@ -6,14 +6,16 @@ import { setFeatures } from "@/components/Map/utils/dataLayers";
 import { updateOverlays } from "@/components/Map/utils/events";
 import { getMapView } from "@/components/Map/utils/init";
 import { initPilotFeatures, updatePilotFeatures } from "@/components/Map/utils/pilotFeatures";
-import { wsClient } from "@/utils/ws";
-import { dxGetAirline, dxGetAirport, dxInitDatabases } from "./dexie";
 import { updateTrackFeatures } from "@/components/Map/utils/trackFeatures";
+import { wsClient } from "@/utils/ws";
+import { dxGetAirline, dxGetAirport, dxGetFirs, dxGetTracons, dxInitDatabases } from "./dexie";
 
 let airportsShort: AirportShort[] = [];
 let controllersMerged: ControllerMerged[] = [];
 const cachedAirports: Map<string, StaticAirport> = new Map();
 const cachedAirlines: Map<string, StaticAirline> = new Map();
+const cachedTracons: Map<string, SimAwareTraconFeature> = new Map();
+const cachedFirs: Map<string, FIRFeature> = new Map();
 
 export async function initData(): Promise<void> {
 	await dxInitDatabases();
@@ -42,7 +44,7 @@ export async function updateCache(delta: WsDelta): Promise<void> {
 
 	airportsShort = [...delta.airports.added, ...delta.airports.updated];
 	controllersMerged = [...delta.controllers.added, ...delta.controllers.updated];
-    
+
 	updateOverlays();
 }
 
@@ -76,6 +78,32 @@ export async function getCachedAirline(id: string): Promise<StaticAirline | null
 	}
 
 	return airline || null;
+}
+
+export async function getCachedTracon(id: string): Promise<SimAwareTraconFeature | null> {
+	const cached = cachedTracons.get(id);
+	if (cached) return cached;
+
+	const tracon = await dxGetTracons([id]).then((res) => res[0]);
+	const feature = tracon?.feature as SimAwareTraconFeature;
+	if (feature) {
+		cachedTracons.set(id, feature);
+	}
+
+	return feature || null;
+}
+
+export async function getCachedFir(id: string): Promise<FIRFeature | null> {
+	const cached = cachedFirs.get(id);
+	if (cached) return cached;
+
+	const fir = await dxGetFirs([id]).then((res) => res[0]);
+	const feature = fir?.feature as FIRFeature;
+	if (feature) {
+		cachedFirs.set(id, feature);
+	}
+
+	return feature || null;
 }
 
 export async function fetchTrackPoints(id: string): Promise<TrackPoint[]> {

@@ -8,11 +8,10 @@ import { fromLonLat } from "ol/proj";
 import Fill from "ol/style/Fill";
 import Style from "ol/style/Style";
 import Text from "ol/style/Text";
-import { dxGetAirport, dxGetFirs, dxGetTracons } from "@/storage/dexie";
+import { getCachedAirport, getCachedFir, getCachedTracon } from "@/storage/cache";
 import type { AirportLabelProperties, ControllerLabelProperties } from "@/types/ol";
-import { airportLabelSource, controllerLabelSource, firSource, traconSource } from "./dataLayers";
-import { getCachedAirport } from "@/storage/cache";
 import { getAirportSize } from "./airportFeatures";
+import { airportLabelSource, controllerLabelSource, firSource, traconSource } from "./dataLayers";
 
 export function getControllerLabelStyle(feature: FeatureLike, resolution: number): Style {
 	const label = feature.get("label") as string;
@@ -56,7 +55,7 @@ export async function initControllerFeatures(controllers: ControllerMerged[]): P
 		const id = c.id.replace(/^(tracon_|airport_|fir_)/, "");
 
 		if (c.facility === "tracon") {
-			const traconFeature = await dxGetTracons([id]).then((r) => r[0]?.feature);
+			const traconFeature = await getCachedTracon(id);
 
 			if (traconFeature) {
 				const feature = readGeoJSONFeature(traconFeature, "tracon", id);
@@ -71,7 +70,7 @@ export async function initControllerFeatures(controllers: ControllerMerged[]): P
 			}
 
 			const icao = id.split("_")[0];
-			const airport = await dxGetAirport(icao);
+			const airport = await getCachedAirport(icao);
 			if (airport) {
 				const polygon = createCircleTracon(airport.longitude, airport.latitude);
 				const feature = new Feature(polygon);
@@ -90,7 +89,7 @@ export async function initControllerFeatures(controllers: ControllerMerged[]): P
 		}
 
 		if (c.facility === "fir") {
-			const firFeature = await dxGetFirs([id]).then((r) => r[0]?.feature);
+			const firFeature = await getCachedFir(id);
 			if (!firFeature) continue;
 
 			const feature = readGeoJSONFeature(firFeature, "fir", id);
@@ -139,7 +138,7 @@ export async function updateControllerFeatures(delta: ControllerDelta): Promise<
 		const id = c.id.replace(/^(tracon_|airport_|fir_)/, "");
 
 		if (c.facility === "tracon") {
-			const traconFeature = await dxGetTracons([id]).then((r) => r[0]?.feature);
+			const traconFeature = await getCachedTracon(id);
 
 			if (traconFeature) {
 				const feature = readGeoJSONFeature(traconFeature, "tracon", id);
@@ -154,7 +153,7 @@ export async function updateControllerFeatures(delta: ControllerDelta): Promise<
 			}
 
 			const icao = id.split("_")[0];
-			const airport = await dxGetAirport(icao);
+			const airport = await getCachedAirport(icao);
 			if (airport) {
 				const polygon = createCircleTracon(airport.longitude, airport.latitude);
 				const feature = new Feature(polygon);
@@ -168,7 +167,7 @@ export async function updateControllerFeatures(delta: ControllerDelta): Promise<
 		}
 
 		if (c.facility === "fir") {
-			const firFeature = await dxGetFirs([id]).then((r) => r[0]?.feature);
+			const firFeature = await getCachedFir(id);
 			if (!firFeature) continue;
 
 			const feature = readGeoJSONFeature(firFeature, "fir", id);

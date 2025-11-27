@@ -1,3 +1,4 @@
+import type { PilotDelta } from "@sk/types/vatsim";
 import { Feature } from "ol";
 import { LineString } from "ol/geom";
 import { fromLonLat } from "ol/proj";
@@ -5,7 +6,6 @@ import Stroke from "ol/style/Stroke";
 import Style from "ol/style/Style";
 import { fetchTrackPoints } from "@/storage/cache";
 import { trackSource } from "./dataLayers";
-import type { PilotDelta } from "@sk/types/vatsim";
 
 let pilotId: string | null = null;
 let lastPoint: [number, number] | null = null;

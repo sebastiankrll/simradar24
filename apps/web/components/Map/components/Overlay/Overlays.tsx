@@ -1,11 +1,11 @@
 import type { Feature } from "ol";
 import "./Overlays.css";
-import type { StaticAirline, StaticAirport } from "@sk/types/db";
+import type { FIRFeature, SimAwareTraconFeature, StaticAirline, StaticAirport } from "@sk/types/db";
 import type { AirportShort, ControllerMerged } from "@sk/types/vatsim";
 import type { Point } from "ol/geom";
-import type { PilotProperties } from "@/types/ol";
-import FlagSprite from "@/assets/images/sprites/flagSprite42.png";
 import { useState } from "react";
+import FlagSprite from "@/assets/images/sprites/flagSprite42.png";
+import type { PilotProperties } from "@/types/ol";
 
 export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; airline: StaticAirline | null }) {
 	const data = feature.getProperties() as PilotProperties;
@@ -149,6 +149,46 @@ export function AirportOverlay({
 						<p>{short?.arr_traffic.traffic_count || 0}</p>
 					</div>
 				</div>
+			</div>
+			<div className="overlay-anchor"></div>
+		</div>
+	);
+}
+
+export function SectorOverlay({ cached, merged }: { cached: SimAwareTraconFeature | FIRFeature | null; merged: ControllerMerged | null }) {
+	const [activeController, setActiveController] = useState(null as string | null);
+
+	const controllers = merged?.controllers;
+
+	return (
+		<div className="overlay-wrapper">
+			{activeController && (
+				<div className="overlay-atis">
+					<div className="overlay-atis-item">
+						{controllers?.find((c) => c.callsign === activeController)?.atis?.join("\n") || "Currently unavailable"}
+					</div>
+				</div>
+			)}
+			{controllers && controllers.length > 0 && (
+				<div className="overlay-live controller" onPointerLeave={() => setActiveController(null)}>
+					{controllers?.map((c) => {
+						return (
+							<div key={c.callsign} className="overlay-live-item controller" onPointerEnter={() => setActiveController(c.callsign)}>
+								<div className="overlay-controller-color" style={{ backgroundColor: getControllerColor(c.facility) }}></div>
+								<div className="overlay-controller-callsign">{c.callsign}</div>
+								<div className="overlay-controller-frequency">{(c.frequency / 1000).toFixed(3)}</div>
+								<div className="overlay-controller-connections">{c.connections}</div>
+							</div>
+						);
+					})}
+				</div>
+			)}
+			<div className="overlay-main-wrapper">
+				<div className="overlay-title">
+					<p>{cached?.properties.name || "N/A"}</p>
+					<p>{cached?.properties.id || "N/A"}</p>
+				</div>
+				<div className="overlay-misc"></div>
 			</div>
 			<div className="overlay-anchor"></div>
 		</div>
