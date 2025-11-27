@@ -5,6 +5,21 @@
 	position: relative;
 	border: none;
 	user-select: none;
+	max-width: 350px;
+}
+
+.overlay-atis {
+	background: var(--color-red);
+	padding: 2px;
+	box-sizing: border-box;
+	box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.overlay-atis-item {
+	background: white;
+	padding: 2px;
+	box-sizing: border-box;
+	font-size: 10px;
 }
 
 .overlay-live {
@@ -32,6 +47,14 @@
 .overlay-live-item.controller {
 	justify-content: initial;
 	cursor: pointer;
+}
+
+.overlay-live-item.controller:hover {
+	background-color: var(--color-main-text);
+}
+
+.overlay-live-item.controller:hover * {
+	color: white;
 }
 
 .overlay-live-item span {
@@ -106,7 +129,7 @@
 	flex-flow: column;
 	gap: 5px;
 	margin-left: 5px;
-	margin-right: 1rem;
+	margin-right: auto;
 }
 
 .overlay-title p {
@@ -127,6 +150,7 @@
 	flex-flow: column;
 	gap: 5px;
 	height: 100%;
+	margin-left: 1rem;
 }
 
 .overlay-misc div {

@@ -5,6 +5,7 @@ import type { AirportShort, ControllerMerged } from "@sk/types/vatsim";
 import type { Point } from "ol/geom";
 import type { PilotProperties } from "@/types/ol";
 import FlagSprite from "@/assets/images/sprites/flagSprite42.png";
+import { useState } from "react";
 
 export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; airline: StaticAirline | null }) {
 	const data = feature.getProperties() as PilotProperties;
@@ -64,6 +65,21 @@ export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; ai
 	);
 }
 
+const getControllerColor = (facility: number): string => {
+	switch (facility) {
+		case -1:
+			return "rgb(255, 138, 43)";
+		case 2:
+			return "rgb(60, 177, 255)";
+		case 3:
+			return "rgb(11, 211, 167)";
+		case 4:
+			return "rgb(234, 89, 121)";
+		default:
+			return "rgb(255, 138, 43)";
+	}
+};
+
 export function AirportOverlay({
 	cached,
 	short,
@@ -73,31 +89,25 @@ export function AirportOverlay({
 	short: AirportShort | null;
 	merged: ControllerMerged | null;
 }) {
+	const [activeController, setActiveController] = useState(null as string | null);
+
 	const controllers = merged?.controllers;
 	const sortedControllers = controllers?.sort((a, b) => b.facility - a.facility);
 
-	const getControllerColor = (facility: number): string => {
-		switch (facility) {
-			case -1:
-				return "rgb(255, 138, 43)";
-			case 2:
-				return "rgb(60, 177, 255)";
-			case 3:
-				return "rgb(11, 211, 167)";
-			case 4:
-				return "rgb(234, 89, 121)";
-			default:
-				return "rgb(255, 138, 43)";
-		}
-	};
-
 	return (
 		<div className="overlay-wrapper">
+			{activeController && (
+				<div className="overlay-atis">
+					<div className="overlay-atis-item">
+						{sortedControllers?.find((c) => c.callsign === activeController)?.atis?.join("\n") || "Currently unavailable"}
+					</div>
+				</div>
+			)}
 			{sortedControllers && sortedControllers.length > 0 && (
-				<div className="overlay-live controller">
+				<div className="overlay-live controller" onPointerLeave={() => setActiveController(null)}>
 					{sortedControllers?.map((c) => {
 						return (
-							<div key={c.callsign} className="overlay-live-item controller">
+							<div key={c.callsign} className="overlay-live-item controller" onPointerEnter={() => setActiveController(c.callsign)}>
 								<div className="overlay-controller-color" style={{ backgroundColor: getControllerColor(c.facility) }}></div>
 								<div className="overlay-controller-callsign">{c.callsign}</div>
 								<div className="overlay-controller-frequency">{(c.frequency / 1000).toFixed(3)}</div>

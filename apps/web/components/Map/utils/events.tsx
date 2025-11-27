@@ -108,7 +108,6 @@ export async function onClick(evt: MapBrowserEvent): Promise<void> {
 
 async function createOverlay(feature: Feature<Point>): Promise<Overlay> {
 	const element = document.createElement("div");
-	element.style.zIndex = "1000";
 	const root = createRoot(element);
 	const type = feature.get("type");
 
