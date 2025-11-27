@@ -10,7 +10,7 @@ services:
     volumes:
       - timescaledb_data:/var/lib/postgresql/data
     networks:
-      - backend
+      - sr24_backend
 
   redis:
     image: redis:latest
@@ -20,7 +20,7 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - backend
+      - sr24_backend
 
   web:
     build:
@@ -33,9 +33,13 @@ services:
     restart: always
     environment:
       NODE_ENV: production
+      HOST: 0.0.0.0
+    depends_on:
+    - timescaledb
+    - redis
     networks:
       - traefik_proxy
-      - backend
+      - sr24_backend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.nextjs.rule=Host(`radar.skruellex.com`)"
@@ -59,9 +63,12 @@ services:
       POSTGRES_PORT: 5432
       REDIS_HOST: redis
       REDIS_PORT: 6379
+    depends_on:
+    - timescaledb
+    - redis
     networks:
       - traefik_proxy
-      - backend
+      - sr24_backend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`api.radar.skruellex.com`)"
@@ -80,9 +87,12 @@ services:
       WEBSOCKET_PORT: 3002
       REDIS_HOST: redis
       REDIS_PORT: 6379
+    depends_on:
+    - timescaledb
+    - redis
     networks:
       - traefik_proxy
-      - backend
+      - sr24_backend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.ws.rule=Host(`ws.radar.skruellex.com`)"
@@ -105,8 +115,11 @@ services:
       POSTGRES_PORT: 5432
       REDIS_HOST: redis
       REDIS_PORT: 6379
+    depends_on:
+    - timescaledb
+    - redis
     networks:
-      - backend
+      - sr24_backend
     labels:
       - "traefik.enable=false"
 
@@ -125,15 +138,18 @@ services:
       POSTGRES_PORT: 5432
       REDIS_HOST: redis
       REDIS_PORT: 6379
+    depends_on:
+    - timescaledb
+    - redis
     networks:
-      - backend
+      - sr24_backend
     labels:
       - "traefik.enable=false"
 
 networks:
   traefik_proxy:
     external: true
-  backend:
+  sr24_backend:
     driver: bridge
 
 volumes:
