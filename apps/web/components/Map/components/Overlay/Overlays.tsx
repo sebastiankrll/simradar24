@@ -59,6 +59,7 @@ export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; ai
 					<div className="overlay-pilot-frequency">{(data.frequency / 1000).toFixed(3)}</div>
 				</div>
 			</div>
+			<div className="overlay-anchor"></div>
 		</div>
 	);
 }
@@ -139,6 +140,7 @@ export function AirportOverlay({
 					</div>
 				</div>
 			</div>
+			<div className="overlay-anchor"></div>
 		</div>
 	);
 }

@@ -1,6 +1,5 @@
-import { type Feature, type Map as OlMap, Overlay, type View } from "ol";
+import { type Feature, MapBrowserEvent, Overlay, type View } from "ol";
 import type { Point } from "ol/geom";
-import type { Pixel } from "ol/pixel";
 import { toLonLat } from "ol/proj";
 import { createRoot, type Root } from "react-dom/client";
 import { getAirportShort, getCachedAirline, getCachedAirport, getControllerMerged } from "@/storage/cache";
@@ -8,7 +7,7 @@ import { AirportOverlay, PilotOverlay } from "../components/Overlay/Overlays";
 import { firSource, setFeatures, trackSource, traconSource } from "./dataLayers";
 import { initTrackFeatures } from "./trackFeatures";
 
-export function onMoveEnd(evt: { map: OlMap }): void {
+export function onMoveEnd(evt: MapBrowserEvent): void {
 	const map = evt.map;
 	const view: View = map.getView();
 	const extent = view.calculateExtent();
@@ -25,12 +24,18 @@ let clickedOverlay: Overlay | null = null;
 let hoveredOverlay: Overlay | null = null;
 let hovering = false;
 
-export async function onPointerMove(evt: { pixel: Pixel; map: OlMap }): Promise<void> {
+export async function onPointerMove(evt: MapBrowserEvent): Promise<void> {
 	if (hovering) return;
 	hovering = true;
 
 	const map = evt.map;
 	const pixel = evt.pixel;
+
+	if (!(evt.originalEvent.target instanceof HTMLCanvasElement)) {
+		map.getTargetElement().style.cursor = "";
+		hovering = false;
+		return;
+	}
 
 	const feature = map.forEachFeatureAtPixel(pixel, (f) => f, {
 		layerFilter: (layer) => layer.get("type") === "airport_main" || layer.get("type") === "pilot_main" || layer.get("type") === "controller_label",
@@ -63,7 +68,7 @@ export async function onPointerMove(evt: { pixel: Pixel; map: OlMap }): Promise<
 	hovering = false;
 }
 
-export async function onClick(evt: { pixel: Pixel; map: OlMap }): Promise<void> {
+export async function onClick(evt: MapBrowserEvent): Promise<void> {
 	const map = evt.map;
 	const pixel = evt.pixel;
 
@@ -103,6 +108,7 @@ export async function onClick(evt: { pixel: Pixel; map: OlMap }): Promise<void> 
 
 async function createOverlay(feature: Feature<Point>): Promise<Overlay> {
 	const element = document.createElement("div");
+	element.style.zIndex = "1000";
 	const root = createRoot(element);
 	const type = feature.get("type");
 
@@ -136,6 +142,7 @@ async function createOverlay(feature: Feature<Point>): Promise<Overlay> {
 		position: feature.getGeometry()?.getCoordinates(),
 		positioning: "bottom-center",
 		offset: [0, -25],
+		insertFirst: false,
 	});
 	overlay.set("root", root);
 

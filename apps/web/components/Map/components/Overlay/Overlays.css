@@ -12,6 +12,7 @@
 	gap: 2px;
 	padding: 2px;
 	background: var(--color-red);
+	box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .overlay-live.pilot {
@@ -24,12 +25,13 @@
 	background-color: white;
 	font-size: 12px;
 	justify-content: space-between;
-    align-items: center;
+	align-items: center;
 	padding: 0px 4px;
 }
 
 .overlay-live-item.controller {
-    justify-content: initial;
+	justify-content: initial;
+	cursor: pointer;
 }
 
 .overlay-live-item span {
@@ -37,24 +39,24 @@
 }
 
 .overlay-controller-color {
-    height: 8px;
-    width: 8px;
-    border-radius: 50%;
-    margin-right: 5px;
+	height: 8px;
+	width: 8px;
+	border-radius: 50%;
+	margin-right: 5px;
 }
 
 .overlay-controller-callsign {
-    font-weight: 700;
-    margin-right: auto;
+	font-weight: 700;
+	margin-right: auto;
 }
 
 .overlay-controller-frequency {
-    font-weight: 700;
+	font-weight: 700;
 }
 
 .overlay-controller-connections {
-    width: 25px;
-    text-align: end;
+	width: 25px;
+	text-align: end;
 }
 
 .overlay-main-wrapper {
@@ -63,6 +65,7 @@
 	height: 2.5rem;
 	padding: 2px;
 	box-sizing: border-box;
+	box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .overlay-main-wrapper::after {
@@ -83,13 +86,13 @@
 	align-items: center;
 	justify-content: center;
 	height: 100%;
-    aspect-ratio: 1/1;
-    background-color: white;
+	aspect-ratio: 1 / 1;
+	background-color: white;
 }
 
 .overlay-icon.flag {
-    padding: 0px 4px;
-    box-sizing: border-box;
+	padding: 0px 4px;
+	box-sizing: border-box;
 }
 
 .overlay-icon p {
@@ -101,7 +104,7 @@
 .overlay-title {
 	display: flex;
 	flex-flow: column;
-    gap: 5px;
+	gap: 5px;
 	margin-left: 5px;
 	margin-right: 1rem;
 }
@@ -122,7 +125,7 @@
 .overlay-misc {
 	display: flex;
 	flex-flow: column;
-    gap: 5px;
+	gap: 5px;
 	height: 100%;
 }
 
@@ -147,20 +150,29 @@
 }
 
 .overlay-misc .overlay-airport-traffic {
-    gap: 2px;
-    height: 50%;
-    overflow: hidden;
-    width: fit-content;
-    padding-right: 4px;
+	gap: 2px;
+	height: 50%;
+	overflow: hidden;
+	width: fit-content;
+	padding-right: 4px;
 }
 
 .overlay-airport-traffic p {
-    color: white;
-    width: 16px;
-    text-align: end;
+	color: white;
+	width: 16px;
+	text-align: end;
 }
 
 .overlay-airport-traffic svg {
-    fill: white;
-    width: 18px;
+	fill: white;
+	width: 18px;
+}
+
+.overlay-anchor {
+	position: absolute;
+	width: 40px;
+	height: 20px;
+	bottom: -20px;
+	left: 50%;
+	transform: translate(-50%);
 }
