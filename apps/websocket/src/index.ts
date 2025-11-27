@@ -1,11 +1,11 @@
 import { createGzip } from "node:zlib";
 import { rdsSubWsDelta } from "@sk/db/redis";
 import type { WsDelta } from "@sk/types/vatsim";
-import { WebSocketServer } from "ws";
+import { WebSocket, WebSocketServer } from "ws";
 
 const wss = new WebSocketServer({
 	port: Number(process.env.WEBSOCKET_PORT) || 3002,
-    host: process.env.WEBSOCKET_HOST || '0.0.0.0',
+	host: process.env.WEBSOCKET_HOST || "0.0.0.0",
 	perMessageDeflate: false,
 });
 
