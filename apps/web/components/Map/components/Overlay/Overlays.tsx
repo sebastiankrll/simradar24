@@ -46,13 +46,15 @@ export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; ai
 							color: airline?.font ?? "var(--color-green)",
 						}}
 					>
-						{airline?.iata}
+						{airline?.iata || "?"}
 					</p>
 				</div>
-				<div className="overlay-main">
-					<div className="overlay-title">{data.callsign}</div>
+				<div className="overlay-title">
+					<p>{data.callsign}</p>
+					<p>{data.route}</p>
+				</div>
+				<div className="overlay-misc">
 					<div className="overlay-pilot-ac-type">{data.aircraft}</div>
-					<div className="overlay-subtitle">{data.route}</div>
 					<div className="overlay-pilot-frequency">{(data.frequency / 1000).toFixed(3)}</div>
 				</div>
 			</div>

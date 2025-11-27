@@ -34,10 +34,8 @@
 .overlay-main-wrapper {
 	display: flex;
 	background: var(--color-red);
-	align-items: center;
-	height: 3rem;
+	height: 2.5rem;
 	padding: 2px;
-	gap: 10px;
 	box-sizing: border-box;
 }
 
@@ -64,48 +62,54 @@
 
 .overlay-icon p {
 	font-weight: 800;
-	font-size: 1.5rem;
-	line-height: 1.5rem;
-}
-
-.overlay-main {
-	display: grid;
-	grid-template-columns: 1fr auto;
-	grid-template-rows: auto auto;
-	width: 100%;
-    gap: 6px 2rem;
-	align-items: center;
-	justify-content: center;
-	box-sizing: border-box;
-	margin-right: 10px;
+	font-size: 18px;
+	line-height: 18px;
 }
 
 .overlay-title {
-	color: white;
-	font-weight: 700;
-	line-height: 16px;
-	font-size: 16px;
+	display: flex;
+	flex-flow: column;
+    gap: 5px;
+    margin-left: 5px;
+    margin-right: 1.5rem;
 }
 
-.overlay-subtitle {
+.overlay-title p {
 	color: white;
+	font-weight: 700;
+	line-height: 18px;
+	font-size: 18px;
+}
+
+.overlay-title p:last-child {
 	font-size: 10px;
-	line-height: 10px;
+    line-height: 10px;
+    font-weight: 500;
+}
+
+.overlay-misc {
+    display: flex;
+    flex-flow: column;
+    justify-content: space-between;
+    height: 100%;
+}
+
+.overlay-misc div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+	line-height: 12px;
+    padding: 2px 0px;
+    width: 2.8rem;
 }
 
 .overlay-pilot-ac-type {
-	background: white;
-	font-size: 12px;
-	line-height: 12px;
-	font-weight: 700;
-	text-align: center;
-	padding: 2px 5px;
-	width: fit-content;
+	background: var(--color-main-text);
+    color: white;
+    font-weight: 700;
 }
 
 .overlay-pilot-frequency {
-	color: white;
-	font-size: 12px;
-	line-height: 12px;
-	font-weight: 700;
+    color: white;
 }
