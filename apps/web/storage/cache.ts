@@ -26,7 +26,7 @@ export async function initData(setStatus?: StatusSetter): Promise<void> {
 	await dxInitDatabases();
 	setStatus?.((prev) => ({ ...prev, indexedDB: true }));
 
-	const data = (await fetch(`${BASE_URL}/api/data/init`).then((res) => res.json())) as WsAll;
+	const data = (await fetch(`${BASE_URL}/data/init`).then((res) => res.json())) as WsAll;
 	setStatus?.((prev) => ({ ...prev, initData: true }));
 
 	await initAirportFeatures();
@@ -117,5 +117,5 @@ export async function getCachedFir(id: string): Promise<FIRFeature | null> {
 }
 
 export async function fetchTrackPoints(id: string): Promise<TrackPoint[]> {
-	return await fetch(`${BASE_URL}/api/data/track/${id}`).then((res) => res.json());
+	return await fetch(`${BASE_URL}/data/track/${id}`).then((res) => res.json());
 }

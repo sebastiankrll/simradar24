@@ -30,7 +30,7 @@ db.version(1).stores({
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export async function dxInitDatabases(): Promise<void> {
-	const serverVersions = (await fetch(`${BASE_URL}/api/static/versions`).then((res) => res.json())) as StaticVersions;
+	const serverVersions = (await fetch(`${BASE_URL}/static/versions`).then((res) => res.json())) as StaticVersions;
 	const localVersions: StaticVersions = JSON.parse(localStorage.getItem("databaseVersions") || "{}");
 
 	if (serverVersions.airportsVersion !== localVersions.airportsVersion) {
@@ -67,7 +67,7 @@ export async function dxInitDatabases(): Promise<void> {
 }
 
 async function fetchStaticData(type: string): Promise<any> {
-	const response = await fetch(`${BASE_URL}/api/static/${type}`);
+	const response = await fetch(`${BASE_URL}/static/${type}`);
 	const data = await response.json();
 
 	return data;
