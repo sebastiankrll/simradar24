@@ -1,11 +1,21 @@
-import { Line, LineChart } from "recharts";
+import type { TrackPoint } from "@sk/types/vatsim";
+import { Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-const data = [
-	{ name: "Page A", uv: 4000, pv: 2400, amt: 2400 },
-	{ name: "Page B", uv: 0, pv: 1398, amt: 2210 },
-];
+export function PilotCharts({
+	trackPoints,
+	openSection,
+	ref,
+}: {
+	trackPoints: TrackPoint[];
+	openSection: string | null;
+	ref: React.Ref<HTMLDivElement>;
+}) {
+	const data = trackPoints.map((point, _index) => ({
+		name: new Date(point.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+		altitude: point.altitude_ms,
+		speed: point.groundspeed,
+	}));
 
-export function PilotCharts({ openSection, ref }: { openSection: string | null; ref: React.Ref<HTMLDivElement> }) {
 	return (
 		<div ref={ref} className={`panel-sub-container accordion${openSection === "charts" ? " open" : ""}`}>
 			<div className="panel-section-title">
@@ -19,9 +29,17 @@ export function PilotCharts({ openSection, ref }: { openSection: string | null; 
 				</svg>
 			</div>
 			<div className="panel-section-content">
-				<LineChart style={{ width: "100%", aspectRatio: 1.8 }} responsive data={data}>
-					<Line dataKey="uv" />
-				</LineChart>
+				<ResponsiveContainer width="100%" aspect={1.618} maxHeight={500}>
+					<LineChart data={data}>
+						<YAxis yAxisId="alt" orientation="left" fontSize="10px" width={33} tickSize={4} tickLine={false} axisLine={false} />
+						<YAxis yAxisId="spd" orientation="right" fontSize="10px" width={23} tickSize={4} tickLine={false} axisLine={false} />
+						<XAxis dataKey="name" tick={false} mirror={true} axisLine={false} />
+						<Line type="monotone" dataKey="altitude" yAxisId="alt" stroke="var(--color-red)" dot={false} name="Barometric Altitude (ft)" />
+						<Line type="monotone" dataKey="speed" yAxisId="spd" stroke="var(--color-green)" dot={false} name="Groundspeed (kt)" />
+						<Legend verticalAlign="bottom" height={10} iconSize={10} wrapperStyle={{ fontSize: "10px" }} />
+						<Tooltip wrapperStyle={{ fontSize: "10px" }} />
+					</LineChart>
+				</ResponsiveContainer>
 			</div>
 		</div>
 	);

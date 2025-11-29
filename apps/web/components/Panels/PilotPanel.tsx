@@ -1,9 +1,9 @@
 "use client";
 
 import type { StaticAircraft, StaticAirline, StaticAirport } from "@sk/types/db";
-import type { PilotLong, WsDelta } from "@sk/types/vatsim";
+import type { PilotLong, TrackPoint, WsDelta } from "@sk/types/vatsim";
 import { useEffect, useRef, useState } from "react";
-import { getCachedAirline, getCachedAirport } from "@/storage/cache";
+import { fetchTrackPoints, getCachedAirline, getCachedAirport } from "@/storage/cache";
 import "./PilotPanel.css";
 import { PilotAircraft } from "./components/PilotAircraft";
 import { PilotFlightplan } from "./components/PilotFlightplan";
@@ -19,6 +19,7 @@ export interface PilotPanelFetchData {
 	airline: StaticAirline | null;
 	departure: StaticAirport | null;
 	arrival: StaticAirport | null;
+	trackPoints: TrackPoint[];
 }
 type AccordionSection = "info" | "charts" | "pilot" | null;
 
@@ -30,6 +31,7 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 		airline: null,
 		departure: null,
 		arrival: null,
+		trackPoints: [],
 	});
 	const callsignNumber = pilot.callsign.slice(3);
 	const flightNumber = data.airline?.iata ? data.airline.iata + callsignNumber : pilot?.callsign;
@@ -67,8 +69,9 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 			getCachedAirline(airlineCode || ""),
 			getCachedAirport(pilot.flight_plan?.departure.icao || ""),
 			getCachedAirport(pilot.flight_plan?.arrival.icao || ""),
-		]).then(([airline, departure, arrival]) => {
-			setData({ airline, departure, arrival });
+			fetchTrackPoints(pilot.id),
+		]).then(([airline, departure, arrival, trackPoints]) => {
+			setData({ airline, departure, arrival, trackPoints });
 		});
 	}, [pilot]);
 
@@ -147,7 +150,7 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 						></path>
 					</svg>
 				</button>
-				<PilotCharts openSection={openSection} ref={chartsRef} />
+				<PilotCharts trackPoints={data.trackPoints} openSection={openSection} ref={chartsRef} />
 				<PilotTelemetry pilot={pilot} />
 				<button className={`panel-container-header${openSection === "pilot" ? " open" : ""}`} type="button" onClick={() => toggleSection("pilot")}>
 					<p>Pilot information</p>
