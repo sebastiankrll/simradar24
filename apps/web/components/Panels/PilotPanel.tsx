@@ -19,7 +19,6 @@ export interface PilotPanelFetchData {
 	airline: StaticAirline | null;
 	departure: StaticAirport | null;
 	arrival: StaticAirport | null;
-	trackPoints: TrackPoint[];
 }
 type AccordionSection = "info" | "charts" | "pilot" | null;
 
@@ -27,11 +26,11 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: PilotLong; aircraft: StaticAircraft | null }) {
 	const [pilot, setPilot] = useState<PilotLong>(initialPilot);
+	const [trackPoints, setTrackPoints] = useState<TrackPoint[]>([]);
 	const [data, setData] = useState<PilotPanelFetchData>({
 		airline: null,
 		departure: null,
 		arrival: null,
-		trackPoints: [],
 	});
 	const callsignNumber = pilot.callsign.slice(3);
 	const flightNumber = data.airline?.iata ? data.airline.iata + callsignNumber : pilot?.callsign;
@@ -71,7 +70,8 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 			getCachedAirport(pilot.flight_plan?.arrival.icao || ""),
 			fetchTrackPoints(pilot.id),
 		]).then(([airline, departure, arrival, trackPoints]) => {
-			setData({ airline, departure, arrival, trackPoints });
+			setData({ airline, departure, arrival });
+			setTrackPoints(trackPoints);
 		});
 	}, [pilot]);
 
@@ -93,6 +93,19 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 				if (res.ok) {
 					const updatedPilot: PilotLong = await res.json();
 					setPilot(updatedPilot);
+
+					const newTrackpoint: TrackPoint = {
+						id: updatedPilot.id,
+						latitude: updatedPilot.latitude,
+						longitude: updatedPilot.longitude,
+						altitude_agl: updatedPilot.altitude_agl,
+						altitude_ms: updatedPilot.altitude_ms,
+						groundspeed: updatedPilot.groundspeed,
+						vertical_speed: updatedPilot.vertical_speed,
+						heading: updatedPilot.heading,
+						timestamp: updatedPilot.timestamp,
+					};
+					setTrackPoints((prev) => [...prev, newTrackpoint]);
 				}
 			} catch (error) {
 				console.error("Failed to fetch pilot data:", error);
@@ -150,7 +163,7 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 						></path>
 					</svg>
 				</button>
-				<PilotCharts trackPoints={data.trackPoints} openSection={openSection} ref={chartsRef} />
+				<PilotCharts trackPoints={trackPoints} openSection={openSection} ref={chartsRef} />
 				<PilotTelemetry pilot={pilot} />
 				<button className={`panel-container-header${openSection === "pilot" ? " open" : ""}`} type="button" onClick={() => toggleSection("pilot")}>
 					<p>Pilot information</p>
