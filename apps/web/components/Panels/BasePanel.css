@@ -122,6 +122,21 @@
 .panel-container.main {
 	padding: 0rem;
 	flex-flow: column;
+	overflow-y: scroll;
+}
+
+.panel-container.main::-webkit-scrollbar {
+	width: 5px;
+}
+
+.panel-container.main::-webkit-scrollbar-track {
+	background: var(--color-light-grey);
+	border: 1px solid var(--color-border);
+	box-sizing: border-box;
+}
+
+.panel-container.main::-webkit-scrollbar-thumb {
+	background-color: var(--color-green);
 }
 
 .panel-container-header {
