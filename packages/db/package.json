@@ -1,31 +1,31 @@
 {
-	"name": "@sk/db",
-	"type": "module",
-	"version": "1.0.0",
-	"exports": {
-		"./pg": {
-			"types": "./src/pg.ts",
-			"default": "./dist/pg.js"
-		},
-		"./redis": {
-			"types": "./src/redis.ts",
-			"default": "./dist/redis.js"
-		}
-	},
-	"scripts": {
-		"dev": "tsc --watch",
-		"build": "tsc",
-		"format-and-lint": "biome check .",
-		"format-and-lint:fix": "biome check . --write"
-	},
-	"devDependencies": {
-		"@sk/typescript-config": "*",
-		"@types/pg": "^8.15.6",
-		"typescript": "^5.9.3"
-	},
-	"dependencies": {
-		"@sk/types": "*",
-		"ioredis": "^5.8.2",
-		"pg": "^8.16.3"
-	}
+    "name": "@sk/db",
+    "type": "module",
+    "version": "1.0.0",
+    "exports": {
+        "./pg": {
+            "types": "./src/pg.ts",
+            "default": "./dist/pg.js"
+        },
+        "./redis": {
+            "types": "./src/redis.ts",
+            "default": "./dist/redis.js"
+        }
+    },
+    "scripts": {
+        "dev": "tsc --watch",
+        "build": "tsc",
+        "format-and-lint": "biome check .",
+        "format-and-lint:fix": "biome check . --write"
+    },
+    "devDependencies": {
+        "@sk/typescript-config": "*",
+        "@types/pg": "^8.15.6",
+        "typescript": "^5.9.3"
+    },
+    "dependencies": {
+        "@sk/types": "*",
+        "ioredis": "^5.8.2",
+        "pg": "^8.16.3"
+    }
 }

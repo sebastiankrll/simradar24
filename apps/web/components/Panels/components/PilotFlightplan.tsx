@@ -3,9 +3,6 @@ import { haversineDistance } from "@/utils/helpers";
 import type { PilotPanelFetchData } from "../PilotPanel";
 
 export function PilotFlightplan({ pilot, data }: { pilot: PilotLong; data: PilotPanelFetchData }) {
-	const callsignNumber = pilot.callsign.slice(3);
-	const flightNumber = data.airline?.iata ? data.airline.iata + callsignNumber : pilot?.callsign;
-
 	const distKm =
 		data.departure && data.arrival
 			? haversineDistance([data.departure.latitude, data.departure.longitude], [data.arrival.latitude, data.arrival.longitude])

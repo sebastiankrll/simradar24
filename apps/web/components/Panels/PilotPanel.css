@@ -165,5 +165,10 @@
 
 #panel-pilot-aircraft-country {
 	height: 14px;
-    width: 21px;
+	width: 21px;
+}
+
+#panel-pilot-telemetry {
+	grid-template-columns: repeat(2, 1fr);
+	grid-template-rows: repeat(3, 1fr);
 }
