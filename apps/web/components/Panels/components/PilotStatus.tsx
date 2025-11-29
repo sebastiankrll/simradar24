@@ -6,6 +6,19 @@ import { PilotProgress } from "./PilotProgress";
 import { PilotTimes } from "./PilotTimes";
 
 export function PilotStatus({ pilot, data }: { pilot: PilotLong; data: PilotPanelFetchData }) {
+	const getSpriteOffset = (status: string | undefined) => {
+		switch (status) {
+			case "Climb":
+				return -30;
+			case "Cruise":
+				return -60;
+			case "Descent":
+				return -90;
+			default:
+				return 0;
+		}
+	};
+
 	return (
 		<div className="panel-container" id="panel-pilot-status">
 			<div id="panel-pilot-route">
@@ -15,7 +28,7 @@ export function PilotStatus({ pilot, data }: { pilot: PilotLong; data: PilotPane
 					id="panel-pilot-route-icon"
 					style={{
 						backgroundImage: `url(${flightStatusSprite.src})`,
-						// backgroundPositionY: flightStatus.imgOffset + "px",
+						backgroundPositionY: `${getSpriteOffset(pilot.times?.state)}px`,
 					}}
 				></div>
 				<PilotAirport airport={data.arrival} />
