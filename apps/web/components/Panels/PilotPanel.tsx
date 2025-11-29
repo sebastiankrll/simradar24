@@ -11,6 +11,7 @@ import { PilotStatus } from "./components/PilotStatus";
 import { PilotTitle } from "./components/PilotTitle";
 import { PilotCharts } from "./components/PilotCharts";
 import { PilotTelemetry } from "./components/PilotTelemetry";
+import { PilotUser } from "./components/PilotUser";
 
 export interface PilotPanelFetchData {
 	airline: StaticAirline | null;
@@ -82,6 +83,18 @@ export default function PilotPanel({ pilot, aircraft }: { pilot: PilotLong; airc
 				</button>
 				<PilotCharts />
 				<PilotTelemetry pilot={pilot} />
+				<button className="panel-container-header" type="button" onClick={() => {}}>
+					<p>Pilot information</p>
+					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+						<title>Toggle more information</title>
+						<path
+							fillRule="evenodd"
+							d="M11.842 18 .237 7.26a.686.686 0 0 1 0-1.038.8.8 0 0 1 1.105 0L11.842 16l10.816-9.704a.8.8 0 0 1 1.105 0 .686.686 0 0 1 0 1.037z"
+							clipRule="evenodd"
+						></path>
+					</svg>
+				</button>
+				<PilotUser pilot={pilot} />
 			</div>
 			<div className="panel-navigation">
 				<button className={`panel-navigation-button`} type="button">
