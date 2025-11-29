@@ -12,6 +12,7 @@ import { PilotTitle } from "./components/PilotTitle";
 import { PilotCharts } from "./components/PilotCharts";
 import { PilotTelemetry } from "./components/PilotTelemetry";
 import { PilotUser } from "./components/PilotUser";
+import { PilotMisc } from "./components/PilotMisc";
 
 export interface PilotPanelFetchData {
 	airline: StaticAirline | null;
@@ -95,6 +96,7 @@ export default function PilotPanel({ pilot, aircraft }: { pilot: PilotLong; airc
 					</svg>
 				</button>
 				<PilotUser pilot={pilot} />
+				<PilotMisc pilot={pilot} />
 			</div>
 			<div className="panel-navigation">
 				<button className={`panel-navigation-button`} type="button">

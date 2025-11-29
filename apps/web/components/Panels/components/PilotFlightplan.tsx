@@ -44,7 +44,7 @@ export function PilotFlightplan({ pilot, data }: { pilot: PilotLong; data: Pilot
 						<p>{enrouteTime}</p>
 					</div>
 				</div>
-				<div className="panel-data-separator">Additional flightplan information</div>
+				{/* <div className="panel-data-separator">Additional flightplan information</div> */}
 				<div className="panel-sub-container" id="panel-pilot-flightplan">
 					<div className="panel-data-item">
 						<p>Flight plan</p>
