@@ -48,6 +48,17 @@
 	grid-template-columns: 2rem repeat(3, 1fr);
 }
 
+.dashboard-table-button {
+	text-align: start;
+    width: fit-content;
+    font-size: 12px;
+}
+
+.dashboard-table-button:hover {
+	background: var(--color-main-text);
+    color: white;
+}
+
 .dashboard-table-header {
 	font-weight: 700;
 }

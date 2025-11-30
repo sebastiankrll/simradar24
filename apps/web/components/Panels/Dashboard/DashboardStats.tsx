@@ -1,8 +1,10 @@
 import type { DashboardStats as Stats } from "@sk/types/vatsim";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Fragment } from "react/jsx-runtime";
 
 export function DashboardStats({ stats }: { stats: Stats }) {
+	const router = useRouter();
 	const [openTab, setOpenTab] = useState<"airports" | "routes" | "aircrafts" | "controllers">("airports");
 
 	return (
@@ -41,7 +43,7 @@ export function DashboardStats({ stats }: { stats: Stats }) {
 						Controllers
 					</button>
 				</div>
-				{openTab === "airports" && <AirportStats stats={stats} />}
+				{openTab === "airports" && <AirportStats stats={stats} router={router} />}
 				{openTab === "routes" && <RouteStats stats={stats} />}
 				{openTab === "aircrafts" && <AircraftStats stats={stats} />}
 				{openTab === "controllers" && <ControllerStats stats={stats} />}
@@ -50,7 +52,7 @@ export function DashboardStats({ stats }: { stats: Stats }) {
 	);
 }
 
-function AirportStats({ stats }: { stats: Stats }) {
+function AirportStats({ stats, router }: { stats: Stats; router: ReturnType<typeof useRouter> }) {
 	return (
 		<>
 			<div className="panel-data-separator">Busiest airports</div>
@@ -62,7 +64,9 @@ function AirportStats({ stats }: { stats: Stats }) {
 				{stats.busiestAirports.map((airport, i) => (
 					<Fragment key={airport.icao}>
 						<p>{i + 1}</p>
-						<p>{airport.icao}</p>
+						<button className="dashboard-table-button" onClick={() => router.push(`/airport/${airport.icao}`)} type="button">
+							{airport.icao}
+						</button>
 						<p>{airport.departures}</p>
 						<p>{airport.arrivals}</p>
 					</Fragment>
@@ -77,7 +81,9 @@ function AirportStats({ stats }: { stats: Stats }) {
 				{stats.quietestAirports.map((airport, i) => (
 					<Fragment key={airport.icao}>
 						<p>{i + 1}</p>
-						<p>{airport.icao}</p>
+						<button className="dashboard-table-button" onClick={() => router.push(`/airport/${airport.icao}`)} type="button">
+							{airport.icao}
+						</button>
 						<p>{airport.departures}</p>
 						<p>{airport.arrivals}</p>
 					</Fragment>
