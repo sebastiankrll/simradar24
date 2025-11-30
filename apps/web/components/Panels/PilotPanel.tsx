@@ -78,17 +78,17 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 	}, [openSection]);
 
 	useEffect(() => {
-		const airlineCode = pilot.callsign.slice(0, 3).toUpperCase();
+		const airlineCode = initialPilot.callsign.slice(0, 3).toUpperCase();
 		Promise.all([
 			getCachedAirline(airlineCode || ""),
-			getCachedAirport(pilot.flight_plan?.departure.icao || ""),
-			getCachedAirport(pilot.flight_plan?.arrival.icao || ""),
-			fetchTrackPoints(pilot.id),
+			getCachedAirport(initialPilot.flight_plan?.departure.icao || ""),
+			getCachedAirport(initialPilot.flight_plan?.arrival.icao || ""),
+			fetchTrackPoints(initialPilot.id),
 		]).then(([airline, departure, arrival, trackPoints]) => {
 			setData({ airline, departure, arrival });
 			setTrackPoints(trackPoints);
 		});
-	}, [pilot]);
+	}, [initialPilot]);
 
 	useEffect(() => {
 		const onDelta = (delta: WsDelta) => {
@@ -99,6 +99,19 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 					...prev,
 					...updatedPilot,
 				}));
+
+				const newTrackpoint: TrackPoint = {
+					id: updatedPilot.id,
+					latitude: updatedPilot.latitude,
+					longitude: updatedPilot.longitude,
+					altitude_agl: updatedPilot.altitude_agl,
+					altitude_ms: updatedPilot.altitude_ms,
+					groundspeed: updatedPilot.groundspeed,
+					vertical_speed: updatedPilot.vertical_speed,
+					heading: updatedPilot.heading,
+					timestamp: new Date(),
+				};
+				setTrackPoints((prev) => [...prev, newTrackpoint]);
 			}
 		};
 
@@ -108,19 +121,6 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 				if (res.ok) {
 					const updatedPilot: PilotLong = await res.json();
 					setPilot(updatedPilot);
-
-					const newTrackpoint: TrackPoint = {
-						id: updatedPilot.id,
-						latitude: updatedPilot.latitude,
-						longitude: updatedPilot.longitude,
-						altitude_agl: updatedPilot.altitude_agl,
-						altitude_ms: updatedPilot.altitude_ms,
-						groundspeed: updatedPilot.groundspeed,
-						vertical_speed: updatedPilot.vertical_speed,
-						heading: updatedPilot.heading,
-						timestamp: updatedPilot.timestamp,
-					};
-					setTrackPoints((prev) => [...prev, newTrackpoint]);
 				}
 			} catch (error) {
 				console.error("Failed to fetch pilot data:", error);

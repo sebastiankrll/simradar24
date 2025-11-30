@@ -8,76 +8,106 @@ import type { AirportProperties } from "@/types/ol";
 import { airportMainSource } from "./dataLayers";
 
 interface RBushAirportFeature {
-	minX: number;
-	minY: number;
-	maxX: number;
-	maxY: number;
-	feature: Feature<Point>;
-	size: string;
+    minX: number;
+    minY: number;
+    maxX: number;
+    maxY: number;
+    feature: Feature<Point>;
+    size: string;
 }
 
 const airportRBush = new RBush<RBushAirportFeature>();
 
 export async function initAirportFeatures(): Promise<void> {
-	const airports = await dxGetAllAirports();
+    const airports = await dxGetAllAirports();
 
-	const items: RBushAirportFeature[] = airports.map((a) => {
-		const feature = new Feature({
-			geometry: new Point(fromLonLat([a.longitude, a.latitude])),
-		});
-		const props: AirportProperties = {
-			clicked: false,
-			hovered: false,
-			size: getAirportSize(a.size),
-			type: "airport",
-		};
-		feature.setProperties(props);
-		feature.setId(`airport_${a.id}`);
+    const items: RBushAirportFeature[] = airports.map((a) => {
+        const feature = new Feature({
+            geometry: new Point(fromLonLat([a.longitude, a.latitude])),
+        });
+        const props: AirportProperties = {
+            clicked: false,
+            hovered: false,
+            size: getAirportSize(a.size),
+            type: "airport",
+        };
+        feature.setProperties(props);
+        feature.setId(`airport_${a.id}`);
 
-		return {
-			minX: a.longitude,
-			minY: a.latitude,
-			maxX: a.longitude,
-			maxY: a.latitude,
-			size: a.size,
-			feature: feature,
-		};
-	});
-	airportRBush.load(items);
+        return {
+            minX: a.longitude,
+            minY: a.latitude,
+            maxX: a.longitude,
+            maxY: a.latitude,
+            size: a.size,
+            feature: feature,
+        };
+    });
+    airportRBush.load(items);
 }
 
 export function getAirportSize(size: string): "s" | "m" | "l" {
-	switch (size) {
-		case "small_airport":
-		case "heliport":
-			return "s";
-		case "medium_airport":
-			return "m";
-		case "large_airport":
-			return "l";
-		default:
-			return "s";
-	}
+    switch (size) {
+        case "small_airport":
+        case "heliport":
+            return "s";
+        case "medium_airport":
+            return "m";
+        case "large_airport":
+            return "l";
+        default:
+            return "s";
+    }
+}
+
+const highlightedAirports: Set<string> = new Set();
+
+export function addHighlightedAirport(airportId: string): void {
+    highlightedAirports.add(airportId);
+}
+
+export function removeHighlightedAirport(airportId: string): void {
+    highlightedAirports.delete(airportId);
 }
 
 export function setAirportFeatures(extent: Extent, zoom: number): void {
-	const visibleSizes = getVisibleSizes(zoom);
-	if (visibleSizes.length === 0) {
-		airportMainSource.clear();
-		return;
-	}
+    const visibleSizes = getVisibleSizes(zoom);
+    if (visibleSizes.length === 0) {
+        airportMainSource.clear();
 
-	const [minX, minY, maxX, maxY] = transformExtent(extent, "EPSG:3857", "EPSG:4326");
-	const airportsByExtent = airportRBush.search({ minX, minY, maxX, maxY });
-	const airportsBySize = airportsByExtent.filter((f) => visibleSizes.includes(f.size));
+        highlightedAirports.forEach((id) => {
+            const feature = airportRBush.all().find((a) => a.feature.getId() === `airport_${id}`);
+            if (feature) {
+                airportMainSource.addFeature(feature.feature);
+            }
+        });
 
-	airportMainSource.clear();
-	airportMainSource.addFeatures(airportsBySize.map((f) => f.feature));
+        return;
+    }
+
+    const [minX, minY, maxX, maxY] = transformExtent(extent, "EPSG:3857", "EPSG:4326");
+    const airportsByExtent = airportRBush.search({ minX, minY, maxX, maxY });
+    const airportsBySize = airportsByExtent.filter((f) => visibleSizes.includes(f.size));
+
+    if (visibleSizes.length === 0 && highlightedAirports.size > 0) {
+        highlightedAirports.forEach((id) => {
+            const exists = airportsBySize.find((a) => a.feature.getId() === `airport_${id}`);
+            if (!exists) {
+                const feature = airportRBush.all().find((a) => a.feature.getId() === `airport_${id}`);
+                if (feature) {
+                    airportsBySize.push(feature);
+                }
+            }
+        });
+    }
+
+    airportMainSource.clear();
+    airportMainSource.addFeatures(airportsBySize.map((f) => f.feature));
 }
 
 function getVisibleSizes(zoom: number): string[] {
-	if (zoom > 7.5) return ["heliport", "small_airport", "medium_airport", "large_airport"];
-	if (zoom > 6.5) return ["medium_airport", "large_airport"];
-	if (zoom > 4.5) return ["large_airport"];
-	return [];
+    if (zoom > 7.5) return ["heliport", "small_airport", "medium_airport", "large_airport"];
+    if (zoom > 6.5) return ["medium_airport", "large_airport"];
+    if (zoom > 4.5) return ["large_airport"];
+    return [];
 }

@@ -10,6 +10,7 @@ import { initTrackFeatures } from "./trackFeatures";
 import { StaticAirport } from "@sk/types/db";
 import { boundingExtent, Extent } from "ol/extent";
 import { getMapView } from "./init";
+import { addHighlightedAirport, removeHighlightedAirport } from "./airportFeatures";
 
 export type NavigateFn = (href: string) => void;
 let navigate: NavigateFn | null = null;
@@ -291,6 +292,9 @@ let lastExtent: Extent | null = null;
 export function showRouteOnMap(departure: StaticAirport, arrival: StaticAirport, toggle: boolean): void {
 	const view = getMapView();
 	if (!toggle && lastExtent) {
+		removeHighlightedAirport(departure.id);
+		removeHighlightedAirport(arrival.id);
+
 		view?.fit(lastExtent, {
 			duration: 200,
 		});
@@ -300,6 +304,9 @@ export function showRouteOnMap(departure: StaticAirport, arrival: StaticAirport,
 
 	const coords = [fromLonLat([departure.longitude, departure.latitude]), fromLonLat([arrival.longitude, arrival.latitude])];
 	const extent = boundingExtent(coords);
+
+	addHighlightedAirport(departure.id);
+	addHighlightedAirport(arrival.id);
 
 	lastExtent = view?.calculateExtent() || null;
 	view?.fit(extent, {
