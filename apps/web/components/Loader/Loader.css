@@ -73,7 +73,7 @@
 	position: absolute;
 	left: 0;
 	top: 0;
-	animation: animloader .5s linear infinite;
+	animation: animloader 0.5s linear infinite;
 }
 
 @keyframes animloader {

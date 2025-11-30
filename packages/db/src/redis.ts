@@ -69,7 +69,7 @@ export async function rdsSetMultiple<T>(
 		await pipeline.exec();
 	}
 
-	console.log(`✅ ${items.length} items set in ${activeSetName || keyPrefix}.`);
+	// console.log(`✅ ${items.length} items set in ${activeSetName || keyPrefix}.`);
 }
 
 export async function rdsGetSingle(query: string): Promise<any> {

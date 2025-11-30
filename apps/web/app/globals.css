@@ -25,3 +25,9 @@ html {
 	--color-orange: rgb(255, 138, 43);
 	--color-magenta: rgb(222, 89, 234);
 }
+
+button {
+	border: none;
+	background-color: transparent;
+	cursor: pointer;
+}

@@ -2,11 +2,16 @@
 
 import { useEffect } from "react";
 import "./Map.css";
-import { onClick, onMoveEnd, onPointerMove } from "./utils/events";
+import { useRouter } from "next/navigation";
+import { onClick, onMoveEnd, onPointerMove, setNavigator } from "./utils/events";
 import { initMap } from "./utils/init";
 
 export default function OMap() {
+	const router = useRouter();
+
 	useEffect(() => {
+		setNavigator((href) => router.push(href));
+
 		const map = initMap();
 		map.on(["moveend"], onMoveEnd);
 		map.on("pointermove", onPointerMove);
@@ -18,7 +23,7 @@ export default function OMap() {
 			map.un("click", onClick);
 			map.setTarget(undefined);
 		};
-	}, []);
+	}, [router]);
 
 	return <div id="map" />;
 }

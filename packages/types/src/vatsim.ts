@@ -153,8 +153,8 @@ export interface PilotLong extends PilotShort {
 	cid: number;
 	name: string;
 	server: string;
-	pilot_rating: number;
-	military_rating: number;
+	pilot_rating: string;
+	military_rating: string;
 	qnh_i_hg: number;
 	qnh_mb: number;
 	flight_plan: PilotFlightPlan | null;

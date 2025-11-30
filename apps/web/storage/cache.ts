@@ -11,16 +11,12 @@ import type { StatusMap } from "@/types/data";
 import { wsClient } from "@/utils/ws";
 import { dxGetAirline, dxGetAirport, dxGetFirs, dxGetTracons, dxInitDatabases } from "./dexie";
 
+type StatusSetter = (status: Partial<StatusMap> | ((prev: Partial<StatusMap>) => Partial<StatusMap>)) => void;
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 let airportsShort: AirportShort[] = [];
 let controllersMerged: ControllerMerged[] = [];
-const cachedAirports: Map<string, StaticAirport> = new Map();
-const cachedAirlines: Map<string, StaticAirline> = new Map();
-const cachedTracons: Map<string, SimAwareTraconFeature> = new Map();
-const cachedFirs: Map<string, FIRFeature> = new Map();
-
-type StatusSetter = (status: Partial<StatusMap> | ((prev: Partial<StatusMap>) => Partial<StatusMap>)) => void;
 
 export async function initData(setStatus?: StatusSetter): Promise<void> {
 	await dxInitDatabases();
@@ -66,6 +62,8 @@ export function getControllerMerged(id: string): ControllerMerged | null {
 	return controllersMerged.find((c) => c.id === id) || null;
 }
 
+const cachedAirports: Map<string, StaticAirport> = new Map();
+
 export async function getCachedAirport(id: string): Promise<StaticAirport | null> {
 	const cached = cachedAirports.get(id);
 	if (cached) return cached;
@@ -78,6 +76,8 @@ export async function getCachedAirport(id: string): Promise<StaticAirport | null
 	return airport || null;
 }
 
+const cachedAirlines: Map<string, StaticAirline> = new Map();
+
 export async function getCachedAirline(id: string): Promise<StaticAirline | null> {
 	const cached = cachedAirlines.get(id);
 	if (cached) return cached;
@@ -89,6 +89,8 @@ export async function getCachedAirline(id: string): Promise<StaticAirline | null
 
 	return airline || null;
 }
+
+const cachedTracons: Map<string, SimAwareTraconFeature> = new Map();
 
 export async function getCachedTracon(id: string): Promise<SimAwareTraconFeature | null> {
 	const cached = cachedTracons.get(id);
@@ -103,6 +105,8 @@ export async function getCachedTracon(id: string): Promise<SimAwareTraconFeature
 	return feature || null;
 }
 
+const cachedFirs: Map<string, FIRFeature> = new Map();
+
 export async function getCachedFir(id: string): Promise<FIRFeature | null> {
 	const cached = cachedFirs.get(id);
 	if (cached) return cached;
@@ -116,6 +120,17 @@ export async function getCachedFir(id: string): Promise<FIRFeature | null> {
 	return feature || null;
 }
 
+let trackPointsCache: TrackPoint[] = [];
+let trackPointsPending: Promise<TrackPoint[]> | null = null;
+
 export async function fetchTrackPoints(id: string): Promise<TrackPoint[]> {
-	return await fetch(`${BASE_URL}/data/track/${id}`).then((res) => res.json());
+	if (trackPointsPending) {
+		return trackPointsPending;
+	}
+
+	trackPointsPending = fetch(`${BASE_URL}/api/data/track/${id}`).then((res) => res.json());
+	trackPointsCache = await trackPointsPending;
+	trackPointsPending = null;
+
+	return trackPointsCache;
 }

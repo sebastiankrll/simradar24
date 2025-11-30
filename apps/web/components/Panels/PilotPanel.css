@@ -1,0 +1,179 @@
+#panel-pilot-status {
+	flex-flow: column;
+	gap: 0.5rem;
+}
+
+#panel-pilot-route {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	border-radius: 0.5rem;
+	background-color: var(--color-light-grey);
+	border: 1px solid var(--color-border);
+	overflow: hidden;
+}
+
+.panel-pilot-airport {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 4px;
+	cursor: pointer;
+	user-select: none;
+	background-color: var(--color-light-grey);
+	padding: 0.5rem 1rem;
+}
+
+.panel-pilot-airport:hover {
+	background-color: var(--color-main-text);
+}
+
+.panel-pilot-airport:hover * {
+	color: white;
+}
+
+.panel-pilot-airport-iata {
+	font-size: 1.75rem;
+	font-weight: 600;
+	line-height: 1.75rem;
+}
+
+.panel-pilot-airport-name {
+	text-align: center;
+	font-size: 12px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 5.5rem;
+}
+
+#panel-pilot-route-line {
+	width: 100%;
+}
+
+#panel-pilot-route-icon {
+	position: absolute;
+	left: 50%;
+	top: 45%;
+	transform: translate(-50%, -50%);
+	width: 40px;
+	height: 30px;
+	background-position: 5px 0px;
+	background-size: 30px;
+	background-repeat: no-repeat;
+}
+
+#panel-pilot-times {
+	display: grid;
+	place-items: center;
+	grid-template-columns: 1fr 2.5rem 2.5rem 1fr;
+	grid-template-rows: auto auto;
+	border-radius: 0.5rem;
+	background: var(--color-light-grey);
+	border: 1px solid var(--color-border);
+	padding: 4px 0rem;
+	width: 100%;
+}
+
+#panel-pilot-times p {
+	width: fit-content;
+}
+
+.panel-pilot-time-desc {
+	font-size: 10px;
+}
+
+.panel-pilot-arrival-status {
+	padding: 0rem 0.25rem;
+}
+
+.panel-pilot-arrival-status.green {
+	color: white;
+	background: var(--color-green);
+}
+
+.panel-pilot-arrival-status.yellow {
+	background: var(--color-yellow);
+}
+
+.panel-pilot-arrival-status.red {
+	color: white;
+	background: var(--color-red);
+}
+
+#panel-pilot-progress {
+	border-radius: 0.5rem;
+	background-color: var(--color-light-grey);
+	border: 1px solid var(--color-border);
+	padding: 0.5rem;
+}
+
+#panel-pilot-progressbar {
+	position: relative;
+	width: 100%;
+	margin-top: 6px;
+	height: 4px;
+	border-radius: 2px;
+	background-color: var(--color-dark-grey);
+}
+
+#panel-pilot-progressbar-value {
+	width: 0%;
+	height: 100%;
+	border-radius: 2px;
+	background-color: var(--color-green);
+	transition: ease 0.3s width;
+}
+
+#panel-pilot-progressbar-icon {
+	position: absolute;
+	left: 0%;
+	top: 50%;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background-color: var(--color-green);
+	box-shadow: 0px 0px 5px 1px var(--color-box-shadow);
+	transform: translate(-50%, -50%);
+	border: 2px solid white;
+	transition: ease 0.3s left;
+}
+
+#panel-pilot-progress-data {
+	display: flex;
+	justify-content: space-between;
+	font-size: 11px;
+	color: var(--color-main-text);
+	margin-top: 10px;
+}
+
+#panel-pilot-flightplan {
+	flex-flow: column;
+}
+
+#panel-pilot-aircraft {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	grid-template-rows: auto repeat(2, 1fr);
+}
+
+#panel-pilot-aircraft > :nth-child(1) {
+	grid-area: 1 / 1 / 2 / 3;
+}
+
+#panel-pilot-aircraft-country {
+	height: 14px;
+	width: 21px;
+}
+
+#panel-pilot-telemetry {
+	grid-template-columns: repeat(2, 1fr);
+	grid-template-rows: repeat(3, 1fr);
+}
+
+#panel-pilot-user {
+	grid-template-columns: repeat(2, 1fr);
+	grid-template-rows: repeat(2, 1fr);
+}

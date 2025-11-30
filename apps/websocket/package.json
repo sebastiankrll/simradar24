@@ -15,8 +15,8 @@
 		"typescript": "^5.9.3"
 	},
 	"dependencies": {
-		"ws": "^8.18.3",
+		"@sk/db": "*",
 		"@sk/types": "*",
-		"@sk/db": "*"
+		"ws": "^8.18.3"
 	}
 }

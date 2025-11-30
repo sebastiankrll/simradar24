@@ -5,6 +5,7 @@ import "@/assets/images/sprites/freakflags.css";
 import Header from "@/components/Header/Header";
 import Loader from "@/components/Loader/Loader";
 import OMap from "@/components/Map/Map";
+import BasePanel from "@/components/Panels/BasePanel";
 
 export const metadata: Metadata = {
 	title: "simradar24",
@@ -27,7 +28,7 @@ export default function RootLayout({
 				<Header />
 				<Loader />
 				<OMap />
-				{children}
+				<BasePanel>{children}</BasePanel>
 			</body>
 		</html>
 	);

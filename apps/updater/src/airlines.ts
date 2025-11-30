@@ -1,4 +1,4 @@
-import { rdsSetSingle } from "@sk/db/redis";
+import { rdsGetSingle, rdsSetSingle } from "@sk/db/redis";
 import axios from "axios";
 
 const RELEASE_URL = "https://api.github.com/repos/sebastiankrll/simradar24-data/releases/latest";
@@ -7,6 +7,9 @@ const BASE_DATA_URL = "https://github.com/sebastiankrll/simradar24-data/releases
 let version: string | null = null;
 
 export async function updateAirlines(): Promise<void> {
+	if (!version) {
+		await initVersion();
+	}
 	if (!(await isNewRelease())) return;
 
 	try {
@@ -17,9 +20,18 @@ export async function updateAirlines(): Promise<void> {
 		});
 
 		await rdsSetSingle("static_airlines:all", response.data);
-		await rdsSetSingle("static_airlines:version", version?.replace(/^v/, "") || "1.0.0");
+		await rdsSetSingle("static_airlines:version", version || "1.0.0");
+
+		console.log(`✅ Airlines data updated to version ${version}`);
 	} catch (error) {
 		console.error(`Error checking for new airlines data: ${error}`);
+	}
+}
+
+async function initVersion(): Promise<void> {
+	if (!version) {
+		const redisVersion = await rdsGetSingle("static_airlines:version");
+		version = redisVersion || "0.0.0";
 	}
 }
 

@@ -1,4 +1,4 @@
-import { rdsSetSingle } from "@sk/db/redis";
+import { rdsGetSingle, rdsSetSingle } from "@sk/db/redis";
 import type { SimAwareTraconFeature } from "@sk/types/db";
 import axios from "axios";
 
@@ -8,6 +8,9 @@ const BASE_DATA_URL = "https://github.com/vatsimnetwork/simaware-tracon-project/
 let version: string | null = null;
 
 export async function updateTracons(): Promise<void> {
+	if (!version) {
+		await initVersion();
+	}
 	if (!(await isNewRelease())) return;
 
 	try {
@@ -21,9 +24,18 @@ export async function updateTracons(): Promise<void> {
 		const labeledFeatures = setLabelPosition(closedFeatures);
 
 		await rdsSetSingle("static_tracons:all", labeledFeatures);
-		await rdsSetSingle("static_tracons:version", version?.replace(/^v/, "") || "1.0.0");
+		await rdsSetSingle("static_tracons:version", version || "1.0.0");
+
+		console.log(`✅ TRACON data updated to version ${version}`);
 	} catch (error) {
 		console.error(`Error checking for new TRACON data: ${error}`);
+	}
+}
+
+async function initVersion(): Promise<void> {
+	if (!version) {
+		const redisVersion = await rdsGetSingle("static_tracons:version");
+		version = redisVersion || "0.0.0";
 	}
 }
 

@@ -56,12 +56,12 @@ app.get("/data/init", async (_req, res) => {
 	}
 });
 
-app.get("/data/pilot/:callsign", async (req, res) => {
+app.get("/api/data/pilot/:id", async (req, res) => {
 	try {
-		const { callsign } = req.params;
-		console.log("Requested pilot:", callsign);
+		const { id } = req.params;
+		console.log("Requested pilot:", id);
 
-		const pilot = await rdsGetSingle(`pilot:${callsign}`);
+		const pilot = await rdsGetSingle(`pilot:${id}`);
 		if (!pilot) return res.status(404).json({ error: "Pilot not found" });
 
 		res.json(pilot);
@@ -109,6 +109,21 @@ app.get("/data/track/:id", async (req, res) => {
 		const trackPoints = await pgGetTrackPointsByid(id);
 
 		res.json(trackPoints);
+	} catch (err) {
+		console.error(err);
+		res.status(500).json({ error: "Internal server error" });
+	}
+});
+
+app.get("/api/data/aircraft/:reg", async (req, res) => {
+	try {
+		const { reg } = req.params;
+		console.log("Requested aircraft:", reg);
+
+		const aircraft = await rdsGetSingle(`fleet:${reg}`);
+		if (!aircraft) return res.status(404).json({ error: "Aircraft not found" });
+
+		res.json(aircraft);
 	} catch (err) {
 		console.error(err);
 		res.status(500).json({ error: "Internal server error" });

@@ -118,11 +118,33 @@ export function updatePilotFeatures(delta: PilotDelta): void {
 	pilotRBush.load(items);
 }
 
+let highlightedPilot: string | null = null;
+
+export function addHighlightedPilot(id: string | null): void {
+	highlightedPilot = id;
+}
+
+export function clearHighlightedPilot(): void {
+	highlightedPilot = null;
+}
+
 export function setPilotFeatures(extent: Extent): void {
 	const [minX, minY, maxX, maxY] = transformExtent(extent, "EPSG:3857", "EPSG:4326");
 	const pilotsByExtent = pilotRBush.search({ minX, minY, maxX, maxY });
 	const pilotsByAltitude = pilotsByExtent.sort((a, b) => (b.feature.get("altitude_agl") || 0) - (a.feature.get("altitude_agl") || 0)).slice(0, 300);
 
+	const features = pilotsByAltitude.map((f) => f.feature);
+
+	if (highlightedPilot) {
+		const exists = pilotsByAltitude.find((p) => p.feature.getId() === `pilot_${highlightedPilot}`);
+		if (!exists) {
+			const feature = pilotMap.get(highlightedPilot);
+			if (feature) {
+				features.push(feature);
+			}
+		}
+	}
+
 	pilotMainSource.clear();
-	pilotMainSource.addFeatures(pilotsByAltitude.map((f) => f.feature));
+	pilotMainSource.addFeatures(features);
 }

@@ -49,7 +49,7 @@ async function fetchVatsimData(): Promise<void> {
 			rdsSetSingle("ws:all", all);
 
 			// Set pilots, controllers and airports data in redis
-			rdsSetMultiple(pilotsLong, "pilot", (p) => p.callsign, "pilots:live", 120);
+			rdsSetMultiple(pilotsLong, "pilot", (p) => p.id, "pilots:live", 120);
 			rdsSetMultiple(controllersLong, "controller", (c) => c.callsign, "controllers:live", 120);
 			rdsSetMultiple(airportsLong, "airport", (a) => a.icao, "airports:live", 120);
 

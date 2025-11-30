@@ -60,16 +60,46 @@ export function getAirportSize(size: string): "s" | "m" | "l" {
 	}
 }
 
+const highlightedAirports: Set<string> = new Set();
+
+export function addHighlightedAirport(airportId: string): void {
+	highlightedAirports.add(airportId);
+}
+
+export function clearHighlightedAirport(): void {
+	highlightedAirports.clear();
+}
+
 export function setAirportFeatures(extent: Extent, zoom: number): void {
 	const visibleSizes = getVisibleSizes(zoom);
 	if (visibleSizes.length === 0) {
 		airportMainSource.clear();
+
+		highlightedAirports.forEach((id) => {
+			const feature = airportRBush.all().find((a) => a.feature.getId() === `airport_${id}`);
+			if (feature) {
+				airportMainSource.addFeature(feature.feature);
+			}
+		});
+
 		return;
 	}
 
 	const [minX, minY, maxX, maxY] = transformExtent(extent, "EPSG:3857", "EPSG:4326");
 	const airportsByExtent = airportRBush.search({ minX, minY, maxX, maxY });
 	const airportsBySize = airportsByExtent.filter((f) => visibleSizes.includes(f.size));
+
+	if (visibleSizes.length === 0 && highlightedAirports.size > 0) {
+		highlightedAirports.forEach((id) => {
+			const exists = airportsBySize.find((a) => a.feature.getId() === `airport_${id}`);
+			if (!exists) {
+				const feature = airportRBush.all().find((a) => a.feature.getId() === `airport_${id}`);
+				if (feature) {
+					airportsBySize.push(feature);
+				}
+			}
+		});
+	}
 
 	airportMainSource.clear();
 	airportMainSource.addFeatures(airportsBySize.map((f) => f.feature));

@@ -3,6 +3,7 @@ import { CronJob } from "cron";
 import { updateAirlines } from "./airlines.js";
 import { updateAirports } from "./airports.js";
 import { updateFirs } from "./fir.js";
+import { updateFleets } from "./fleet.js";
 import { updateTracons } from "./tracon.js";
 
 CronJob.from({
@@ -11,6 +12,9 @@ CronJob.from({
 		await updateAirports();
 		await updateFirs();
 		await updateTracons();
+		await updateFleets();
+
+		console.log("✅ Static data update completed!");
 	},
 	start: true,
 	runOnInit: true,

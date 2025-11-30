@@ -76,3 +76,16 @@ export interface StaticAirline {
 	bg: string | null;
 	font: string | null;
 }
+
+export interface StaticAircraft {
+	icao24: string;
+	built: string;
+	manufacturerName: string;
+	model: string;
+	owner: string;
+	registration: string;
+	selCal: string;
+	serialNumber: string;
+	typecode: string;
+	country: string;
+}

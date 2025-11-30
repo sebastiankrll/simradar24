@@ -1,12 +1,23 @@
+import type { StaticAirport } from "@sk/types/db";
 import { type Feature, type MapBrowserEvent, Overlay, type View } from "ol";
 import type BaseEvent from "ol/events/Event";
+import { boundingExtent, type Extent } from "ol/extent";
 import type { Point } from "ol/geom";
-import { toLonLat } from "ol/proj";
+import { fromLonLat, toLonLat } from "ol/proj";
 import { createRoot, type Root } from "react-dom/client";
 import { getAirportShort, getCachedAirline, getCachedAirport, getCachedFir, getCachedTracon, getControllerMerged } from "@/storage/cache";
 import { AirportOverlay, PilotOverlay, SectorOverlay } from "../components/Overlay/Overlays";
-import { firSource, setFeatures, trackSource, traconSource } from "./dataLayers";
+import { addHighlightedAirport, clearHighlightedAirport } from "./airportFeatures";
+import { firSource, pilotMainSource, setFeatures, trackSource, traconSource } from "./dataLayers";
+import { getMap, getMapView } from "./init";
+import { addHighlightedPilot, clearHighlightedPilot } from "./pilotFeatures";
 import { initTrackFeatures } from "./trackFeatures";
+
+export type NavigateFn = (href: string) => void;
+let navigate: NavigateFn | null = null;
+export function setNavigator(fn: NavigateFn) {
+	navigate = fn;
+}
 
 export function onMoveEnd(evt: BaseEvent | Event): void {
 	const map = evt.target;
@@ -81,8 +92,7 @@ export async function onClick(evt: MapBrowserEvent): Promise<void> {
 	if (feature !== clickedFeature && clickedOverlay) {
 		map.removeOverlay(clickedOverlay);
 		clickedOverlay = null;
-		trackSource.clear();
-		toggleControllerSectorHover(clickedFeature, false, "clicked");
+		clearMap();
 	}
 
 	if (feature && feature !== clickedFeature) {
@@ -100,6 +110,11 @@ export async function onClick(evt: MapBrowserEvent): Promise<void> {
 		clickedFeature = null;
 	}
 
+	if (!feature) {
+		navigate?.(`/`);
+		return;
+	}
+
 	feature?.set("clicked", true);
 	clickedFeature = feature || null;
 
@@ -107,8 +122,14 @@ export async function onClick(evt: MapBrowserEvent): Promise<void> {
 
 	const type = clickedFeature?.get("type");
 	if (clickedFeature && type === "pilot") {
-		const callsign = clickedFeature.getId()?.toString();
-		initTrackFeatures(callsign || "");
+		const id = clickedFeature.getId()?.toString();
+		initTrackFeatures(id || "");
+
+		if (id) {
+			const strippedId = id.toString().replace(/^pilot_/, "");
+			navigate?.(`/pilot/${strippedId}`);
+			addHighlightedPilot(strippedId);
+		}
 	}
 }
 
@@ -266,4 +287,102 @@ function toggleControllerSectorHover(feature: Feature<Point> | undefined | null,
 			}
 		}
 	}
+}
+
+let lastExtent: Extent | null = null;
+
+export function showRouteOnMap(departure: StaticAirport | null, arrival: StaticAirport | null, toggle: "route" | "follow" | null): void {
+	clearHighlightedAirport();
+	if (!departure || !arrival || toggle === "follow") return;
+
+	const view = getMapView();
+	if (!toggle && lastExtent) {
+		view?.fit(lastExtent, {
+			duration: 200,
+		});
+		lastExtent = null;
+		return;
+	}
+
+	const coords = [fromLonLat([departure.longitude, departure.latitude]), fromLonLat([arrival.longitude, arrival.latitude])];
+	const extent = boundingExtent(coords);
+
+	addHighlightedAirport(departure.id);
+	addHighlightedAirport(arrival.id);
+
+	lastExtent = view?.calculateExtent() || null;
+	view?.fit(extent, {
+		duration: 200,
+		padding: [150, 100, 100, 468],
+	});
+}
+
+let followInterval: NodeJS.Timeout | null = null;
+
+export function followPilotOnMap(id: string, toggle: "route" | "follow" | null): void {
+	if (followInterval) {
+		clearInterval(followInterval);
+		followInterval = null;
+	}
+	if (toggle === "route") return;
+
+	const view = getMapView();
+	if (!toggle && lastExtent) {
+		view?.fit(lastExtent, {
+			duration: 200,
+		});
+		lastExtent = null;
+		return;
+	}
+
+	const follow = () => {
+		const feature = pilotMainSource.getFeatureById(`pilot_${id}`) as Feature<Point> | undefined;
+		const geom = feature?.getGeometry();
+		if (!geom) return;
+
+		const coords = geom.getCoordinates();
+		if (coords) {
+			view?.animate({
+				center: coords,
+				duration: 200,
+			});
+		}
+	};
+
+	lastExtent = view?.calculateExtent() || null;
+
+	follow();
+	followInterval = setInterval(follow, 5000);
+}
+
+function clearMap(): void {
+	trackSource.clear();
+
+	toggleControllerSectorHover(clickedFeature, false, "clicked");
+
+	clearHighlightedAirport();
+	clearHighlightedPilot();
+
+	if (followInterval) {
+		clearInterval(followInterval);
+		followInterval = null;
+	}
+
+	lastExtent = null;
+}
+
+export function resetMap(): void {
+	clearMap();
+
+	const map = getMap();
+
+	if (clickedOverlay) {
+		map?.removeOverlay(clickedOverlay);
+		clickedOverlay = null;
+	}
+
+	clickedFeature?.set("clicked", false);
+	clickedFeature = null;
+
+	navigate?.(`/`);
 }

@@ -1,4 +1,4 @@
-import { rdsGetMultiple } from "@sk/db/redis";
+import { rdsGetMultiple, rdsGetSingle } from "@sk/db/redis";
 import type { StaticAirport } from "@sk/types/db";
 import type {
 	PilotDelta,
@@ -13,6 +13,71 @@ import type {
 import { haversineDistance } from "./utils/helpers.js";
 
 const TAXI_TIME_MS = 5 * 60 * 1000;
+const PILOT_RATINGS = [
+	{
+		id: 0,
+		short_name: "NEW",
+		long_name: "Basic Member",
+	},
+	{
+		id: 1,
+		short_name: "PPL",
+		long_name: "Private Pilot License",
+	},
+	{
+		id: 3,
+		short_name: "IR",
+		long_name: "Instrument Rating",
+	},
+	{
+		id: 7,
+		short_name: "CMEL",
+		long_name: "Commercial Multi-Engine License",
+	},
+	{
+		id: 15,
+		short_name: "ATPL",
+		long_name: "Airline Transport Pilot License",
+	},
+	{
+		id: 31,
+		short_name: "FI",
+		long_name: "Flight Instructor",
+	},
+	{
+		id: 63,
+		short_name: "FE",
+		long_name: "Flight Examiner",
+	},
+];
+const MILITARY_RATINGS = [
+	{
+		id: 0,
+		short_name: "M0",
+		long_name: "No Military Rating",
+	},
+	{
+		id: 1,
+		short_name: "M1",
+		long_name: "Military Pilot License",
+	},
+	{
+		id: 3,
+		short_name: "M2",
+		long_name: "Military Instrument Rating",
+	},
+	{
+		id: 7,
+		short_name: "M3",
+		long_name: "Military Multi-Engine Rating",
+	},
+	{
+		id: 15,
+		short_name: "M4",
+		long_name: "Military Mission Ready Pilot",
+	},
+];
+
 let cached: PilotLong[] = [];
 let deleted: string[] = [];
 let updated: PilotShort[] = [];
@@ -23,7 +88,7 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 	updated = [];
 	added = [];
 
-	const pilotsLong: PilotLong[] = latestVatsimData.pilots.map((pilot) => {
+	const pilotsLongPromises: Promise<PilotLong>[] = latestVatsimData.pilots.map(async (pilot) => {
 		const id = `${pilot.cid}_${pilot.callsign}_${pilot.logon_time}`;
 		const cachedPilot = cached.find((c) => c.id === id);
 
@@ -59,9 +124,9 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 				aircraft: pilot.flight_plan?.aircraft_short || "A320",
 				name: pilot.name,
 				server: pilot.server,
-				pilot_rating: pilot.pilot_rating,
-				military_rating: pilot.military_rating,
-				flight_plan: mapPilotFlightPlan(pilot.flight_plan),
+				pilot_rating: PILOT_RATINGS.find((r) => r.id === pilot.pilot_rating)?.short_name || "NEW",
+				military_rating: MILITARY_RATINGS.find((r) => r.id === pilot.military_rating)?.short_name || "M0",
+				flight_plan: await mapPilotFlightPlan(pilot.flight_plan),
 				route: `${pilot.flight_plan?.departure || "N/A"} -- ${pilot.flight_plan?.arrival || "N/A"}`,
 				logon_time: new Date(pilot.logon_time),
 				times: null,
@@ -75,6 +140,8 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 
 		return pilotLong;
 	});
+
+	const pilotsLong = await Promise.all(pilotsLongPromises);
 
 	// Fetch airport coordinates for flight time estimation and store in PilotLong to minimize DB access
 	const icaos = getUniqueAirports(pilotsLong);
@@ -149,11 +216,11 @@ function calculateVerticalSpeed(current: PilotLong, cache: PilotLong | undefined
 	return Math.round(vs);
 }
 
-function mapPilotFlightPlan(fp?: VatsimPilotFlightPlan): PilotFlightPlan | null {
+async function mapPilotFlightPlan(fp?: VatsimPilotFlightPlan): Promise<PilotFlightPlan | null> {
 	if (!fp) return null;
 	return {
 		flight_rules: fp.flight_rules === "I" ? "IFR" : "VFR",
-		ac_reg: extractAircraftRegistration(fp.remarks),
+		ac_reg: await extractAircraftRegistration(fp.remarks),
 		departure: { icao: fp.departure },
 		arrival: { icao: fp.arrival },
 		alternate: { icao: fp.alternate },
@@ -167,9 +234,27 @@ function mapPilotFlightPlan(fp?: VatsimPilotFlightPlan): PilotFlightPlan | null 
 	};
 }
 
-function extractAircraftRegistration(remarks: string): string | null {
+async function extractAircraftRegistration(remarks: string): Promise<string | null> {
 	const match = remarks.match(/REG\/([A-Z0-9]+)/i);
-	return match?.[1] ?? null;
+	if (!match?.[1]) return null;
+	const reg = match[1].toUpperCase();
+
+	let aircraft = await rdsGetSingle(`fleet:${reg}`);
+	if (aircraft) return reg;
+
+	if (reg.length > 1) {
+		const format1 = `${reg[0]}-${reg.slice(1)}`;
+		aircraft = await rdsGetSingle(`fleet:${format1}`);
+		if (aircraft) return format1;
+	}
+
+	if (reg.length > 2) {
+		const format2 = `${reg.slice(0, 2)}-${reg.slice(2)}`;
+		aircraft = await rdsGetSingle(`fleet:${format2}`);
+		if (aircraft) return format2;
+	}
+
+	return reg;
 }
 
 function mapPilotTimes(current: PilotLong, cache: PilotLong | undefined, vatsimPilot: VatsimPilot): PilotTimes | null {

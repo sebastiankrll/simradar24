@@ -1,4 +1,4 @@
-import { rdsSetSingle } from "@sk/db/redis";
+import { rdsGetSingle, rdsSetSingle } from "@sk/db/redis";
 import type { FIRFeature, FIRProperties, VatSpyDat, VatSpyFIRFeatureCollection } from "@sk/types/db";
 import axios from "axios";
 
@@ -8,6 +8,9 @@ const BASE_DATA_URL = "https://github.com/vatsimnetwork/vatspy-data-project/rele
 let version: string | null = null;
 
 export async function updateFirs(): Promise<void> {
+	if (!version) {
+		await initVersion();
+	}
 	if (!(await isNewRelease())) return;
 
 	try {
@@ -43,9 +46,18 @@ export async function updateFirs(): Promise<void> {
 		});
 
 		await rdsSetSingle("static_firs:all", newFeatures);
-		await rdsSetSingle("static_firs:version", version?.replace(/^v/, "") || "1.0.0");
+		await rdsSetSingle("static_firs:version", version || "1.0.0");
+
+		console.log(`✅ FIR data updated to version ${version}`);
 	} catch (error) {
 		console.error(`Error checking for new FIR data: ${error}`);
+	}
+}
+
+async function initVersion(): Promise<void> {
+	if (!version) {
+		const redisVersion = await rdsGetSingle("static_firs:version");
+		version = redisVersion || "0.0.0";
 	}
 }
 

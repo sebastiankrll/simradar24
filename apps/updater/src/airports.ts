@@ -1,11 +1,19 @@
-import { rdsSetMultiple, rdsSetSingle } from "@sk/db/redis";
+import { rdsGetSingle, rdsSetMultiple, rdsSetSingle } from "@sk/db/redis";
 import type { OurAirportsCsv, StaticAirport } from "@sk/types/db";
 import axios from "axios";
 import csvParser from "csv-parser";
 
 const CSV_URL = "https://ourairports.com/data/airports.csv";
 
+let version: string | null = null;
+
 export async function updateAirports(): Promise<void> {
+	if (!version) {
+		await initVersion();
+	}
+	if (version === "1.0.0") {
+		return;
+	}
 	const response = await axios.get(CSV_URL, { responseType: "stream" });
 	const airports: OurAirportsCsv[] = [];
 
@@ -32,4 +40,13 @@ export async function updateAirports(): Promise<void> {
 	await rdsSetMultiple(filteredAirports, "static_airport", (a) => a.id, "airports:static");
 	await rdsSetSingle("static_airports:all", filteredAirports);
 	await rdsSetSingle("static_airports:version", "1.0.0");
+
+	console.log(`✅ Airports data updated to version ${version}`);
+}
+
+async function initVersion(): Promise<void> {
+	if (!version) {
+		const redisVersion = await rdsGetSingle("static_airports:version");
+		version = redisVersion || "0.0.0";
+	}
 }
