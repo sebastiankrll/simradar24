@@ -51,15 +51,10 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 
 	const [mapInteraction, setMapInteraction] = useState<MapInteraction>(null);
 	const toggleMapInteraction = (interaction: MapInteraction) => {
-		setMapInteraction(mapInteraction === interaction ? null : interaction);
-
-		if (interaction === "route" && data.departure && data.arrival) {
-			showRouteOnMap(data.departure, data.arrival, mapInteraction !== "route");
-		}
-
-		if (interaction === "follow") {
-			followPilotOnMap(pilot.id, mapInteraction !== "follow");
-		}
+		const newInteraction = mapInteraction === interaction ? null : interaction;
+		setMapInteraction(newInteraction);
+		showRouteOnMap(data.departure, data.arrival, newInteraction);
+		followPilotOnMap(pilot.id, newInteraction);
 	};
 
 	const infoRef = useRef<HTMLDivElement>(null);

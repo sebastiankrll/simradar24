@@ -10,7 +10,9 @@ import { initTrackFeatures } from "./trackFeatures";
 import { StaticAirport } from "@sk/types/db";
 import { boundingExtent, Extent } from "ol/extent";
 import { getMapView } from "./init";
-import { addHighlightedAirport, removeHighlightedAirport } from "./airportFeatures";
+import { addHighlightedAirport, clearHighlightedAirport } from "./airportFeatures";
+import { add } from "dexie";
+import { addHighlightedPilot, clearHighlightedPilot } from "./pilotFeatures";
 
 export type NavigateFn = (href: string) => void;
 let navigate: NavigateFn | null = null;
@@ -91,8 +93,7 @@ export async function onClick(evt: MapBrowserEvent): Promise<void> {
 	if (feature !== clickedFeature && clickedOverlay) {
 		map.removeOverlay(clickedOverlay);
 		clickedOverlay = null;
-		trackSource.clear();
-		toggleControllerSectorHover(clickedFeature, false, "clicked");
+		resetMap();
 	}
 
 	if (feature && feature !== clickedFeature) {
@@ -112,6 +113,7 @@ export async function onClick(evt: MapBrowserEvent): Promise<void> {
 
 	if (!feature) {
 		navigate?.(`/`);
+		return;
 	}
 
 	feature?.set("clicked", true);
@@ -127,6 +129,7 @@ export async function onClick(evt: MapBrowserEvent): Promise<void> {
 		if (id) {
 			const strippedId = id.toString().replace(/^pilot_/, "");
 			navigate?.(`/pilot/${strippedId}`);
+			addHighlightedPilot(strippedId);
 		}
 	}
 }
@@ -289,12 +292,12 @@ function toggleControllerSectorHover(feature: Feature<Point> | undefined | null,
 
 let lastExtent: Extent | null = null;
 
-export function showRouteOnMap(departure: StaticAirport, arrival: StaticAirport, toggle: boolean): void {
+export function showRouteOnMap(departure: StaticAirport | null, arrival: StaticAirport | null, toggle: "route" | "follow" | null): void {
+	clearHighlightedAirport();
+	if (!departure || !arrival || toggle === "follow") return;
+
 	const view = getMapView();
 	if (!toggle && lastExtent) {
-		removeHighlightedAirport(departure.id);
-		removeHighlightedAirport(arrival.id);
-
 		view?.fit(lastExtent, {
 			duration: 200,
 		});
@@ -317,13 +320,14 @@ export function showRouteOnMap(departure: StaticAirport, arrival: StaticAirport,
 
 let followInterval: NodeJS.Timeout | null = null;
 
-export function followPilotOnMap(id: string, toggle: boolean): void {
-	const view = getMapView();
+export function followPilotOnMap(id: string, toggle: "route" | "follow" | null): void {
 	if (followInterval) {
 		clearInterval(followInterval);
 		followInterval = null;
 	}
+	if (toggle === "route") return;
 
+	const view = getMapView();
 	if (!toggle && lastExtent) {
 		view?.fit(lastExtent, {
 			duration: 200,
@@ -332,11 +336,11 @@ export function followPilotOnMap(id: string, toggle: boolean): void {
 		return;
 	}
 
-	const feature = pilotMainSource.getFeatureById(`pilot_${id}`) as Feature<Point> | undefined;
-	const geom = feature?.getGeometry();
-	if (!geom) return;
+	const follow = () => {
+		const feature = pilotMainSource.getFeatureById(`pilot_${id}`) as Feature<Point> | undefined;
+		const geom = feature?.getGeometry();
+		if (!geom) return;
 
-	const follow = (geom: Point) => {
 		const coords = geom.getCoordinates();
 		if (coords) {
 			view?.animate({
@@ -348,8 +352,22 @@ export function followPilotOnMap(id: string, toggle: boolean): void {
 
 	lastExtent = view?.calculateExtent() || null;
 
-	follow(geom);
-	followInterval = setInterval(() => {
-		follow(geom);
-	}, 10_000);
+	follow();
+	followInterval = setInterval(follow, 5000);
+}
+
+function resetMap(): void {
+	trackSource.clear();
+
+	toggleControllerSectorHover(clickedFeature, false, "clicked");
+
+	clearHighlightedAirport();
+	clearHighlightedPilot();
+
+	if (followInterval) {
+		clearInterval(followInterval);
+		followInterval = null;
+	}
+
+	lastExtent = null;
 }

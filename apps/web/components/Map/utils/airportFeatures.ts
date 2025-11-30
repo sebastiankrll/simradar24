@@ -66,8 +66,8 @@ export function addHighlightedAirport(airportId: string): void {
     highlightedAirports.add(airportId);
 }
 
-export function removeHighlightedAirport(airportId: string): void {
-    highlightedAirports.delete(airportId);
+export function clearHighlightedAirport(): void {
+    highlightedAirports.clear();
 }
 
 export function setAirportFeatures(extent: Extent, zoom: number): void {
