@@ -148,7 +148,7 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 			</div>
 			<PilotTitle pilot={pilot} data={data} />
 			<PilotStatus pilot={pilot} data={data} />
-			<div className="panel-container main">
+			<div className="panel-container main scrollable">
 				<button className={`panel-container-header${openSection === "info" ? " open" : ""}`} type="button" onClick={() => toggleSection("info")}>
 					<p>More {flightNumber} information</p>
 					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">

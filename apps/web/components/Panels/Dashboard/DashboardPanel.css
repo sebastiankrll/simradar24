@@ -1,3 +1,8 @@
+.panel-container.dashboard {
+	padding: 0rem;
+	flex-flow: column;
+}
+
 #panel-dashboard-stats {
 	display: grid;
 	grid-template-columns: repeat(2, 1fr);
@@ -45,4 +50,41 @@
 
 .dashboard-table-header {
 	font-weight: 700;
+}
+
+.panel-sub-container.events {
+	flex-flow: column;
+}
+
+#panel-dashboard-events {
+	min-height: 0;
+}
+
+.dashboard-event-item {
+	display: flex;
+}
+
+.dashboard-event-item {
+	display: flex;
+	flex-flow: column;
+	padding: 2px 5px;
+}
+
+.dashboard-event-item:hover {
+	background: var(--color-main-text);
+}
+
+.dashboard-event-item:hover * {
+	color: white;
+}
+
+.dashboard-event-item p {
+	font-size: 11px;
+}
+
+.dashboard-event-item .dashboard-event-title {
+	font-weight: 700;
+	font-size: 12px;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }

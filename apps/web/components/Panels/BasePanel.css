@@ -124,28 +124,26 @@
 .panel-container.main {
 	padding: 0rem;
 	flex-flow: column;
-	overflow-y: scroll;
 	flex: 1;
 	min-height: 0;
 }
 
-.panel-container.main::-webkit-scrollbar {
+.scrollable {
+	overflow-y: scroll;
+}
+
+.scrollable::-webkit-scrollbar {
 	width: 5px;
 }
 
-.panel-container.main::-webkit-scrollbar-track {
+.scrollable::-webkit-scrollbar-track {
 	background: var(--color-light-grey);
 	border: 1px solid var(--color-border);
 	box-sizing: border-box;
 }
 
-.panel-container.main::-webkit-scrollbar-thumb {
+.scrollable::-webkit-scrollbar-thumb {
 	background-color: var(--color-green);
-}
-
-.panel-container.dashboard {
-	padding: 0rem;
-	flex-flow: column;
 }
 
 .panel-container-header {
@@ -196,7 +194,7 @@
 	border-top: 1px solid var(--color-border);
 }
 
-.panel-sub-container.accordion {
+.accordion {
 	overflow: hidden;
 	height: 0rem;
 	transition: ease 0.2s min-height;

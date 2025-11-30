@@ -92,7 +92,7 @@ export default function DashboardPanel({ data }: { data: DashboardData }) {
 					<DashboardStats stats={data.stats} />
 				</div>
 			</div>
-			<div className="panel-container dashboard">
+			<div className="panel-container dashboard" id="panel-dashboard-events">
 				<button
 					className={`panel-container-header${openSection.includes("events") ? " open" : ""}`}
 					type="button"
@@ -108,8 +108,8 @@ export default function DashboardPanel({ data }: { data: DashboardData }) {
 						></path>
 					</svg>
 				</button>
-				<div ref={eventsRef} className={`panel-sub-container accordion${openSection.includes("events") ? " open" : ""}`}>
-					<DashboardEvents events={data.events} />
+				<div className={`panel-sub-container scrollable`}>
+					<DashboardEvents events={data.events} ref={eventsRef} openSection={openSection} />
 				</div>
 			</div>
 		</>
