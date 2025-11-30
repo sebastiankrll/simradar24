@@ -38,6 +38,10 @@ function setHeight(ref: React.RefObject<HTMLDivElement | null>, isOpen: boolean)
 	}
 }
 
+function onStatsClick(cid: number) {
+	window.open(`https://stats.vatsim.net/stats/${cid}`, "_blank");
+}
+
 export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: PilotLong; aircraft: StaticAircraft | null }) {
 	const [pilot, setPilot] = useState<PilotLong>(initialPilot);
 	const [trackPoints, setTrackPoints] = useState<TrackPoint[]>([]);
@@ -55,6 +59,13 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 		setMapInteraction(newInteraction);
 		showRouteOnMap(data.departure, data.arrival, newInteraction);
 		followPilotOnMap(pilot.id, newInteraction);
+	};
+
+	const [shared, setShared] = useState(false);
+	const onShareClick = () => {
+		navigator.clipboard.writeText(`${window.location.origin}/pilot/${pilot.id}`);
+		setShared(true);
+		setTimeout(() => setShared(false), 2000);
 	};
 
 	const infoRef = useRef<HTMLDivElement>(null);
@@ -220,7 +231,7 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 					</svg>
 					<p>Follow</p>
 				</button>
-				<button className={`panel-navigation-button`} type="button" onClick={() => {}}>
+				<button className={`panel-navigation-button`} type="button" onClick={() => onShareClick()}>
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
 						<title>Share</title>
 						<path
@@ -229,9 +240,9 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 							clipRule="evenodd"
 						></path>
 					</svg>
-					<p>Share</p>
+					<p>{shared ? "Copied!" : "Share"}</p>
 				</button>
-				<button className={`panel-navigation-button`} type="button" onClick={() => {}}>
+				<button className={`panel-navigation-button`} type="button" onClick={() => onStatsClick(pilot.cid)}>
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
 						<title>More</title>
 						<path
