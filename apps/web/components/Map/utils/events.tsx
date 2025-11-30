@@ -5,7 +5,7 @@ import { fromLonLat, toLonLat } from "ol/proj";
 import { createRoot, type Root } from "react-dom/client";
 import { getAirportShort, getCachedAirline, getCachedAirport, getCachedFir, getCachedTracon, getControllerMerged } from "@/storage/cache";
 import { AirportOverlay, PilotOverlay, SectorOverlay } from "../components/Overlay/Overlays";
-import { firSource, setFeatures, trackSource, traconSource } from "./dataLayers";
+import { firSource, pilotMainSource, setFeatures, trackSource, traconSource } from "./dataLayers";
 import { initTrackFeatures } from "./trackFeatures";
 import { StaticAirport } from "@sk/types/db";
 import { boundingExtent, Extent } from "ol/extent";
@@ -294,6 +294,7 @@ export function showRouteOnMap(departure: StaticAirport, arrival: StaticAirport,
 		view?.fit(lastExtent, {
 			duration: 200,
 		});
+		lastExtent = null;
 		return;
 	}
 
@@ -305,4 +306,43 @@ export function showRouteOnMap(departure: StaticAirport, arrival: StaticAirport,
 		duration: 200,
 		padding: [150, 100, 100, 468],
 	});
+}
+
+let followInterval: NodeJS.Timeout | null = null;
+
+export function followPilotOnMap(id: string, toggle: boolean): void {
+	const view = getMapView();
+	if (followInterval) {
+		clearInterval(followInterval);
+		followInterval = null;
+	}
+
+	if (!toggle && lastExtent) {
+		view?.fit(lastExtent, {
+			duration: 200,
+		});
+		lastExtent = null;
+		return;
+	}
+
+	const feature = pilotMainSource.getFeatureById(`pilot_${id}`) as Feature<Point> | undefined;
+	const geom = feature?.getGeometry();
+	if (!geom) return;
+
+	const follow = (geom: Point) => {
+		const coords = geom.getCoordinates();
+		if (coords) {
+			view?.animate({
+				center: coords,
+				duration: 200,
+			});
+		}
+	};
+
+	lastExtent = view?.calculateExtent() || null;
+
+	follow(geom);
+	followInterval = setInterval(() => {
+		follow(geom);
+	}, 10_000);
 }

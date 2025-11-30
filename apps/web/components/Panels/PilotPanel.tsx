@@ -14,7 +14,7 @@ import { PilotTelemetry } from "./components/PilotTelemetry";
 import { PilotUser } from "./components/PilotUser";
 import { PilotMisc } from "./components/PilotMisc";
 import { wsClient } from "@/utils/ws";
-import { showRouteOnMap } from "../Map/utils/events";
+import { followPilotOnMap, showRouteOnMap } from "../Map/utils/events";
 
 export interface PilotPanelFetchData {
 	airline: StaticAirline | null;
@@ -38,12 +38,6 @@ function setHeight(ref: React.RefObject<HTMLDivElement | null>, isOpen: boolean)
 	}
 }
 
-function onRouteClick(departure: StaticAirport | null, arrival: StaticAirport | null, toggle: boolean) {
-	if (departure && arrival) {
-		showRouteOnMap(departure, arrival, toggle);
-	}
-}
-
 export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: PilotLong; aircraft: StaticAircraft | null }) {
 	const [pilot, setPilot] = useState<PilotLong>(initialPilot);
 	const [trackPoints, setTrackPoints] = useState<TrackPoint[]>([]);
@@ -58,8 +52,13 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 	const [mapInteraction, setMapInteraction] = useState<MapInteraction>(null);
 	const toggleMapInteraction = (interaction: MapInteraction) => {
 		setMapInteraction(mapInteraction === interaction ? null : interaction);
-		if (interaction === "route") {
-			onRouteClick(data.departure, data.arrival, mapInteraction !== "route");
+
+		if (interaction === "route" && data.departure && data.arrival) {
+			showRouteOnMap(data.departure, data.arrival, mapInteraction !== "route");
+		}
+
+		if (interaction === "follow") {
+			followPilotOnMap(pilot.id, mapInteraction !== "follow");
 		}
 	};
 
