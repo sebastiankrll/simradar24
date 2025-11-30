@@ -22,7 +22,7 @@ export async function initData(setStatus?: StatusSetter): Promise<void> {
 	await dxInitDatabases();
 	setStatus?.((prev) => ({ ...prev, indexedDB: true }));
 
-	const data = (await fetch(`${BASE_URL}/api/data/init`).then((res) => res.json())) as WsAll;
+	const data = (await fetch(`${BASE_URL}/data/init`).then((res) => res.json())) as WsAll;
 	setStatus?.((prev) => ({ ...prev, initData: true }));
 
 	await initAirportFeatures();

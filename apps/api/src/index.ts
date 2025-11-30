@@ -8,7 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get("/api/static/versions", async (_req, res) => {
+app.get("/static/versions", async (_req, res) => {
 	try {
 		const airportsVersion = await rdsGetSingle("static_airports:version");
 		const firsVersion = await rdsGetSingle("static_firs:version");
@@ -27,7 +27,7 @@ app.get("/api/static/versions", async (_req, res) => {
 	}
 });
 
-app.get("/api/static/:type", async (req, res) => {
+app.get("/static/:type", async (req, res) => {
 	try {
 		const { type } = req.params;
 		const allowedTypes = ["airports", "tracons", "firs", "airlines"];
@@ -44,7 +44,7 @@ app.get("/api/static/:type", async (req, res) => {
 	}
 });
 
-app.get("/api/data/init", async (_req, res) => {
+app.get("/data/init", async (_req, res) => {
 	try {
 		const all = await rdsGetSingle("ws:all");
 		if (!all) return res.status(404).json({ error: "Initial data not found" });
@@ -71,7 +71,7 @@ app.get("/api/data/pilot/:id", async (req, res) => {
 	}
 });
 
-app.get("/api/data/airport/:icao", async (req, res) => {
+app.get("/data/airport/:icao", async (req, res) => {
 	try {
 		const { icao } = req.params;
 		console.log("Requested airport:", icao);
@@ -86,7 +86,7 @@ app.get("/api/data/airport/:icao", async (req, res) => {
 	}
 });
 
-app.get("/api/data/controller/:callsign", async (req, res) => {
+app.get("/data/controller/:callsign", async (req, res) => {
 	try {
 		const { callsign } = req.params;
 		console.log("Requested controller:", callsign);
@@ -101,7 +101,7 @@ app.get("/api/data/controller/:callsign", async (req, res) => {
 	}
 });
 
-app.get("/api/data/track/:id", async (req, res) => {
+app.get("/data/track/:id", async (req, res) => {
 	try {
 		const { id } = req.params;
 		console.log("Requested track:", id);

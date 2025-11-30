@@ -27,8 +27,8 @@ services:
       context: ..
       dockerfile: apps/web/Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: "https://api.radar.skruellex.com"
-        NEXT_PUBLIC_WEBSOCKET_URL: "wss://ws.radar.skruellex.com"
+        NEXT_PUBLIC_API_URL: "https://radar.skruellex.com/api"
+        NEXT_PUBLIC_WEBSOCKET_URL: "wss://radar.skruellex.com/ws"
     container_name: sr24_web
     restart: always
     environment:
@@ -69,12 +69,14 @@ services:
       - sr24_backend
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=Host(`api.radar.skruellex.com`)"
+      - "traefik.http.routers.api.rule=Host(`radar.skruellex.com`) && PathPrefix(`/api`)"
       - "traefik.http.routers.api.entrypoints=websecure"
       - "traefik.http.routers.api.tls=true"
       - "traefik.http.routers.api.tls.certresolver=letsencrypt"
       - "traefik.http.services.api.loadbalancer.server.port=3001"
-      - "traefik.docker.network=traefik_proxy" 
+      - "traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api"
+      - "traefik.http.routers.api.middlewares=api-stripprefix"
+      - "traefik.docker.network=traefik_proxy"
 
   ws:
     build:
@@ -96,12 +98,14 @@ services:
       - sr24_backend
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.ws.rule=Host(`ws.radar.skruellex.com`)"
+      - "traefik.http.routers.ws.rule=Host(`radar.skruellex.com`) && PathPrefix(`/ws`)"
       - "traefik.http.routers.ws.entrypoints=websecure"
       - "traefik.http.routers.ws.tls=true"
       - "traefik.http.routers.ws.tls.certresolver=letsencrypt"
       - "traefik.http.services.ws.loadbalancer.server.port=3002"
-      - "traefik.docker.network=traefik_proxy" 
+      - "traefik.http.middlewares.ws-stripprefix.stripprefix.prefixes=/ws"
+      - "traefik.http.routers.ws.middlewares=ws-stripprefix"
+      - "traefik.docker.network=traefik_proxy"
 
   ingestion:
     build:
