@@ -6,7 +6,6 @@ import { useEffect, useRef, useState } from "react";
 
 export default function BasePanel({ children }: { children: React.ReactNode }) {
 	const pathname = usePathname();
-	const [rendered, setRendered] = useState<React.ReactNode>(children);
 	const [open, setOpen] = useState(true);
 	const prevPath = useRef<string | null>(null);
 
@@ -19,14 +18,24 @@ export default function BasePanel({ children }: { children: React.ReactNode }) {
 		if (prevPath.current === type) return;
 
 		setOpen(false);
-		const t = setTimeout(() => {
-			setRendered(children);
+		const openTimeout = setTimeout(() => {
 			setOpen(true);
 			prevPath.current = type;
-		}, 200);
+		}, 300);
 
-		return () => clearTimeout(t);
-	}, [children, pathname]);
+		return () => {
+			clearTimeout(openTimeout);
+		};
+	}, [pathname]);
 
-	return <div className={`panel${open ? "" : " hide"}`}>{rendered}</div>;
+	return (
+		<div className={`panel${open ? "" : " hide"}`}>
+			{!open && (
+				<div id="panel-loader-wrapper">
+					<div id="panel-loader"></div>
+				</div>
+			)}
+			{children}
+		</div>
+	);
 }

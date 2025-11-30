@@ -5,6 +5,9 @@ import axios from "axios";
 const VATSIM_EVENT_URL = "https://my.vatsim.net/api/v2/events/latest";
 const VATSIM_EVENT_INTERVAL = 60 * 60 * 1000;
 const VATSIM_HISTORY_WINDOW = 24 * 60 * 60 * 1000;
+const VATSIM_HISTORY_INTERVAL = 5 * 60 * 1000;
+
+let lastHistoryUpdateTimestamp: Date | null = null;
 
 export async function updateDashboardData(vatsimData: VatsimData, controllers: ControllerLong[]): Promise<void> {
     updateVatsimEvents();
@@ -12,6 +15,10 @@ export async function updateDashboardData(vatsimData: VatsimData, controllers: C
     const stats = getDashboardStats(vatsimData, controllers);
     rdsSetSingle("dashboard:stats", stats);
 
+    if (lastHistoryUpdateTimestamp && Date.now() - lastHistoryUpdateTimestamp.getTime() < VATSIM_HISTORY_INTERVAL) {
+        return;
+    }
+    lastHistoryUpdateTimestamp = new Date();
     const historyItem = { pilots: vatsimData.pilots.length, controllers: controllers.length };
     rdsSetRingStorage("dashboard:history", historyItem, VATSIM_HISTORY_WINDOW);
 }

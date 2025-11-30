@@ -28,7 +28,10 @@ function getStoredOpenSections(): string[] {
 	return [];
 }
 
-export default function DashboardPanel({ data }: { data: DashboardData }) {
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+
+export default function DashboardPanel({ initialData }: { initialData: DashboardData }) {
+	const [data, setData] = useState<DashboardData>(initialData);
 	const historyRef = useRef<HTMLDivElement>(null);
 	const statsRef = useRef<HTMLDivElement>(null);
 	const eventsRef = useRef<HTMLDivElement>(null);
@@ -42,6 +45,19 @@ export default function DashboardPanel({ data }: { data: DashboardData }) {
 
 	useEffect(() => {
 		setOpenSection(getStoredOpenSections());
+		const fetchInterval = setInterval(async () => {
+			const newData = fetch(`${BASE_URL}/data/dashboard`, { cache: "no-store" })
+				.then((res) => {
+					if (!res.ok) return null;
+					return res.json();
+				})
+				.catch(() => null);
+			if (newData) {
+				setData(await newData);
+			}
+		}, 60000);
+
+		return () => clearInterval(fetchInterval);
 	}, []);
 
 	useEffect(() => {

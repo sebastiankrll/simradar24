@@ -14,5 +14,5 @@ async function fetchDashboardData(): Promise<DashboardData | null> {
 export default async function Page() {
 	const dashboardData = await fetchDashboardData();
 	if (!dashboardData) return <div className="info-panel error">Failed to load dashboard data.</div>;
-	return <DashboardPanel data={dashboardData} />;
+	return <DashboardPanel initialData={dashboardData} />;
 }
