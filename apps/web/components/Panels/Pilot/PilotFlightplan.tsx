@@ -41,9 +41,6 @@ export function PilotFlightplan({
 				</svg>
 			</div>
 			<div className="panel-section-content">
-				{/* <div className="panel-data-separator">
-					{`${flightNumber} flight from ${data.departure?.iata || data.departure?.id} to ${data.arrival?.iata || data.arrival?.id}`}
-				</div> */}
 				<div className="panel-sub-container">
 					<div className="panel-data-item">
 						<p>Great circle distance</p>
@@ -54,7 +51,6 @@ export function PilotFlightplan({
 						<p>{enrouteTime}</p>
 					</div>
 				</div>
-				{/* <div className="panel-data-separator">Additional flightplan information</div> */}
 				<div className="panel-sub-container" id="panel-pilot-flightplan">
 					<div className="panel-data-item">
 						<p>Flight plan</p>

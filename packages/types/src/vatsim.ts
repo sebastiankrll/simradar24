@@ -226,8 +226,8 @@ export interface AirportShort {
 }
 
 export interface AirportLong extends AirportShort {
-	busiest_route: string;
-	total_routes: number;
+	busiest: { departure: string; arrival: string };
+	unique: { departures: number; arrivals: number };
 	metar: string | null;
 	taf: string | null;
 }

@@ -92,12 +92,12 @@ function getWind(wind: IWind | undefined): string {
 	}
 	const unit = wind.unit || "KT";
 	if (wind.degrees) {
-		return `${wind.degrees}° / ${wind.speed} ${unit}${wind.gust ? ` (G ${wind.gust})` : ""}`;
+		return `${wind.degrees}° / ${wind.speed}${wind.gust ? `G${wind.gust}` : ""} ${unit}`;
 	}
-	return `${wind.direction} / ${wind.speed} ${unit}${wind.gust ? ` (G ${wind.gust})` : ""}`;
+	return `${wind.direction} / ${wind.speed}${wind.gust ? `G${wind.gust}` : ""} ${unit}`;
 }
 
-function getDelayColor(avgDelay: number) {
+export function getDelayColor(avgDelay: number) {
 	if (avgDelay >= 60) {
 		return "red";
 	} else if (avgDelay >= 30) {
@@ -139,19 +139,7 @@ export function AirportStatus({ airport, parsedMetar }: { airport: AirportLong; 
 					<p>{airport.arr_traffic.traffic_count}</p>
 				</div>
 				<div className="panel-airport-status-item">
-					<p>Total</p>
-					<p>{airport.dep_traffic.traffic_count + airport.arr_traffic.traffic_count}</p>
-				</div>
-				<div className="panel-airport-status-item">
-					<p>Unique</p>
-					<p>{airport.total_routes}</p>
-				</div>
-				<div className="panel-airport-status-item">
-					<p>Busiest</p>
-					<p>{airport.busiest_route}</p>
-				</div>
-				<div className="panel-airport-status-item">
-					<p>Avg. delay</p>
+					<p>Avg. Delay</p>
 					<p className={getDelayColor(avgDelay)}>{`${avgDelay} min`}</p>
 				</div>
 			</div>

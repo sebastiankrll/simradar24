@@ -8,6 +8,7 @@ import { parseMetar } from "metar-taf-parser";
 import { useEffect, useRef, useState } from "react";
 import { getCachedAirport } from "@/storage/cache";
 import { setHeight } from "../helpers";
+import { AirportConnections } from "./AirportConnections";
 import { AirportStatus } from "./AirportStatus";
 import { AirportTitle } from "./AirportTitle";
 import { AirportWeather } from "./AirportWeather";
@@ -86,6 +87,7 @@ export default function AirportPanel({ initialAirport }: { initialAirport: Airpo
 					</svg>
 				</button>
 				<AirportWeather airport={airport} parsedMetar={parsedMetar} openSection={openSection} ref={weatherRef} />
+				<AirportConnections airport={airport} />
 			</div>
 			<div className="panel-navigation">
 				<button className={`panel-navigation-button`} type="button" onClick={() => {}}>

@@ -91,18 +91,38 @@ export async function mapAirports(pilotsLong: PilotLong[]): Promise<AirportLong[
 		const routes = routeRecord[icao];
 		if (!routes) continue;
 
-		let busiestRoute = "-";
-		let maxFlights = 0;
+		let busiestDeparture = "-";
+		let busiestArrival = "-";
+		let busiestDepCount = 0;
+		let busiestArrCount = 0;
+		let uniqueDepartures = 0;
+		let uniqueArrivals = 0;
 
 		routes.forEach((count, route) => {
-			if (count > maxFlights) {
-				maxFlights = count;
-				busiestRoute = route;
+			const [depIcao, arrIcao] = route.split("-");
+			if (depIcao === icao) {
+				uniqueDepartures++;
+				if (count > busiestDepCount) {
+					busiestDeparture = route;
+					busiestDepCount = count;
+				}
+			} else if (arrIcao === icao) {
+				uniqueArrivals++;
+				if (count > busiestArrCount) {
+					busiestArrival = route;
+					busiestArrCount = count;
+				}
 			}
 		});
 
-		airportRecord[icao].busiest_route = busiestRoute;
-		airportRecord[icao].total_routes = routes.size;
+		airportRecord[icao].busiest = {
+			departure: busiestDeparture,
+			arrival: busiestArrival,
+		};
+		airportRecord[icao].unique = {
+			departures: uniqueDepartures,
+			arrivals: uniqueArrivals,
+		};
 	}
 
 	const airportsLong = Object.values(airportRecord);
@@ -141,8 +161,8 @@ function initAirportRecord(icao: string): AirportLong {
 		icao: icao,
 		dep_traffic: { traffic_count: 0, average_delay: 0, flights_delayed: 0 },
 		arr_traffic: { traffic_count: 0, average_delay: 0, flights_delayed: 0 },
-		busiest_route: "",
-		total_routes: 0,
+		busiest: { departure: "-", arrival: "-" },
+		unique: { departures: 0, arrivals: 0 },
 		metar: getMetar(icao),
 		taf: getTaf(icao),
 	};

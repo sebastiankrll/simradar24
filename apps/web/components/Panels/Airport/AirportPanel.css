@@ -55,3 +55,36 @@
 #panel-airport-weather .panel-data-item:nth-last-child(-n + 3) {
 	grid-column: 1 / -1;
 }
+
+.panel-sub-container .airport-connections {
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+}
+
+.panel-sub-container.airport-connections .panel-data-item:nth-child(-n + 3) {
+	grid-column: span 2;
+}
+
+.panel-sub-container.airport-connections .panel-data-item:nth-child(n + 4) {
+	grid-column: span 3;
+}
+
+#panel-airport-connections p.green {
+	background: var(--color-green);
+	color: white;
+	width: fit-content;
+	padding: 0px 2px;
+}
+
+#panel-airport-connections p.yellow {
+	background: var(--color-yellow);
+	width: fit-content;
+	padding: 0px 2px;
+}
+
+#panel-airport-connections p.red {
+	background: var(--color-red);
+	color: white;
+	width: fit-content;
+	padding: 0px 2px;
+}
