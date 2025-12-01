@@ -1,62 +1,25 @@
 "use client";
 
-import type { AirportLong } from "@sk/types/vatsim";
 import { resetMap } from "@/components/Map/utils/events";
 import "./AirportPanel.css";
-import type { StaticAirport } from "@sk/types/db";
-import { parseMetar } from "metar-taf-parser";
-import { useEffect, useRef, useState } from "react";
-import { getCachedAirport } from "@/storage/cache";
-import { setHeight } from "../helpers";
-import { AirportConnections } from "./AirportConnections";
-import { AirportStatus } from "./AirportStatus";
-import { AirportTitle } from "./AirportTitle";
-import { AirportWeather } from "./AirportWeather";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 
-export interface AirportPanelStatic {
-	airport: StaticAirport | null;
-}
-type AccordionSection = "weather" | "stats" | "controllers" | null;
-
-export default function AirportPanel({ initialAirport }: { initialAirport: AirportLong }) {
-	const [airport, _setAirport] = useState<AirportLong>(initialAirport);
-	const [data, setData] = useState<AirportPanelStatic>({
-		airport: null,
-	});
-	const parsedMetar = airport.metar ? parseMetar(airport.metar) : null;
+export default function AirportPanel({ icao, children }: { icao: string; children: React.ReactNode }) {
+	const pathname = usePathname();
+	const router = useRouter();
 
 	const [shared, setShared] = useState(false);
 	const onShareClick = () => {
-		navigator.clipboard.writeText(`${window.location.origin}/airport/${airport.icao}`);
+		navigator.clipboard.writeText(`${window.location.origin}/airport/${icao}`);
 		setShared(true);
 		setTimeout(() => setShared(false), 2000);
 	};
 
-	const weatherRef = useRef<HTMLDivElement>(null);
-	const statsRef = useRef<HTMLDivElement>(null);
-	const controllersRef = useRef<HTMLDivElement>(null);
-
-	const [openSection, setOpenSection] = useState<AccordionSection>(null);
-	const toggleSection = (section: AccordionSection) => {
-		setOpenSection(openSection === section ? null : section);
-	};
-
-	useEffect(() => {
-		setHeight(weatherRef, openSection === "weather");
-		setHeight(statsRef, openSection === "stats");
-		setHeight(controllersRef, openSection === "controllers");
-	}, [openSection]);
-
-	useEffect(() => {
-		Promise.all([getCachedAirport(initialAirport.icao)]).then(([airport]) => {
-			setData({ airport });
-		});
-	}, [initialAirport]);
-
 	return (
 		<>
 			<div className="panel-header">
-				<div className="panel-id">{airport.icao}</div>
+				<div className="panel-id">{icao}</div>
 				<button className="panel-close" type="button" onClick={() => resetMap()}>
 					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
 						<title>Close panel</title>
@@ -68,29 +31,15 @@ export default function AirportPanel({ initialAirport }: { initialAirport: Airpo
 					</svg>
 				</button>
 			</div>
-			<AirportTitle staticAirport={data.airport} />
-			<AirportStatus airport={airport} parsedMetar={parsedMetar} />
-			<div className="panel-container main scrollable">
-				<button
-					className={`panel-container-header${openSection === "weather" ? " open" : ""}`}
-					type="button"
-					onClick={() => toggleSection("weather")}
-				>
-					<p>More Weather & METAR</p>
-					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-						<title>Weather & METAR</title>
-						<path
-							fillRule="evenodd"
-							d="M11.842 18 .237 7.26a.686.686 0 0 1 0-1.038.8.8 0 0 1 1.105 0L11.842 16l10.816-9.704a.8.8 0 0 1 1.105 0 .686.686 0 0 1 0 1.037z"
-							clipRule="evenodd"
-						></path>
-					</svg>
-				</button>
-				<AirportWeather airport={airport} parsedMetar={parsedMetar} openSection={openSection} ref={weatherRef} />
-				<AirportConnections airport={airport} />
-			</div>
+			{children}
 			<div className="panel-navigation">
-				<button className={`panel-navigation-button`} type="button" onClick={() => {}}>
+				<button
+					className={`panel-navigation-button${pathname === `/airport/${icao}` ? " active" : ""}`}
+					type="button"
+					onClick={() => {
+						router.push(`/airport/${icao}`);
+					}}
+				>
 					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
 						<title>General</title>
 						<path
@@ -101,7 +50,13 @@ export default function AirportPanel({ initialAirport }: { initialAirport: Airpo
 					</svg>
 					<p>General</p>
 				</button>
-				<button className={`panel-navigation-button`} type="button" onClick={() => {}}>
+				<button
+					className={`panel-navigation-button${pathname === `/airport/${icao}/departures` ? " active" : ""}`}
+					type="button"
+					onClick={() => {
+						router.push(`/airport/${icao}/departures`);
+					}}
+				>
 					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
 						<title>Departures</title>
 						<path
@@ -112,7 +67,13 @@ export default function AirportPanel({ initialAirport }: { initialAirport: Airpo
 					</svg>
 					<p>Departures</p>
 				</button>
-				<button className={`panel-navigation-button`} type="button" onClick={() => {}}>
+				<button
+					className={`panel-navigation-button${pathname === `/airport/${icao}/arrivals` ? " active" : ""}`}
+					type="button"
+					onClick={() => {
+						router.push(`/airport/${icao}/arrivals`);
+					}}
+				>
 					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
 						<title>Arrivals</title>
 						<path
