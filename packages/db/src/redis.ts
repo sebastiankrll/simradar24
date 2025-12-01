@@ -35,7 +35,7 @@ export async function rdsSubWsDelta(callback: (data: WsDelta) => void) {
 
 export async function rdsSetSingle(key: string, value: any): Promise<void> {
 	await redis.set(key, JSON.stringify(value));
-	console.log(`✅ Item ${key} set.`);
+	// console.log(`✅ Item ${key} set.`);
 }
 
 type KeyExtractor<T> = (item: T) => string;

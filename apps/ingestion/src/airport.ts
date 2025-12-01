@@ -239,7 +239,7 @@ async function updateWeather(): Promise<void> {
 		metarCache = newMetarCache;
 		tafCache = newTafCache;
 
-		console.log(`✅ Updated ${metarCache.size} METAR entries and ${tafCache.size} TAF entries`);
+		// console.log(`✅ Updated ${metarCache.size} METAR entries and ${tafCache.size} TAF entries`);
 	} catch (error) {
 		console.error("❌ Error fetching weather data:", error instanceof Error ? error.message : error);
 	}

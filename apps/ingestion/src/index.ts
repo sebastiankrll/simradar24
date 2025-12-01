@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { pgInsertTrackPoints } from "@sk/db/pg";
+import { pgCleanupStalePilots, pgUpsertPilots, pgUpsertTrackPoints } from "@sk/db/pg";
 import { rdsPubWsDelta, rdsSetMultiple, rdsSetSingle } from "@sk/db/redis";
 import type { TrackPoint, VatsimData, VatsimTransceivers, WsAll, WsDelta } from "@sk/types/vatsim";
 import axios from "axios";
@@ -13,7 +13,8 @@ const VATSIM_TRANSCEIVERS_URL = "https://data.vatsim.net/v3/transceivers-data.js
 const FETCH_INTERVAL = 5_000;
 
 let updating = false;
-let lastUpdateTimestamp = "2000-01-01T00:00:00.00000Z";
+let lastVatsimUpdate = 0;
+let lastPgCleanUp = 0;
 
 async function fetchVatsimData(): Promise<void> {
 	if (updating) return;
@@ -22,9 +23,10 @@ async function fetchVatsimData(): Promise<void> {
 	try {
 		const vatsimResponse = await axios.get<VatsimData>(VATSIM_DATA_URL);
 		const vatsimData = vatsimResponse.data;
+		const timestmap = new Date(vatsimData.general.update_timestamp).getTime();
 
-		if (new Date(vatsimData.general.update_timestamp) > new Date(lastUpdateTimestamp)) {
-			lastUpdateTimestamp = vatsimData.general.update_timestamp;
+		if (timestmap > lastVatsimUpdate) {
+			lastVatsimUpdate = timestmap;
 
 			const transceiversResponse = await axios.get<VatsimTransceivers[]>(VATSIM_TRANSCEIVERS_URL);
 			vatsimData.transceivers = transceiversResponse.data;
@@ -67,7 +69,14 @@ async function fetchVatsimData(): Promise<void> {
 				heading: p.heading,
 				timestamp: p.timestamp,
 			}));
-			pgInsertTrackPoints(trackPoints);
+			await pgUpsertTrackPoints(trackPoints);
+			await pgUpsertPilots(pilotsLong);
+
+			const now = Date.now();
+			if (now > lastPgCleanUp + 30 * 60 * 1000) {
+				lastPgCleanUp = now;
+				await pgCleanupStalePilots();
+			}
 
 			// Update dashboard data
 			updateDashboardData(vatsimData, controllersLong);
