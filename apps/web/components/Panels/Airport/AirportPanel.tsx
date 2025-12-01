@@ -1,12 +1,22 @@
 "use client";
 
+import type { AirportLong } from "@sk/types/vatsim";
 import { resetMap } from "@/components/Map/utils/events";
-import { AirportLong } from "@sk/types/vatsim";
 import "./AirportPanel.css";
-import { useState } from "react";
+import type { StaticAirport } from "@sk/types/db";
+import { useEffect, useState } from "react";
+import { getCachedAirport } from "@/storage/cache";
+import { AirportTitle } from "./AirportTitle";
+
+export interface AirportPanelStatic {
+	airport: StaticAirport | null;
+}
 
 export default function AirportPanel({ initialAirport }: { initialAirport: AirportLong }) {
 	const [airport, setAirport] = useState<AirportLong>(initialAirport);
+	const [data, setData] = useState<AirportPanelStatic>({
+		airport: null,
+	});
 
 	const [shared, setShared] = useState(false);
 	const onShareClick = () => {
@@ -14,6 +24,12 @@ export default function AirportPanel({ initialAirport }: { initialAirport: Airpo
 		setShared(true);
 		setTimeout(() => setShared(false), 2000);
 	};
+
+	useEffect(() => {
+		Promise.all([getCachedAirport(initialAirport.icao)]).then(([airport]) => {
+			setData({ airport });
+		});
+	}, [initialAirport]);
 
 	return (
 		<>
@@ -30,6 +46,7 @@ export default function AirportPanel({ initialAirport }: { initialAirport: Airpo
 					</svg>
 				</button>
 			</div>
+			<AirportTitle staticAirport={data.airport} />
 			<div className="panel-container main scrollable"></div>
 			<div className="panel-navigation">
 				<button className={`panel-navigation-button`} type="button" onClick={() => {}}>

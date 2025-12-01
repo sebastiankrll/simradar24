@@ -1,6 +1,6 @@
 import type { PilotLong } from "@sk/types/vatsim";
 import { haversineDistance } from "@/utils/helpers";
-import type { PilotPanelFetchData } from "./PilotPanel";
+import type { PilotPanelStatic } from "./PilotPanel";
 
 export function PilotFlightplan({
 	pilot,
@@ -9,7 +9,7 @@ export function PilotFlightplan({
 	ref,
 }: {
 	pilot: PilotLong;
-	data: PilotPanelFetchData;
+	data: PilotPanelStatic;
 	openSection: string | null;
 	ref: React.Ref<HTMLDivElement>;
 }) {

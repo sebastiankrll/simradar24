@@ -1,7 +1,7 @@
 import type { PilotLong } from "@sk/types/vatsim";
 import flightStatusSprite from "../lib/sprites/flightStatusSprite.png";
 import { PilotAirport } from "./PilotAirport";
-import type { PilotPanelFetchData } from "./PilotPanel";
+import type { PilotPanelStatic } from "./PilotPanel";
 import { PilotProgress } from "./PilotProgress";
 import { PilotTimes } from "./PilotTimes";
 
@@ -18,7 +18,7 @@ function getSpriteOffset(status: string | undefined) {
 	}
 }
 
-export function PilotStatus({ pilot, data }: { pilot: PilotLong; data: PilotPanelFetchData }) {
+export function PilotStatus({ pilot, data }: { pilot: PilotLong; data: PilotPanelStatic }) {
 	return (
 		<div className="panel-container" id="panel-pilot-status">
 			<div id="panel-pilot-route">

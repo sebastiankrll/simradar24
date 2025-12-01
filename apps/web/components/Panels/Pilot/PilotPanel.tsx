@@ -17,7 +17,7 @@ import { PilotTelemetry } from "./PilotTelemetry";
 import { PilotTitle } from "./PilotTitle";
 import { PilotUser } from "./PilotUser";
 
-export interface PilotPanelFetchData {
+export interface PilotPanelStatic {
 	airline: StaticAirline | null;
 	departure: StaticAirport | null;
 	arrival: StaticAirport | null;
@@ -34,7 +34,7 @@ function onStatsClick(cid: number) {
 export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: PilotLong; aircraft: StaticAircraft | null }) {
 	const [pilot, setPilot] = useState<PilotLong>(initialPilot);
 	const [trackPoints, setTrackPoints] = useState<TrackPoint[]>([]);
-	const [data, setData] = useState<PilotPanelFetchData>({
+	const [data, setData] = useState<PilotPanelStatic>({
 		airline: null,
 		departure: null,
 		arrival: null,

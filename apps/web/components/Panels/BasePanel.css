@@ -143,13 +143,12 @@
 	justify-content: center;
 	width: 100%;
 	padding: 4px;
-	gap: 8px;
+	gap: 4px;
 }
 
 .panel-title p {
 	font-weight: 700;
 	font-size: 1rem;
-	line-height: 1rem;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -162,17 +161,19 @@
 
 .panel-desc-item {
 	font-size: 12px;
-	color: white;
 	font-weight: 600;
-	padding: 0px 4px;
 }
 
 .panel-desc-item.r {
 	background-color: var(--color-red);
+	color: white;
+	padding: 0px 4px;
 }
 
 .panel-desc-item.g {
 	background-color: var(--color-green);
+	color: white;
+	padding: 0px 4px;
 }
 
 .panel-container.main {
@@ -215,7 +216,6 @@
 	color: white;
 	font-weight: 600;
 	font-size: 12px;
-	line-height: 12px;
 }
 
 .panel-container-header:hover {

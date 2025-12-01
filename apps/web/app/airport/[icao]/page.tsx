@@ -1,5 +1,5 @@
+import type { AirportLong } from "@sk/types/vatsim";
 import AirportPanel from "@/components/Panels/Airport/AirportPanel";
-import { AirportLong } from "@sk/types/vatsim";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 

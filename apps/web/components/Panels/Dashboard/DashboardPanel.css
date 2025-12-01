@@ -50,13 +50,13 @@
 
 .dashboard-table-button {
 	text-align: start;
-    width: fit-content;
-    font-size: 12px;
+	width: fit-content;
+	font-size: 12px;
 }
 
 .dashboard-table-button:hover {
 	background: var(--color-main-text);
-    color: white;
+	color: white;
 }
 
 .dashboard-table-header {

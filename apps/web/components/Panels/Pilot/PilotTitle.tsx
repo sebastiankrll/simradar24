@@ -1,13 +1,13 @@
 import type { PilotLong } from "@sk/types/vatsim";
-import type { PilotPanelFetchData } from "./PilotPanel";
+import type { PilotPanelStatic } from "./PilotPanel";
 
-export function PilotTitle({ pilot, data }: { pilot: PilotLong; data: PilotPanelFetchData }) {
+export function PilotTitle({ pilot, data }: { pilot: PilotLong; data: PilotPanelStatic }) {
 	const callsignNumber = pilot.callsign.slice(3);
 	const flightNumber = data.airline?.iata ? data.airline.iata + callsignNumber : pilot?.callsign;
 
 	return (
 		<div className="panel-container title-section">
-			<figure className="panel-icon" style={{ backgroundColor: data.airline?.bg ?? "none" }}>
+			<div className="panel-icon" style={{ backgroundColor: data.airline?.bg ?? "none" }}>
 				<p
 					style={{
 						color: data.airline?.font ?? "var(--color-green)",
@@ -15,7 +15,7 @@ export function PilotTitle({ pilot, data }: { pilot: PilotLong; data: PilotPanel
 				>
 					{data.airline?.iata || "?"}
 				</p>
-			</figure>
+			</div>
 			<div className="panel-title">
 				<p>{data.airline?.name}</p>
 				<div className="panel-desc-items">

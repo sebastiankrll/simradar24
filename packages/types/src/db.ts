@@ -30,6 +30,7 @@ export interface StaticAirport {
 	country: string;
 	latitude: number;
 	longitude: number;
+	timezone: string;
 }
 
 interface SimAwareTRACONProperties {
