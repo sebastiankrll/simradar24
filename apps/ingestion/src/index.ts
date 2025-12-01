@@ -16,70 +16,70 @@ let updating = false;
 let lastUpdateTimestamp = "2000-01-01T00:00:00.00000Z";
 
 async function fetchVatsimData(): Promise<void> {
-    if (updating) return;
+	if (updating) return;
 
-    updating = true;
-    try {
-        const vatsimResponse = await axios.get<VatsimData>(VATSIM_DATA_URL);
-        const vatsimData = vatsimResponse.data;
+	updating = true;
+	try {
+		const vatsimResponse = await axios.get<VatsimData>(VATSIM_DATA_URL);
+		const vatsimData = vatsimResponse.data;
 
-        if (new Date(vatsimData.general.update_timestamp) > new Date(lastUpdateTimestamp)) {
-            lastUpdateTimestamp = vatsimData.general.update_timestamp;
+		if (new Date(vatsimData.general.update_timestamp) > new Date(lastUpdateTimestamp)) {
+			lastUpdateTimestamp = vatsimData.general.update_timestamp;
 
-            const transceiversResponse = await axios.get<VatsimTransceivers[]>(VATSIM_TRANSCEIVERS_URL);
-            vatsimData.transceivers = transceiversResponse.data;
+			const transceiversResponse = await axios.get<VatsimTransceivers[]>(VATSIM_TRANSCEIVERS_URL);
+			vatsimData.transceivers = transceiversResponse.data;
 
-            const pilotsLong = await mapPilots(vatsimData);
-            const [controllersLong, controllersMerged] = await mapControllers(vatsimData, pilotsLong);
-            const airportsLong = await mapAirports(pilotsLong);
+			const pilotsLong = await mapPilots(vatsimData);
+			const [controllersLong, controllersMerged] = await mapControllers(vatsimData, pilotsLong);
+			const airportsLong = await mapAirports(pilotsLong);
 
-            // Publish minimal websocket data on redis ws:short
-            const delta: WsDelta = {
-                pilots: getPilotDelta(),
-                airports: getAirportDelta(),
-                controllers: getControllerDelta(),
-            };
-            rdsPubWsDelta(delta);
+			// Publish minimal websocket data on redis ws:short
+			const delta: WsDelta = {
+				pilots: getPilotDelta(),
+				airports: getAirportDelta(),
+				controllers: getControllerDelta(),
+			};
+			rdsPubWsDelta(delta);
 
-            // Set full websocket data on redis ws:all
-            const all: WsAll = {
-                pilots: pilotsLong.map(getPilotShort),
-                airports: airportsLong.map(getAirportShort),
-                controllers: controllersMerged,
-            };
-            rdsSetSingle("ws:all", all);
+			// Set full websocket data on redis ws:all
+			const all: WsAll = {
+				pilots: pilotsLong.map(getPilotShort),
+				airports: airportsLong.map(getAirportShort),
+				controllers: controllersMerged,
+			};
+			rdsSetSingle("ws:all", all);
 
-            // Set pilots, controllers and airports data in redis
-            rdsSetMultiple(pilotsLong, "pilot", (p) => p.id, "pilots:live", 120);
-            rdsSetMultiple(controllersLong, "controller", (c) => c.callsign, "controllers:live", 120);
-            rdsSetMultiple(airportsLong, "airport", (a) => a.icao, "airports:live", 120);
+			// Set pilots, controllers and airports data in redis
+			rdsSetMultiple(pilotsLong, "pilot", (p) => p.id, "pilots:live", 120);
+			rdsSetMultiple(controllersLong, "controller", (c) => c.callsign, "controllers:live", 120);
+			rdsSetMultiple(airportsLong, "airport", (a) => a.icao, "airports:live", 120);
 
-            // Insert trackpoints in TimescaleDB
-            const trackPoints: TrackPoint[] = pilotsLong.map((p) => ({
-                id: p.id,
-                cid: p.cid,
-                latitude: p.latitude,
-                longitude: p.longitude,
-                altitude_agl: p.altitude_agl,
-                altitude_ms: p.altitude_ms,
-                groundspeed: p.groundspeed,
-                vertical_speed: p.vertical_speed,
-                heading: p.heading,
-                timestamp: p.timestamp,
-            }));
-            pgInsertTrackPoints(trackPoints);
+			// Insert trackpoints in TimescaleDB
+			const trackPoints: TrackPoint[] = pilotsLong.map((p) => ({
+				id: p.id,
+				cid: p.cid,
+				latitude: p.latitude,
+				longitude: p.longitude,
+				altitude_agl: p.altitude_agl,
+				altitude_ms: p.altitude_ms,
+				groundspeed: p.groundspeed,
+				vertical_speed: p.vertical_speed,
+				heading: p.heading,
+				timestamp: p.timestamp,
+			}));
+			pgInsertTrackPoints(trackPoints);
 
-            // Update dashboard data
-            updateDashboardData(vatsimData, controllersLong);
+			// Update dashboard data
+			updateDashboardData(vatsimData, controllersLong);
 
-            console.log(`✅ Retrieved ${vatsimData.pilots.length} pilots and ${vatsimData.controllers.length} controllers.`);
-        } else {
-            // console.log("Nothing changed.")
-        }
-    } catch (error) {
-        console.error("❌ Error fetching VATSIM data:", error instanceof Error ? error.message : error);
-    }
-    updating = false;
+			console.log(`✅ Retrieved ${vatsimData.pilots.length} pilots and ${vatsimData.controllers.length} controllers.`);
+		} else {
+			// console.log("Nothing changed.")
+		}
+	} catch (error) {
+		console.error("❌ Error fetching VATSIM data:", error instanceof Error ? error.message : error);
+	}
+	updating = false;
 }
 
 fetchVatsimData();

@@ -150,7 +150,7 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 			<PilotStatus pilot={pilot} data={data} />
 			<div className="panel-container main scrollable">
 				<button className={`panel-container-header${openSection === "info" ? " open" : ""}`} type="button" onClick={() => toggleSection("info")}>
-					<p>More {flightNumber} information</p>
+					<p>More {flightNumber} Information</p>
 					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
 						<title>Toggle more information</title>
 						<path
@@ -163,7 +163,7 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 				<PilotFlightplan pilot={pilot} data={data} openSection={openSection} ref={infoRef} />
 				<PilotAircraft pilot={pilot} aircraft={aircraft} />
 				<button className={`panel-container-header${openSection === "charts" ? " open" : ""}`} type="button" onClick={() => toggleSection("charts")}>
-					<p>Speed & altitude graph</p>
+					<p>Speed & Altitude Graph</p>
 					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
 						<title>Toggle more information</title>
 						<path
@@ -176,7 +176,7 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 				<PilotCharts trackPoints={trackPoints} openSection={openSection} ref={chartsRef} />
 				<PilotTelemetry pilot={pilot} />
 				<button className={`panel-container-header${openSection === "pilot" ? " open" : ""}`} type="button" onClick={() => toggleSection("pilot")}>
-					<p>Pilot information</p>
+					<p>Pilot Information</p>
 					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
 						<title>Toggle more information</title>
 						<path

@@ -1,29 +1,29 @@
+import { promisify } from "node:util";
+import * as zlib from "node:zlib";
 import type { AirportDelta, AirportLong, AirportShort, PilotLong } from "@sk/types/vatsim";
 import axios from "axios";
-import * as zlib from "node:zlib";
-import { promisify } from "node:util";
 import { parseStringPromise } from "xml2js";
 
 interface MetarXML {
-    response?: {
-        data?: Array<{
-            METAR?: Array<{
-                station_id?: string[];
-                raw_text?: string[];
-            }>;
-        }>;
-    };
+	response?: {
+		data?: Array<{
+			METAR?: Array<{
+				station_id?: string[];
+				raw_text?: string[];
+			}>;
+		}>;
+	};
 }
 
 interface TafXML {
-    response?: {
-        data?: Array<{
-            TAF?: Array<{
-                station_id?: string[];
-                raw_text?: string[];
-            }>;
-        }>;
-    };
+	response?: {
+		data?: Array<{
+			TAF?: Array<{
+				station_id?: string[];
+				raw_text?: string[];
+			}>;
+		}>;
+	};
 }
 
 const METAR_URL = "https://aviationweather.gov/data/cache/metars.cache.xml.gz";
@@ -36,132 +36,132 @@ let updated: AirportShort[] = [];
 let added: AirportShort[] = [];
 
 export async function mapAirports(pilotsLong: PilotLong[]): Promise<AirportLong[]> {
-    await updateWeather();
+	await updateWeather();
 
-    const airportRecord: Record<string, AirportLong> = {};
-    const routeRecord: Record<string, Map<string, number>> = {};
+	const airportRecord: Record<string, AirportLong> = {};
+	const routeRecord: Record<string, Map<string, number>> = {};
 
-    for (const pilotLong of pilotsLong) {
-        if (!pilotLong.flight_plan?.departure.icao) continue;
+	for (const pilotLong of pilotsLong) {
+		if (!pilotLong.flight_plan?.departure.icao) continue;
 
-        const departure = pilotLong.flight_plan.departure;
-        const arrival = pilotLong.flight_plan.arrival;
+		const departure = pilotLong.flight_plan.departure;
+		const arrival = pilotLong.flight_plan.arrival;
 
-        // Add airport if not existing already
-        if (!airportRecord[departure.icao]) {
-            airportRecord[departure.icao] = initAirportRecord(departure.icao);
-        }
+		// Add airport if not existing already
+		if (!airportRecord[departure.icao]) {
+			airportRecord[departure.icao] = initAirportRecord(departure.icao);
+		}
 
-        if (!airportRecord[arrival.icao]) {
-            airportRecord[arrival.icao] = initAirportRecord(arrival.icao);
-        }
+		if (!airportRecord[arrival.icao]) {
+			airportRecord[arrival.icao] = initAirportRecord(arrival.icao);
+		}
 
-        const depTraffic = airportRecord[departure.icao].dep_traffic;
-        depTraffic.traffic_count++;
+		const depTraffic = airportRecord[departure.icao].dep_traffic;
+		depTraffic.traffic_count++;
 
-        const depDelay = calculateDepartureDelay(pilotLong);
-        if (depDelay !== 0) {
-            depTraffic.flights_delayed++;
-            depTraffic.average_delay = Math.round((depTraffic.average_delay * (depTraffic.flights_delayed - 1) + depDelay) / depTraffic.flights_delayed);
-        }
+		const depDelay = calculateDepartureDelay(pilotLong);
+		if (depDelay !== 0) {
+			depTraffic.flights_delayed++;
+			depTraffic.average_delay = Math.round((depTraffic.average_delay * (depTraffic.flights_delayed - 1) + depDelay) / depTraffic.flights_delayed);
+		}
 
-        const arrTraffic = airportRecord[arrival.icao].arr_traffic;
-        arrTraffic.traffic_count++;
+		const arrTraffic = airportRecord[arrival.icao].arr_traffic;
+		arrTraffic.traffic_count++;
 
-        const arrDelay = calculateArrivalDelay(pilotLong);
-        if (arrDelay !== 0) {
-            arrTraffic.flights_delayed++;
-            arrTraffic.average_delay = Math.round((arrTraffic.average_delay * (arrTraffic.flights_delayed - 1) + arrDelay) / arrTraffic.flights_delayed);
-        }
+		const arrDelay = calculateArrivalDelay(pilotLong);
+		if (arrDelay !== 0) {
+			arrTraffic.flights_delayed++;
+			arrTraffic.average_delay = Math.round((arrTraffic.average_delay * (arrTraffic.flights_delayed - 1) + arrDelay) / arrTraffic.flights_delayed);
+		}
 
-        const setRoute = (icao: string, route: string) => {
-            if (!routeRecord[icao]) routeRecord[icao] = new Map();
+		const setRoute = (icao: string, route: string) => {
+			if (!routeRecord[icao]) routeRecord[icao] = new Map();
 
-            const current = routeRecord[icao].get(route) || 0;
-            routeRecord[icao].set(route, current + 1);
-        };
+			const current = routeRecord[icao].get(route) || 0;
+			routeRecord[icao].set(route, current + 1);
+		};
 
-        const route = `${departure.icao}-${arrival.icao}`;
-        setRoute(departure.icao, route);
-        setRoute(arrival.icao, route);
-    }
+		const route = `${departure.icao}-${arrival.icao}`;
+		setRoute(departure.icao, route);
+		setRoute(arrival.icao, route);
+	}
 
-    // Get busiest and total routes
-    for (const icao of Object.keys(routeRecord)) {
-        const routes = routeRecord[icao];
-        if (!routes) continue;
+	// Get busiest and total routes
+	for (const icao of Object.keys(routeRecord)) {
+		const routes = routeRecord[icao];
+		if (!routes) continue;
 
-        let busiestRoute = "-";
-        let maxFlights = 0;
+		let busiestRoute = "-";
+		let maxFlights = 0;
 
-        routes.forEach((count, route) => {
-            if (count > maxFlights) {
-                maxFlights = count;
-                busiestRoute = route;
-            }
-        });
+		routes.forEach((count, route) => {
+			if (count > maxFlights) {
+				maxFlights = count;
+				busiestRoute = route;
+			}
+		});
 
-        airportRecord[icao].busiest_route = busiestRoute;
-        airportRecord[icao].total_routes = routes.size;
-    }
+		airportRecord[icao].busiest_route = busiestRoute;
+		airportRecord[icao].total_routes = routes.size;
+	}
 
-    const airportsLong = Object.values(airportRecord);
+	const airportsLong = Object.values(airportRecord);
 
-    const deletedLong = cached.filter((a) => !airportsLong.some((b) => b.icao === a.icao));
-    const addedLong = airportsLong.filter((a) => !cached.some((b) => b.icao === a.icao));
-    const updatedLong = airportsLong.filter((a) => cached.some((b) => b.icao === a.icao));
+	const deletedLong = cached.filter((a) => !airportsLong.some((b) => b.icao === a.icao));
+	const addedLong = airportsLong.filter((a) => !cached.some((b) => b.icao === a.icao));
+	const updatedLong = airportsLong.filter((a) => cached.some((b) => b.icao === a.icao));
 
-    deleted = deletedLong.map((a) => a.icao);
-    added = addedLong.map(getAirportShort);
-    updated = updatedLong.map(getAirportShort);
-    // console.log(airportsLong[0])
+	deleted = deletedLong.map((a) => a.icao);
+	added = addedLong.map(getAirportShort);
+	updated = updatedLong.map(getAirportShort);
+	// console.log(airportsLong[0])
 
-    cached = airportsLong;
-    return airportsLong;
+	cached = airportsLong;
+	return airportsLong;
 }
 
 export function getAirportShort(a: AirportLong): AirportShort {
-    return {
-        icao: a.icao,
-        dep_traffic: a.dep_traffic,
-        arr_traffic: a.arr_traffic,
-    };
+	return {
+		icao: a.icao,
+		dep_traffic: a.dep_traffic,
+		arr_traffic: a.arr_traffic,
+	};
 }
 
 export function getAirportDelta(): AirportDelta {
-    return {
-        deleted,
-        added,
-        updated,
-    };
+	return {
+		deleted,
+		added,
+		updated,
+	};
 }
 
 function initAirportRecord(icao: string): AirportLong {
-    return {
-        icao: icao,
-        dep_traffic: { traffic_count: 0, average_delay: 0, flights_delayed: 0 },
-        arr_traffic: { traffic_count: 0, average_delay: 0, flights_delayed: 0 },
-        busiest_route: "",
-        total_routes: 0,
-        metar: getMetar(icao),
-        taf: getTaf(icao),
-    };
+	return {
+		icao: icao,
+		dep_traffic: { traffic_count: 0, average_delay: 0, flights_delayed: 0 },
+		arr_traffic: { traffic_count: 0, average_delay: 0, flights_delayed: 0 },
+		busiest_route: "",
+		total_routes: 0,
+		metar: getMetar(icao),
+		taf: getTaf(icao),
+	};
 }
 
 function calculateDepartureDelay(pilot: PilotLong): number {
-    if (!pilot.times?.off_block) return 0;
-    const times = pilot.times;
-    const delay_min = (times.off_block.getTime() - times.sched_off_block.getTime()) / 1000 / 60;
+	if (!pilot.times?.off_block) return 0;
+	const times = pilot.times;
+	const delay_min = (times.off_block.getTime() - times.sched_off_block.getTime()) / 1000 / 60;
 
-    return Math.min(Math.max(delay_min, 0), 120);
+	return Math.min(Math.max(delay_min, 0), 120);
 }
 
 function calculateArrivalDelay(pilot: PilotLong): number {
-    if (!pilot.times?.on_block) return 0;
-    const times = pilot.times;
-    const delay_min = (times.on_block.getTime() - times.sched_on_block.getTime()) / 1000 / 60;
+	if (!pilot.times?.on_block) return 0;
+	const times = pilot.times;
+	const delay_min = (times.on_block.getTime() - times.sched_on_block.getTime()) / 1000 / 60;
 
-    return Math.min(Math.max(delay_min, 0), 120);
+	return Math.min(Math.max(delay_min, 0), 120);
 }
 
 const gunzip = promisify(zlib.gunzip);
@@ -170,65 +170,65 @@ let tafCache: Map<string, string> = new Map();
 let lastWeatherFetch = 0;
 
 async function fetchWeather(url: string): Promise<MetarXML | TafXML> {
-    const response = await axios.get<Buffer>(url, {
-        responseType: "arraybuffer",
-    });
+	const response = await axios.get<Buffer>(url, {
+		responseType: "arraybuffer",
+	});
 
-    const decompressed = await gunzip(response.data);
-    const xml = decompressed.toString("utf-8");
+	const decompressed = await gunzip(response.data);
+	const xml = decompressed.toString("utf-8");
 
-    const parsed = (await parseStringPromise(xml)) as MetarXML | TafXML;
+	const parsed = (await parseStringPromise(xml)) as MetarXML | TafXML;
 
-    return parsed;
+	return parsed;
 }
 
 async function updateWeather(): Promise<void> {
-    if (Date.now() - lastWeatherFetch < WEATHER_FETCH_INTERVAL) {
-        return;
-    }
-    lastWeatherFetch = Date.now();
+	if (Date.now() - lastWeatherFetch < WEATHER_FETCH_INTERVAL) {
+		return;
+	}
+	lastWeatherFetch = Date.now();
 
-    try {
-        const parsedMetar = await fetchWeather(METAR_URL) as MetarXML;
-        const parsedTaf = await fetchWeather(TAF_URL) as TafXML;
+	try {
+		const parsedMetar = (await fetchWeather(METAR_URL)) as MetarXML;
+		const parsedTaf = (await fetchWeather(TAF_URL)) as TafXML;
 
-        const metars = parsedMetar?.response?.data?.[0]?.METAR || [];
-        const tafs = parsedTaf?.response?.data?.[0]?.TAF || [];
+		const metars = parsedMetar?.response?.data?.[0]?.METAR || [];
+		const tafs = parsedTaf?.response?.data?.[0]?.TAF || [];
 
-        const newMetarCache = new Map<string, string>();
-        const newTafCache = new Map<string, string>();
+		const newMetarCache = new Map<string, string>();
+		const newTafCache = new Map<string, string>();
 
-        for (const metar of metars) {
-            const icao = metar.station_id?.[0];
-            const raw = metar.raw_text?.[0];
+		for (const metar of metars) {
+			const icao = metar.station_id?.[0];
+			const raw = metar.raw_text?.[0];
 
-            if (icao && raw) {
-                newMetarCache.set(icao, raw);
-            }
-        }
+			if (icao && raw) {
+				newMetarCache.set(icao, raw);
+			}
+		}
 
-        for (const taf of tafs) {
-            const icao = taf.station_id?.[0];
-            const raw = taf.raw_text?.[0];
+		for (const taf of tafs) {
+			const icao = taf.station_id?.[0];
+			const raw = taf.raw_text?.[0];
 
-            if (icao && raw) {
-                newTafCache.set(icao, raw);
-            }
-        }
+			if (icao && raw) {
+				newTafCache.set(icao, raw);
+			}
+		}
 
-        metarCache = newMetarCache;
-        tafCache = newTafCache;
+		metarCache = newMetarCache;
+		tafCache = newTafCache;
 
-        console.log(`✅ Updated ${metarCache.size} METAR entries and ${tafCache.size} TAF entries`);
-    } catch (error) {
-        console.error("❌ Error fetching weather data:", error instanceof Error ? error.message : error);
-    }
+		console.log(`✅ Updated ${metarCache.size} METAR entries and ${tafCache.size} TAF entries`);
+	} catch (error) {
+		console.error("❌ Error fetching weather data:", error instanceof Error ? error.message : error);
+	}
 }
 
 export function getMetar(icao: string): string | null {
-    return metarCache.get(icao) || null;
+	return metarCache.get(icao) || null;
 }
 
 export function getTaf(icao: string): string | null {
-    return tafCache.get(icao) || null;
+	return tafCache.get(icao) || null;
 }

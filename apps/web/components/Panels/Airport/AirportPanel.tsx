@@ -4,13 +4,13 @@ import type { AirportLong } from "@sk/types/vatsim";
 import { resetMap } from "@/components/Map/utils/events";
 import "./AirportPanel.css";
 import type { StaticAirport } from "@sk/types/db";
+import { parseMetar } from "metar-taf-parser";
 import { useEffect, useRef, useState } from "react";
 import { getCachedAirport } from "@/storage/cache";
-import { AirportTitle } from "./AirportTitle";
 import { setHeight } from "../helpers";
-import { AirportWeather } from "./AirportWeather";
 import { AirportStatus } from "./AirportStatus";
-import { parseMetar } from "metar-taf-parser";
+import { AirportTitle } from "./AirportTitle";
+import { AirportWeather } from "./AirportWeather";
 
 export interface AirportPanelStatic {
 	airport: StaticAirport | null;
@@ -18,7 +18,7 @@ export interface AirportPanelStatic {
 type AccordionSection = "weather" | "stats" | "controllers" | null;
 
 export default function AirportPanel({ initialAirport }: { initialAirport: AirportLong }) {
-	const [airport, setAirport] = useState<AirportLong>(initialAirport);
+	const [airport, _setAirport] = useState<AirportLong>(initialAirport);
 	const [data, setData] = useState<AirportPanelStatic>({
 		airport: null,
 	});
@@ -75,7 +75,7 @@ export default function AirportPanel({ initialAirport }: { initialAirport: Airpo
 					type="button"
 					onClick={() => toggleSection("weather")}
 				>
-					<p>Weather & METAR</p>
+					<p>More Weather & METAR</p>
 					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
 						<title>Weather & METAR</title>
 						<path
@@ -85,7 +85,7 @@ export default function AirportPanel({ initialAirport }: { initialAirport: Airpo
 						></path>
 					</svg>
 				</button>
-				<AirportWeather airport={airport} openSection={openSection} ref={weatherRef} />
+				<AirportWeather airport={airport} parsedMetar={parsedMetar} openSection={openSection} ref={weatherRef} />
 			</div>
 			<div className="panel-navigation">
 				<button className={`panel-navigation-button`} type="button" onClick={() => {}}>

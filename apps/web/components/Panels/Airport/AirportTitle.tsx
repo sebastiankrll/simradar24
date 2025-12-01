@@ -1,6 +1,6 @@
 import type { StaticAirport } from "@sk/types/db";
-import FlagSprite from "@/assets/images/sprites/flagSprite42.png";
 import { useEffect, useState } from "react";
+import FlagSprite from "@/assets/images/sprites/flagSprite42.png";
 
 function formatLocalTime(tz: string): string {
 	const now = new Date();

@@ -31,7 +31,7 @@
 }
 
 .panel-airport-status-item p:last-child {
-    padding: 0px 2px;
+	padding: 0px 2px;
 }
 
 .panel-airport-status-item p.green {
@@ -46,4 +46,12 @@
 .panel-airport-status-item p.red {
 	background: var(--color-red);
 	color: white;
+}
+
+#panel-airport-weather {
+	grid-template-columns: repeat(3, 1fr);
+}
+
+#panel-airport-weather .panel-data-item:nth-last-child(-n + 3) {
+	grid-column: 1 / -1;
 }

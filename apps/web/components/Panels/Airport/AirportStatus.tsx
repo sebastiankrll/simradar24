@@ -1,5 +1,5 @@
-import { AirportLong } from "@sk/types/vatsim";
-import { CloudQuantity, Descriptive, IAltimeter, IMetar, Intensity, IWind, Phenomenon } from "metar-taf-parser";
+import type { AirportLong } from "@sk/types/vatsim";
+import { CloudQuantity, Descriptive, type IMetar, Intensity, type IWind, Phenomenon } from "metar-taf-parser";
 
 function getConditions(metar: IMetar): string {
 	if (metar.cavok) {
@@ -86,14 +86,6 @@ function getTemperature(temp: number | undefined): string {
 	return `${temp} °C`;
 }
 
-function getPressure(altimeter: IAltimeter | undefined): string {
-	if (!altimeter) {
-		return "N/A";
-	}
-	const unit = altimeter.unit || "inHg";
-	return `${altimeter.value} ${unit}`;
-}
-
 function getWind(wind: IWind | undefined): string {
 	if (!wind) {
 		return "N/A";
@@ -130,10 +122,6 @@ export function AirportStatus({ airport, parsedMetar }: { airport: AirportLong; 
 					<div className="panel-airport-status-item">
 						<p>Temp.</p>
 						<p>{getTemperature(parsedMetar.temperature)}</p>
-					</div>
-					<div className="panel-airport-status-item">
-						<p>Altimeter</p>
-						<p>{getPressure(parsedMetar.altimeter)}</p>
 					</div>
 					<div className="panel-airport-status-item">
 						<p>Wind</p>
