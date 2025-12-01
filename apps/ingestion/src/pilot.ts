@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { rdsGetMultiple, rdsGetSingle } from "@sk/db/redis";
 import type { StaticAirport } from "@sk/types/db";
 import type {
@@ -89,7 +90,7 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 	added = [];
 
 	const pilotsLongPromises: Promise<PilotLong>[] = latestVatsimData.pilots.map(async (pilot) => {
-		const id = `${pilot.cid}_${pilot.callsign}_${pilot.logon_time}`;
+		const id = getPilotId(pilot.cid, pilot.callsign, pilot.logon_time);
 		const cachedPilot = cached.find((c) => c.id === id);
 
 		const transceiverData = latestVatsimData.transceivers.find((transceiver) => transceiver.callsign === pilot.callsign);
@@ -172,6 +173,13 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 
 	cached = pilotsLong;
 	return pilotsLong;
+}
+
+function getPilotId(cid: number, callsign: string, logonTime: string): string {
+	const base = `${cid}_${callsign}_${logonTime}`;
+	const digest = createHash("sha256").update(base).digest();
+	const b64url = digest.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+	return b64url.slice(0, 10);
 }
 
 export function getPilotDelta(): PilotDelta {
