@@ -81,7 +81,7 @@ async function fetchVatsimData(): Promise<void> {
 			// Update dashboard data
 			updateDashboardData(vatsimData, controllersLong);
 
-			console.log(`✅ Retrieved ${vatsimData.pilots.length} pilots and ${vatsimData.controllers.length} controllers.`);
+			// console.log(`✅ Retrieved ${vatsimData.pilots.length} pilots and ${vatsimData.controllers.length} controllers.`);
 		} else {
 			// console.log("Nothing changed.")
 		}
