@@ -6,7 +6,6 @@ import { type InfiniteData, QueryClient, QueryClientProvider, useInfiniteQuery }
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
-import { useInView } from "react-intersection-observer";
 import { setHoveredPilot } from "@/components/Map/utils/events";
 import Spinner from "@/components/Spinner/Spinner";
 import { getCachedAirline, getCachedAirport } from "@/storage/cache";
@@ -42,9 +41,6 @@ export default function AirportFlights({ icao, direction }: { icao: string; dire
 }
 
 function List({ icao, dir }: { icao: string; dir: "dep" | "arr" }) {
-	const { ref: bottomRef, inView: bottomInView } = useInView({ rootMargin: "200px" });
-	const { ref: topRef, inView: topInView } = useInView({ rootMargin: "200px" });
-
 	const {
 		status,
 		data,
@@ -73,25 +69,12 @@ function List({ icao, dir }: { icao: string; dir: "dep" | "arr" }) {
 		staleTime: 10_000,
 	});
 
-	useEffect(() => {
-		if (bottomInView && hasNextPage && !isFetchingNextPage) {
-			fetchNextPage();
-		}
-	}, [bottomInView, hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-	useEffect(() => {
-		if (topInView && hasPreviousPage && !isFetchingPreviousPage) {
-			fetchPreviousPage();
-		}
-	}, [topInView, hasPreviousPage, isFetchingPreviousPage, fetchPreviousPage]);
-
 	return (
 		<>
 			{status === "error" ? (
 				<span>Error: {error?.message || "Failed"}</span>
 			) : (
 				<>
-					<div ref={topRef} style={{ height: 1 }} />
 					<button
 						className="panel-airport-flights-page"
 						type="button"
@@ -114,7 +97,6 @@ function List({ icao, dir }: { icao: string; dir: "dep" | "arr" }) {
 					<button className="panel-airport-flights-page" type="button" onClick={() => fetchNextPage()} disabled={!hasNextPage || isFetchingNextPage}>
 						{isFetchingNextPage ? "Loading later..." : hasNextPage ? "Load Later" : "No later"}
 					</button>
-					<div ref={bottomRef} style={{ height: 1 }} />
 					{(isFetching || status === "pending") && <Spinner />}
 				</>
 			)}

@@ -261,6 +261,9 @@ export async function pgGetAirportPilots(
 		whereCursor = `AND (${timeCol}, id) < ($${paramIdx++}, $${paramIdx++})`;
 		params.push(new Date(tsStr), id);
 		isLoadingNewer = true;
+	} else {
+		// Initial load: fetch from NOW onwards
+		whereCursor = `AND ${timeCol} >= NOW()`;
 	}
 
 	const q = `
