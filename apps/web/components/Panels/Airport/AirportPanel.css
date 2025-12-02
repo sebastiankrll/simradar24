@@ -91,6 +91,7 @@
 
 #panel-airport-flights {
 	background: var(--color-light-grey);
+	position: relative;
 }
 
 #panel-airport-flights-list {

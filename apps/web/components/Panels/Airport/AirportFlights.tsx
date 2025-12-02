@@ -7,6 +7,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
+import Spinner from "@/components/Spinner/Spinner";
 import { getCachedAirline, getCachedAirport } from "@/storage/cache";
 import { getDelayColor } from "../Pilot/PilotTimes";
 
@@ -85,9 +86,7 @@ function List({ icao, dir }: { icao: string; dir: "dep" | "arr" }) {
 
 	return (
 		<>
-			{status === "pending" ? (
-				<p>Loading...</p>
-			) : status === "error" ? (
+			{status === "error" ? (
 				<span>Error: {error?.message || "Failed"}</span>
 			) : (
 				<>
@@ -110,9 +109,7 @@ function List({ icao, dir }: { icao: string; dir: "dep" | "arr" }) {
 						{isFetchingNextPage ? "Loading later..." : hasNextPage ? "Load Later" : "No later"}
 					</button>
 					<div ref={bottomRef} style={{ height: 1 }} />
-
-					{/* Status */}
-					<div style={{ padding: 8 }}>{isFetching && !isFetchingNextPage && !isFetchingPreviousPage ? "Background updating..." : null}</div>
+					{(isFetching || status === "pending") && <Spinner />}
 				</>
 			)}
 			<ReactQueryDevtools initialIsOpen={false} />
