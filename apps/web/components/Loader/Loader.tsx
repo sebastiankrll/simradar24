@@ -6,14 +6,16 @@ import type { StatusMap } from "@/types/data";
 import "./Loader.css";
 import Image from "next/image";
 import simradar24Logo from "@/assets/images/simradar24_logo.svg";
+import { usePathname } from "next/navigation";
 
 export default function Loader() {
 	const [status, setStatus] = useState<StatusMap>({});
+	const pathname = usePathname();
 
 	useEffect(() => {
-		initData(setStatus);
+		initData(setStatus, pathname);
 		return () => {};
-	}, []);
+	}, [pathname]);
 
 	return (
 		<>

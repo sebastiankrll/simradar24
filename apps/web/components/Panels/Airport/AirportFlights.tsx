@@ -10,6 +10,7 @@ import { useInView } from "react-intersection-observer";
 import Spinner from "@/components/Spinner/Spinner";
 import { getCachedAirline, getCachedAirport } from "@/storage/cache";
 import { getDelayColor } from "../Pilot/PilotTimes";
+import { setHoveredPilot } from "@/components/Map/utils/events";
 
 type ApiPage = {
 	items: PilotLong[];
@@ -157,6 +158,8 @@ function ListItem({ pilot, dir }: { pilot: PilotLong; dir: "dep" | "arr" }) {
 			onClick={() => {
 				router.push(`/pilot/${pilot.id}`);
 			}}
+			onPointerEnter={() => setHoveredPilot(pilot.id)}
+			onPointerLeave={() => setHoveredPilot(null)}
 		>
 			<div className={`panel-airport-flights-delay ${getDelayColor(schedTime, estTime) ?? ""}`}></div>
 			<div className="panel-airport-flights-times">
