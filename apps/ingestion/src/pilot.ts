@@ -148,32 +148,13 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 			// console.log("Missed cache, re-creating...")
 		}
 
+		pilotLong.times = mapPilotTimes(pilotLong, cachedPilot, pilot);
 		pilotLong.vertical_speed = calculateVerticalSpeed(pilotLong, cachedPilot || disconnectedMatch);
-		pilotLong.times = mapPilotTimes(pilotLong, cachedPilot || disconnectedMatch, pilot);
 
 		return pilotLong;
 	});
 
 	const pilotsLong = await Promise.all(pilotsLongPromises);
-
-	// Fetch airport coordinates for flight time estimation and store in PilotLong to minimize DB access
-	const icaos = getUniqueAirports(pilotsLong);
-	const airports = (await rdsGetMultiple("static_airport", icaos)) as (StaticAirport | null)[];
-
-	for (const pilot of pilotsLong) {
-		const fp = pilot.flight_plan;
-		if (!fp) continue;
-
-		if (!fp.departure.latitude) {
-			const depInfo = airports.find((a) => a?.id === fp.departure.icao);
-			fp.departure.latitude = Number(depInfo?.latitude);
-			fp.departure.longitude = Number(depInfo?.longitude);
-
-			const arrInfo = airports.find((a) => a?.id === fp.arrival.icao);
-			fp.arrival.latitude = Number(arrInfo?.latitude);
-			fp.arrival.longitude = Number(arrInfo?.longitude);
-		}
-	}
 
 	const deletedLong = cached.filter((a) => !pilotsLong.some((b) => b.id === a.id));
 	const addedLong = pilotsLong.filter((a) => !cached.some((b) => b.id === a.id));
@@ -257,7 +238,10 @@ function calculateVerticalSpeed(current: PilotLong, cache: PilotLong | undefined
 
 async function mapPilotFlightPlan(fp?: VatsimPilotFlightPlan): Promise<PilotFlightPlan | null> {
 	if (!fp) return null;
-	return {
+
+	const airports = (await rdsGetMultiple("static_airport", [fp.departure, fp.arrival])) as (StaticAirport | null)[];
+
+	const plan: PilotFlightPlan = {
 		flight_rules: fp.flight_rules === "I" ? "IFR" : "VFR",
 		ac_reg: await extractAircraftRegistration(fp.remarks),
 		departure: { icao: fp.departure },
@@ -271,6 +255,18 @@ async function mapPilotFlightPlan(fp?: VatsimPilotFlightPlan): Promise<PilotFlig
 		route: fp.route,
 		revision_id: fp.revision_id,
 	};
+
+	if (airports[0]) {
+		plan.departure.latitude = Number(airports[0]?.latitude);
+		plan.departure.longitude = Number(airports[0]?.longitude);
+	}
+
+	if (airports[1]) {
+		plan.arrival.latitude = Number(airports[1]?.latitude);
+		plan.arrival.longitude = Number(airports[1]?.longitude);
+	}
+
+	return plan;
 }
 
 async function extractAircraftRegistration(remarks: string): Promise<string | null> {
@@ -451,20 +447,6 @@ function estimateTouchdown(current: PilotLong): Date | null {
 	const timeToLooseEnergy = ((current.groundspeed - 100) / 1 + current.altitude_agl / 25) * 1000; // Time needed for 1 kt/s deacceleration and 25 ft/s (1500 ft/min) descent rate
 
 	return timeToLooseEnergy > timeForRemainingDistance ? new Date(Date.now() + timeToLooseEnergy) : new Date(Date.now() + timeForRemainingDistance);
-}
-
-function getUniqueAirports(pilotsLong: PilotLong[]): string[] {
-	const icaoSet = new Set<string>();
-
-	for (const pilot of pilotsLong) {
-		const fp = pilot.flight_plan;
-		if (!fp) continue;
-
-		if (!fp.departure.latitude) icaoSet.add(fp.departure.icao);
-		if (!fp.arrival.latitude) icaoSet.add(fp.arrival.icao);
-	}
-
-	return Array.from(icaoSet);
 }
 
 // "0325" ==> 12,300 seconds

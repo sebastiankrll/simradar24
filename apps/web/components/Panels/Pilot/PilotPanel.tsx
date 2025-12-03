@@ -32,6 +32,7 @@ function onStatsClick(cid: number) {
 }
 
 export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: PilotLong; aircraft: StaticAircraft | null }) {
+	console.log(initialPilot.times?.state);
 	const [pilot, setPilot] = useState<PilotLong>(initialPilot);
 	const [trackPoints, setTrackPoints] = useState<TrackPoint[]>([]);
 	const [data, setData] = useState<PilotPanelStatic>({
