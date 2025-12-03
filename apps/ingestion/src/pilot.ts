@@ -421,14 +421,16 @@ function estimateTouchdown(current: PilotLong): Date | null {
 	const distToDeparture = haversineDistance(departureCoordinates, currentCoordinates) * 1.1;
 	const distToArrival = haversineDistance(currentCoordinates, arrivalCoordinates) * 1.1;
 	const distTotal = distToDeparture + distToArrival;
-	const distanceRemaining = distToDeparture / distTotal;
 
-	const timeForRemainingDistance = distanceRemaining * current.flight_plan.enroute_time * 1000;
+	const fractionRemaining = distToArrival / distTotal;
+	const timeForRemainingDistance = fractionRemaining * current.flight_plan.enroute_time * 1000;
 
-	// Time needed to loose energy. Covers airport fly-overs
-	const timeToLooseEnergy = ((current.groundspeed - 100) / 1 + current.altitude_agl / 25) * 1000; // Time needed for 1 kt/s deacceleration and 25 ft/s (1500 ft/min) descent rate
+	// Time needed to lose energy. Covers airport fly-overs
+	const timeToLooseEnergy = ((current.groundspeed - 100) / 1 + current.altitude_agl / 25) * 1000;
 
-	return timeToLooseEnergy > timeForRemainingDistance ? new Date(Date.now() + timeToLooseEnergy) : new Date(Date.now() + timeForRemainingDistance);
+	return timeToLooseEnergy > timeForRemainingDistance
+		? new Date(Date.now() + timeToLooseEnergy)
+		: new Date(Date.now() + timeForRemainingDistance);
 }
 
 // "0325" ==> 12,300 seconds
