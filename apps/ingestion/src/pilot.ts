@@ -184,11 +184,10 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 	cached = pilotsLong;
 
 	for (const pilot of deletedLong) {
-		if (checkIfFinalDisconnect(pilot)) {
-			deleted.push(pilot.id);
-		} else {
+		if (!checkIfFinalDisconnect(pilot)) {
 			disconnected.push(pilot);
 		}
+		deleted.push(pilot.id);
 	}
 
 	return pilotsLong;
