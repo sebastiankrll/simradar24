@@ -121,7 +121,7 @@ app.get("/data/aircraft/:reg", async (req, res) => {
 		const { reg } = req.params;
 		// console.log("Requested aircraft:", reg);
 
-		const aircraft = await rdsGetSingle(`fleet:${reg}`);
+		const aircraft = await rdsGetSingle(`static_fleet:${reg}`);
 		if (!aircraft) return res.status(404).json({ error: "Aircraft not found" });
 
 		res.json(aircraft);

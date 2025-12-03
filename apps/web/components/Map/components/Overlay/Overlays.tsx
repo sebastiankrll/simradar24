@@ -77,6 +77,8 @@ export function getControllerColor(facility: number): string {
 			return "rgb(234, 89, 121)";
 		case 5:
 			return "rgb(222, 89, 234)";
+		case 6:
+			return "rgb(77, 95, 131)";
 		default:
 			return "rgb(255, 138, 43)";
 	}

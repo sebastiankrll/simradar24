@@ -256,18 +256,18 @@ async function extractAircraftRegistration(remarks: string): Promise<string | nu
 	if (!match?.[1]) return null;
 	const reg = match[1].toUpperCase();
 
-	let aircraft = await rdsGetSingle(`fleet:${reg}`);
+	let aircraft = await rdsGetSingle(`static_fleet:${reg}`);
 	if (aircraft) return reg;
 
 	if (reg.length > 1) {
 		const format1 = `${reg[0]}-${reg.slice(1)}`;
-		aircraft = await rdsGetSingle(`fleet:${format1}`);
+		aircraft = await rdsGetSingle(`static_fleet:${format1}`);
 		if (aircraft) return format1;
 	}
 
 	if (reg.length > 2) {
 		const format2 = `${reg.slice(0, 2)}-${reg.slice(2)}`;
-		aircraft = await rdsGetSingle(`fleet:${format2}`);
+		aircraft = await rdsGetSingle(`static_fleet:${format2}`);
 		if (aircraft) return format2;
 	}
 
@@ -428,9 +428,7 @@ function estimateTouchdown(current: PilotLong): Date | null {
 	// Time needed to lose energy. Covers airport fly-overs
 	const timeToLooseEnergy = ((current.groundspeed - 100) / 1 + current.altitude_agl / 25) * 1000;
 
-	return timeToLooseEnergy > timeForRemainingDistance
-		? new Date(Date.now() + timeToLooseEnergy)
-		: new Date(Date.now() + timeForRemainingDistance);
+	return timeToLooseEnergy > timeForRemainingDistance ? new Date(Date.now() + timeToLooseEnergy) : new Date(Date.now() + timeForRemainingDistance);
 }
 
 // "0325" ==> 12,300 seconds

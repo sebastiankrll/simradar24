@@ -27,7 +27,6 @@
 
 .panel-header {
 	display: flex;
-	justify-content: space-between;
 	align-items: center;
 }
 
@@ -46,6 +45,7 @@
 	width: 1.5rem;
 	height: 1.5rem;
 	padding: 0.25rem;
+	margin-left: auto;
 }
 
 .panel-close svg {

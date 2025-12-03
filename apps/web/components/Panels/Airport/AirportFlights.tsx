@@ -176,7 +176,7 @@ function ListItem({ pilot, dir }: { pilot: PilotLong; dir: "dep" | "arr" }) {
 				<p>{data.airport?.name || "Unknown Airport"}</p>
 				<p>{`${data.airport?.id ? `${data.airport.id} / ` : ""}${data.airport?.iata || "N/A"}`}</p>
 				<p>
-					{pilot.live && <span>Live</span>}
+					<span className={pilot.live ? "green" : "grey"}>Live</span>
 					{pilot.callsign}
 				</p>
 				<p>{pilot.aircraft}</p>
