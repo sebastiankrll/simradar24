@@ -78,28 +78,20 @@ const MILITARY_RATINGS = [
 		long_name: "Military Mission Ready Pilot",
 	},
 ];
-const DISCONNECTED_TIMEOUT_MS = 12 * 60 * 60 * 1000;
 
 let cached: PilotLong[] = [];
 let deleted: string[] = [];
 let updated: PilotShort[] = [];
 let added: PilotShort[] = [];
-let disconnected: PilotLong[] = [];
 
 export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong[]> {
 	deleted = [];
 	updated = [];
 	added = [];
 
-	const timedOut = new Date(Date.now() - DISCONNECTED_TIMEOUT_MS);
-	disconnected = disconnected.filter((pilot) => new Date(pilot.timestamp) > timedOut);
-
 	const pilotsLongPromises: Promise<PilotLong>[] = latestVatsimData.pilots.map(async (pilot) => {
-		const id = getPilotId(pilot.cid, pilot.callsign, pilot.logon_time);
+		const id = getPilotId(pilot);
 		const cachedPilot = cached.find((c) => c.id === id);
-
-		// Check if this pilot was previously connected
-		const disconnectedMatch = findDisconnectedMatch(pilot);
 
 		const transceiverData = latestVatsimData.transceivers.find((transceiver) => transceiver.callsign === pilot.callsign);
 		const transceiver = transceiverData?.transceivers[0];
@@ -113,7 +105,7 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 			vertical_speed: 0,
 			heading: pilot.heading,
 			timestamp: new Date(pilot.last_updated),
-			transponder: pilot.flight_plan?.assigned_transponder ? Number(pilot.flight_plan?.assigned_transponder) : 2000,
+			transponder: Number(pilot.transponder),
 			frequency: Number(transceiver?.frequency.toString().slice(0, 6)) || 122_800,
 			qnh_i_hg: pilot.qnh_i_hg,
 			qnh_mb: pilot.qnh_mb,
@@ -125,9 +117,6 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 			// hit cache, use cache
 			pilotLong = { ...cachedPilot, ...updatedFields };
 			// console.log("Hit cache!")
-		} else if (disconnectedMatch) {
-			pilotLong = { ...disconnectedMatch, ...updatedFields };
-			disconnected = disconnected.filter((p) => p.id !== disconnectedMatch.id);
 		} else {
 			// cache missed, re-create
 			pilotLong = {
@@ -148,8 +137,8 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 			// console.log("Missed cache, re-creating...")
 		}
 
+		pilotLong.vertical_speed = calculateVerticalSpeed(pilotLong, cachedPilot);
 		pilotLong.times = mapPilotTimes(pilotLong, cachedPilot, pilot);
-		pilotLong.vertical_speed = calculateVerticalSpeed(pilotLong, cachedPilot || disconnectedMatch);
 
 		return pilotLong;
 	});
@@ -162,35 +151,21 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 
 	added = addedLong.map(getPilotShort);
 	updated = updatedLong.map(getPilotShort);
+	deleted = deletedLong.map((p) => p.id);
 	cached = pilotsLong;
-
-	for (const pilot of deletedLong) {
-		if (!checkIfFinalDisconnect(pilot)) {
-			disconnected.push(pilot);
-		}
-		deleted.push(pilot.id);
-	}
 
 	return pilotsLong;
 }
 
-function getPilotId(cid: number, callsign: string, logonTime: string): string {
-	const base = `${cid}_${callsign}_${logonTime}`;
-	const digest = createHash("sha256").update(base).digest();
+function getPilotId(pilot: VatsimPilot): string {
+	const base = `${pilot.cid}_${pilot.callsign}`;
+
+	const plan = pilot.flight_plan;
+	const variable = `${plan?.aircraft_short}_${plan?.departure}_${plan?.arrival}_${plan?.deptime}`;
+
+	const digest = createHash("sha256").update(`${base}${plan ? `_${variable}` : ""}`).digest();
 	const b64url = digest.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 	return b64url.slice(0, 10);
-}
-
-function findDisconnectedMatch(pilot: VatsimPilot): PilotLong | undefined {
-	return disconnected.find((disconnected) => {
-		return (
-			disconnected.callsign === pilot.callsign &&
-			disconnected.aircraft === pilot.flight_plan?.aircraft_short &&
-			disconnected.flight_plan?.departure.icao === pilot.flight_plan?.departure &&
-			disconnected.flight_plan?.arrival.icao === pilot.flight_plan?.arrival &&
-			disconnected.times?.sched_off_block?.getTime() === (pilot.flight_plan?.deptime ? parseStrToDate(pilot.flight_plan.deptime).getTime() : null)
-		);
-	});
 }
 
 export function getPilotDelta(): PilotDelta {
@@ -488,16 +463,6 @@ function roundDateTo5Min(date: Date): Date {
 	newDate.setMilliseconds(0);
 
 	return newDate;
-}
-
-function checkIfFinalDisconnect(pilot: PilotLong): boolean {
-	const arrival = pilot.flight_plan?.arrival;
-	if (!arrival?.latitude || !arrival?.longitude) return true;
-
-	const state = pilot.times?.state;
-	if (state !== "Taxi In" && state !== "On Block") return true;
-
-	return false;
 }
 
 // const SPD_RATE = 5;
