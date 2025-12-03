@@ -380,16 +380,16 @@ function estimateInitState(current: PilotLong): PilotTimes["state"] {
 	if (current.groundspeed === 0 && distToDeparture <= distToArrival) return "Boarding";
 
 	// Moving on ground, closer to departure airport
-	if (current.groundspeed > 0 && current.vertical_speed < 100 && distToDeparture <= distToArrival) return "Taxi Out";
+	if (current.groundspeed > 0 && current.altitude_agl < 100 && current.altitude_agl < 500 && distToDeparture <= distToArrival) return "Taxi Out";
 
 	// Climbing
-	if (current.vertical_speed > 500) return "Climb";
+	if (current.vertical_speed > 500 && current.altitude_agl > 500) return "Climb";
 
 	// Cruising
-	if (current.vertical_speed < 100 && current.vertical_speed > -100) return "Cruise";
+	if (current.vertical_speed < 500 && current.vertical_speed > -500 && current.altitude_agl > 2000) return "Cruise";
 
 	// Descending
-	if (current.vertical_speed < -500) return "Descent";
+	if (current.vertical_speed < -500 && current.altitude_agl > 500) return "Descent";
 
 	// Moving on ground, closer to arrival airport
 	if (current.groundspeed > 0 && current.vertical_speed < 100 && distToDeparture > distToArrival) return "Taxi In";
