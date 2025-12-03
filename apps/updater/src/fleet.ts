@@ -35,6 +35,7 @@ export async function updateFleets(): Promise<void> {
 				if (itemsBuffer.length >= CHUNK) {
 					await rdsSetMultiple(itemsBuffer, "static_fleet", (a) => a.registration);
 					itemsBuffer.length = 0;
+					console.log(`Processed ${CHUNK} fleet items...`);
 				}
 			}
 		});
