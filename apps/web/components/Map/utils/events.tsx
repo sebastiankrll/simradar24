@@ -373,11 +373,17 @@ function clearMap(): void {
 		clearInterval(followInterval);
 		followInterval = null;
 	}
-	lastExtent = null;
 }
 
 export function resetMap(nav: boolean = true): void {
-	clearMap();
+	if (lastExtent) {
+		const view = getMapView();
+		view?.fit(lastExtent, {
+			duration: 200,
+		});
+		lastExtent = null;
+	}
+
 	const map = getMap();
 	if (clickedOverlay) {
 		map?.removeOverlay(clickedOverlay);
@@ -385,6 +391,8 @@ export function resetMap(nav: boolean = true): void {
 	}
 	clickedFeature?.set("clicked", false);
 	clickedFeature = null;
+
+	clearMap();
 
 	if (nav) {
 		navigate?.(`/`);

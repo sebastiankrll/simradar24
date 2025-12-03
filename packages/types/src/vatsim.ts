@@ -144,7 +144,7 @@ export interface PilotShort {
 	vertical_speed: number;
 	heading: number;
 	aircraft: string;
-	transponder: number;
+	transponder: string;
 	frequency: number;
 	route: string;
 	ghost: boolean;
@@ -162,6 +162,7 @@ export interface PilotLong extends PilotShort {
 	logon_time: Date;
 	times: PilotTimes | null;
 	timestamp: Date;
+	live: boolean;
 }
 
 export interface PilotFlightPlan {

@@ -116,7 +116,7 @@ export async function pgInitPilotsTable() {
       groundspeed DOUBLE PRECISION NOT NULL,
       vertical_speed DOUBLE PRECISION NOT NULL,
       heading DOUBLE PRECISION NOT NULL,
-      transponder INTEGER NOT NULL,
+      transponder TEXT NOT NULL,
       frequency INTEGER NOT NULL,
       qnh_i_hg DOUBLE PRECISION NOT NULL,
       qnh_mb DOUBLE PRECISION NOT NULL,
@@ -138,7 +138,8 @@ export async function pgInitPilotsTable() {
       
       -- Timestamps
       logon_time TIMESTAMPTZ NOT NULL,
-      last_update TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      last_update TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	  live BOOLEAN NOT NULL DEFAULT FALSE
     );
   `;
 	await pool.query(createTableQuery);
@@ -157,15 +158,15 @@ export async function pgUpsertPilots(pilots: PilotLong[]): Promise<void> {
         latitude, longitude, altitude_agl, altitude_ms, groundspeed, vertical_speed,
         heading, transponder, frequency, qnh_i_hg, qnh_mb,
         flight_plan, route, dep_icao, arr_icao, times, sched_off_block, sched_on_block,
-        logon_time, last_update
+        logon_time, last_update, live
     )`;
 
 	const values: any[] = [];
 	const placeholders: string[] = [];
 
 	pilots.forEach((p, i) => {
-		const idx = i * 28;
-		const params = Array.from({ length: 28 }, (_, j) => `$${idx + j + 1}`);
+		const idx = i * 29;
+		const params = Array.from({ length: 29 }, (_, j) => `$${idx + j + 1}`);
 		placeholders.push(`(${params.join(", ")})`);
 
 		values.push(
@@ -197,6 +198,7 @@ export async function pgUpsertPilots(pilots: PilotLong[]): Promise<void> {
 			p.times?.sched_on_block || null,
 			p.logon_time,
 			p.timestamp,
+			p.live,
 		);
 	});
 
@@ -230,7 +232,8 @@ export async function pgUpsertPilots(pilots: PilotLong[]): Promise<void> {
             sched_off_block = EXCLUDED.sched_off_block,
             sched_on_block = EXCLUDED.sched_on_block,
             logon_time = EXCLUDED.logon_time,
-            last_update = EXCLUDED.last_update
+            last_update = EXCLUDED.last_update,
+			live = EXCLUDED.live
     `;
 
 	await pool.query(query, values);
@@ -262,7 +265,6 @@ export async function pgGetAirportPilots(
 		params.push(new Date(tsStr), id);
 		isLoadingNewer = true;
 	} else {
-		// Initial load: fetch from NOW onwards
 		whereCursor = `AND ${timeCol} >= NOW()`;
 	}
 
@@ -279,6 +281,8 @@ export async function pgGetAirportPilots(
 
 	let { rows } = await pool.query(q, params);
 
+	const hadMoreThanLimit = rows.length > limit;
+
 	// If loading newer (earlier times), reverse to maintain chronological order
 	if (isLoadingNewer) {
 		rows = rows.reverse();
@@ -288,7 +292,7 @@ export async function pgGetAirportPilots(
 	let prevCursor: string | null = null;
 	const items = rows as any[];
 
-	if (items.length > limit) {
+	if (hadMoreThanLimit) {
 		if (isLoadingNewer) {
 			items.shift();
 		} else {
@@ -296,16 +300,24 @@ export async function pgGetAirportPilots(
 		}
 	}
 
-	if (!isLoadingNewer && items.length > 0) {
+	if (!isLoadingNewer && hadMoreThanLimit && items.length > 0) {
 		const tail = items[items.length - 1];
 		const tailTime = tail[timeCol];
 		nextCursor = Buffer.from(`${new Date(tailTime).toISOString()}|${tail.id}`).toString("base64");
 	}
 
 	if (items.length > 0) {
-		const head = items[0];
-		const headTime = head[timeCol];
-		prevCursor = Buffer.from(`${new Date(headTime).toISOString()}|${head.id}`).toString("base64");
+		if (!isLoadingNewer) {
+			const head = items[0];
+			const headTime = head[timeCol];
+			prevCursor = Buffer.from(`${new Date(headTime).toISOString()}|${head.id}`).toString("base64");
+		} else if (hadMoreThanLimit) {
+			const head = items[0];
+			const headTime = head[timeCol];
+			prevCursor = Buffer.from(`${new Date(headTime).toISOString()}|${head.id}`).toString("base64");
+		} else {
+			prevCursor = null;
+		}
 	}
 
 	const pilots: PilotLong[] = items.map((r: any) => ({
@@ -334,6 +346,7 @@ export async function pgGetAirportPilots(
 		ghost: false,
 		logon_time: new Date(r.logon_time),
 		timestamp: new Date(r.last_update),
+		live: r.live,
 	}));
 
 	return { items: pilots, nextCursor, prevCursor };

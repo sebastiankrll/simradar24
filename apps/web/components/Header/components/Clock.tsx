@@ -26,7 +26,7 @@ export default function Clock() {
 	}, []);
 
 	return (
-		<div id="header-clock">
+		<div id="header-clock" suppressHydrationWarning>
 			{getTime(time)}
 			<span>UTC</span>
 		</div>

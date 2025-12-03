@@ -38,7 +38,7 @@ async function fetchVatsimData(): Promise<void> {
 			const transceiversResponse = await axios.get<VatsimTransceivers[]>(VATSIM_TRANSCEIVERS_URL);
 			vatsimData.transceivers = transceiversResponse.data;
 
-			const pilotsLong = await mapPilots(vatsimData);
+			const [pilotsLong, deletedPilotsLong] = await mapPilots(vatsimData);
 			const [controllersLong, controllersMerged] = await mapControllers(vatsimData, pilotsLong);
 			const airportsLong = await mapAirports(pilotsLong);
 
@@ -77,7 +77,7 @@ async function fetchVatsimData(): Promise<void> {
 				timestamp: p.timestamp,
 			}));
 			await pgUpsertTrackPoints(trackPoints);
-			await pgUpsertPilots(pilotsLong);
+			await pgUpsertPilots([...pilotsLong, ...deletedPilotsLong]);
 
 			const now = Date.now();
 			if (now > lastPgCleanUp + 30 * 60 * 1000) {

@@ -2,7 +2,7 @@
 
 import type { StaticAirline, StaticAirport } from "@sk/types/db";
 import type { PilotLong } from "@sk/types/vatsim";
-import { type InfiniteData, QueryClient, QueryClientProvider, useInfiniteQuery } from "@tanstack/react-query";
+import { type InfiniteData, QueryClientProvider, useInfiniteQuery } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
@@ -10,6 +10,7 @@ import { setHoveredPilot } from "@/components/Map/utils/events";
 import Spinner from "@/components/Spinner/Spinner";
 import { cacheIsInitialized, getCachedAirline, getCachedAirport } from "@/storage/cache";
 import { getDelayColor } from "../Pilot/PilotTimes";
+import { queryClient } from "./AirportPanel";
 
 type ApiPage = {
 	items: PilotLong[];
@@ -19,14 +20,12 @@ type ApiPage = {
 type PageParam = { cursor?: string; afterCursor?: string };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-const LIMIT = 10;
+const LIMIT = 20;
 
 function normalizeDirection(direction: string): "dep" | "arr" {
 	const d = direction.toLowerCase();
 	return d.startsWith("arr") ? "arr" : "dep";
 }
-
-const queryClient = new QueryClient();
 
 export default function AirportFlights({ icao, direction }: { icao: string; direction: string }) {
 	const dir = normalizeDirection(direction);
@@ -61,12 +60,19 @@ function List({ icao, dir }: { icao: string; dir: "dep" | "arr" }) {
 
 			const res = await fetch(`${API_URL}/data/airport/${icao}/flights?${params.toString()}`, { cache: "no-store" });
 			if (!res.ok) throw new Error(`Failed to fetch flights: ${res.status}`);
-			return (await res.json()) as ApiPage;
+			const json = (await res.json()) as ApiPage;
+
+			json.nextCursor = json.nextCursor && json.nextCursor.length > 0 ? json.nextCursor : null;
+			json.prevCursor = json.prevCursor && json.prevCursor.length > 0 ? json.prevCursor : null;
+
+			return json;
 		},
 		initialPageParam: {} as PageParam,
-		getNextPageParam: (lastPage) => (lastPage.nextCursor ? { cursor: lastPage.nextCursor } : undefined),
-		getPreviousPageParam: (firstPage) => (firstPage.prevCursor ? { afterCursor: firstPage.prevCursor } : undefined),
+		getNextPageParam: (lastPage) => (lastPage.nextCursor && lastPage.nextCursor.length > 0 ? { cursor: lastPage.nextCursor } : undefined),
+		getPreviousPageParam: (firstPage) =>
+			firstPage.prevCursor && firstPage.prevCursor.length > 0 ? { afterCursor: firstPage.prevCursor } : undefined,
 		staleTime: 10_000,
+		gcTime: 30_000,
 	});
 
 	return (
@@ -169,7 +175,10 @@ function ListItem({ pilot, dir }: { pilot: PilotLong; dir: "dep" | "arr" }) {
 			<div className="panel-airport-flights-main">
 				<p>{data.airport?.name || "Unknown Airport"}</p>
 				<p>{`${data.airport?.id ? `${data.airport.id} / ` : ""}${data.airport?.iata || "N/A"}`}</p>
-				<p>{pilot.callsign}</p>
+				<p>
+					<span className={pilot.live ? "green" : "grey"}>Live</span>
+					{pilot.callsign}
+				</p>
 				<p>{pilot.aircraft}</p>
 			</div>
 		</button>
