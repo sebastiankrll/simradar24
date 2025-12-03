@@ -168,7 +168,7 @@ export function moveToPilotFeature(id: string): Feature<Point> | null {
 		zoom: 8,
 	});
 
-	initTrackFeatures(id);
+	initTrackFeatures(`pilot_${id}`);
 	addHighlightedPilot(id);
 
 	return feature;
