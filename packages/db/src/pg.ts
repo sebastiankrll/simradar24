@@ -83,7 +83,7 @@ export async function pgUpsertTrackPoints(trackPoints: TrackPoint[]) {
 	if (trackPoints.length === 0) return;
 
 	const BATCH_SIZE = 500;
-	let totalInserted = 0;
+	// let totalInserted = 0;
 
 	try {
 		for (let i = 0; i < trackPoints.length; i += BATCH_SIZE) {
@@ -105,11 +105,11 @@ export async function pgUpsertTrackPoints(trackPoints: TrackPoint[]) {
         ON CONFLICT (id, timestamp) DO NOTHING
       `;
 
-			const result = await pool.query(query, values);
-			totalInserted += result.rowCount || 0;
+			await pool.query(query, values);
+			// totalInserted += result.rowCount || 0;
 		}
 
-		console.log(`✅ Inserted ${totalInserted} track points`);
+		// console.log(`✅ Inserted ${totalInserted} track points`);
 	} catch (err) {
 		console.error("Error inserting track points:", err);
 		throw err;
@@ -202,7 +202,7 @@ export async function pgUpsertPilots(pilots: PilotLong[]): Promise<void> {
 	if (!pilots.length) return;
 
 	const BATCH_SIZE = 100;
-	let totalUpserted = 0;
+	// let totalUpserted = 0;
 
 	try {
 		for (let i = 0; i < pilots.length; i += BATCH_SIZE) {
@@ -290,11 +290,11 @@ export async function pgUpsertPilots(pilots: PilotLong[]): Promise<void> {
             live = EXCLUDED.live
       `;
 
-			const result = await pool.query(query, values);
-			totalUpserted += result.rowCount || 0;
+			await pool.query(query, values);
+			// totalUpserted += result.rowCount || 0;
 		}
 
-		console.log(`✅ Upserted ${totalUpserted} pilots`);
+		// console.log(`✅ Upserted ${totalUpserted} pilots`);
 	} catch (err) {
 		console.error("Error upserting pilots:", err);
 		throw err;
@@ -418,12 +418,12 @@ export async function pgGetAirportPilots(
 
 export async function pgCleanupStalePilots(): Promise<void> {
 	try {
-		const result = await pool.query(`
+		await pool.query(`
       DELETE FROM pilots 
       WHERE last_update < NOW() - INTERVAL '24 hours'
       RETURNING id
     `);
-		console.log(`🗑️  Cleaned up ${result.rowCount} stale pilots`);
+		// console.log(`🗑️  Cleaned up ${result.rowCount} stale pilots`);
 	} catch (err) {
 		console.error("Error cleaning up stale pilots:", err);
 		throw err;

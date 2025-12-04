@@ -53,10 +53,10 @@ class WsClient {
 			this.isPageHidden = document.hidden;
 
 			if (document.hidden) {
-				console.log("📱 Page hidden, pausing WebSocket...");
+				// console.log("📱 Page hidden, pausing WebSocket...");
 				this.disconnect();
 			} else {
-				console.log("📱 Page visible, resuming WebSocket...");
+				// console.log("📱 Page visible, resuming WebSocket...");
 				if (!this.isConnected() && !this.isConnecting) {
 					this.reconnect();
 				}
@@ -153,7 +153,7 @@ class WsClient {
 
 	private scheduleReconnect(): void {
 		if (this.isPageHidden && this.config.pauseWhenHidden) {
-			console.log("Page is hidden, not scheduling reconnect");
+			// console.log("Page is hidden, not scheduling reconnect");
 			return;
 		}
 
@@ -169,7 +169,7 @@ class WsClient {
 		const jitter = delay * 0.1 * Math.random();
 		const totalDelay = delay + jitter;
 
-		console.log(`⏳ Scheduling reconnect in ${totalDelay.toFixed(0)}ms (attempt ${this.reconnectAttempts}/${this.config.maxReconnectAttempts})`);
+		// console.log(`⏳ Scheduling reconnect in ${totalDelay.toFixed(0)}ms (attempt ${this.reconnectAttempts}/${this.config.maxReconnectAttempts})`);
 
 		if (this.reconnectTimeout) {
 			clearTimeout(this.reconnectTimeout);
@@ -207,7 +207,7 @@ class WsClient {
 
 	private flushMessageBuffer(): void {
 		if (this.messageBuffer.length > 0) {
-			console.log(`Flushing ${this.messageBuffer.length} buffered messages`);
+			// console.log(`Flushing ${this.messageBuffer.length} buffered messages`);
 			this.messageBuffer = [];
 		}
 	}

@@ -104,7 +104,7 @@ export async function rdsSetMultiple<T>(
 	if (items.length === 0) return;
 
 	const BATCH_SIZE = 1000; // Reduced from 2000 for better performance
-	let totalSet = 0;
+	// let totalSet = 0;
 
 	try {
 		for (let i = 0; i < items.length; i += BATCH_SIZE) {
@@ -121,13 +121,13 @@ export async function rdsSetMultiple<T>(
 				if (activeSetName) {
 					pipeline.sadd(activeSetName, keyExtractor(item));
 				}
-				totalSet++;
+				// totalSet++;
 			}
 
 			await pipeline.exec();
 		}
 
-		console.log(`✅ ${totalSet} items set in ${activeSetName || keyPrefix}.`);
+		// console.log(`✅ ${totalSet} items set in ${activeSetName || keyPrefix}.`);
 	} catch (err) {
 		console.error(`Failed to set multiple items in ${keyPrefix}:`, err);
 		throw err;

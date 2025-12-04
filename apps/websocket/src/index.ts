@@ -98,9 +98,9 @@ const wss = new WebSocketServer({
 	maxPayload: 1024 * 64,
 });
 
-wss.on("connection", (ws: WebSocket, req: any) => {
+wss.on("connection", (ws: WebSocket, _req: any) => {
 	const clientId = generateClientId();
-	const clientIp = req.socket.remoteAddress;
+	// const clientIp = req.socket.remoteAddress;
 
 	const clientContext: ClientContext = {
 		id: clientId,
@@ -114,7 +114,7 @@ wss.on("connection", (ws: WebSocket, req: any) => {
 	};
 
 	clientContextMap.set(ws, clientContext);
-	console.log(`✅ Client connected: ${clientId} from ${clientIp} (Total: ${clientContextMap.size})`);
+	// console.log(`✅ Client connected: ${clientId} from ${clientIp} (Total: ${clientContextMap.size})`);
 
 	ws.on("pong", () => {
 		clientContext.isAlive = true;
@@ -139,7 +139,7 @@ wss.on("connection", (ws: WebSocket, req: any) => {
 			}
 
 			if (process.env.NODE_ENV === "development") {
-				console.log(`📨 Message from ${clientId}:`, msg.toString().substring(0, 100));
+				// console.log(`📨 Message from ${clientId}:`, msg.toString().substring(0, 100));
 			}
 		} catch (err) {
 			console.error(`Error processing message from ${clientId}:`, err);
@@ -148,10 +148,10 @@ wss.on("connection", (ws: WebSocket, req: any) => {
 
 	ws.on("close", () => {
 		clientContextMap.delete(ws);
-		const duration = Date.now() - clientContext.connectedAt.getTime();
-		console.log(
-			`❌ Client disconnected: ${clientId} (connected for ${duration}ms, sent ${clientContext.messagesSent} messages, Total: ${clientContextMap.size})`,
-		);
+		// const duration = Date.now() - clientContext.connectedAt.getTime();
+		// console.log(
+		// 	`❌ Client disconnected: ${clientId} (connected for ${duration}ms, sent ${clientContext.messagesSent} messages, Total: ${clientContextMap.size})`,
+		// );
 	});
 });
 
@@ -172,7 +172,7 @@ const heartbeatInterval = setInterval(() => {
 }, 30000);
 
 function sendWsDelta(data: WsDelta): void {
-	const startTime = Date.now();
+	// const startTime = Date.now();
 	let successCount = 0;
 	let errorCount = 0;
 	let clientCount = 0;
@@ -198,9 +198,9 @@ function sendWsDelta(data: WsDelta): void {
 
 	gzip.on("end", () => {
 		const compressedData = Buffer.concat(chunks);
-		const originalSize = payload.length;
-		const compressedSize = compressedData.length;
-		const compressionRatio = ((1 - compressedSize / originalSize) * 100).toFixed(2);
+		// const originalSize = payload.length;
+		// const compressedSize = compressedData.length;
+		// const compressionRatio = ((1 - compressedSize / originalSize) * 100).toFixed(2);
 
 		wss.clients.forEach((client) => {
 			if (client.readyState !== WebSocket.OPEN) return;
@@ -223,10 +223,10 @@ function sendWsDelta(data: WsDelta): void {
 
 					// Log only after all sends complete
 					if (successCount + errorCount === clientCount) {
-						const duration = Date.now() - startTime;
-						console.log(
-							`📡 Delta broadcast: ${successCount}/${clientCount} sent, ${errorCount} failed (compression: ${compressionRatio}%, size: ${compressedSize}B, duration: ${duration}ms)`,
-						);
+						// const duration = Date.now() - startTime;
+						// console.log(
+						// 	`📡 Delta broadcast: ${successCount}/${clientCount} sent, ${errorCount} failed (compression: ${compressionRatio}%, size: ${compressedSize}B, duration: ${duration}ms)`,
+						// );
 					}
 				});
 			} catch (err) {
@@ -235,17 +235,17 @@ function sendWsDelta(data: WsDelta): void {
 
 				// Log if all sends complete
 				if (successCount + errorCount === clientCount) {
-					const duration = Date.now() - startTime;
-					console.log(
-						`📡 Delta broadcast: ${successCount}/${clientCount} sent, ${errorCount} failed (compression: ${compressionRatio}%, size: ${compressedSize}B, duration: ${duration}ms)`,
-					);
+					// const duration = Date.now() - startTime;
+					// console.log(
+					// 	`📡 Delta broadcast: ${successCount}/${clientCount} sent, ${errorCount} failed (compression: ${compressionRatio}%, size: ${compressedSize}B, duration: ${duration}ms)`,
+					// );
 				}
 			}
 		});
 
 		// Handle case with no clients
 		if (clientCount === 0) {
-			console.log(`📡 Delta broadcast: no connected clients`);
+			// console.log(`📡 Delta broadcast: no connected clients`);
 		}
 	});
 }
