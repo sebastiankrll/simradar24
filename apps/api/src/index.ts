@@ -1,6 +1,6 @@
 import "dotenv/config";
-import { pgGetAirportPilots, pgGetTrackPointsByid } from "@sk/db/pg";
-import { rdsGetMultiple, rdsGetRingStorage, rdsGetSingle, rdsShutdown, rdsHealthCheck } from "@sk/db/redis";
+import { pgGetAirportPilots, pgGetTrackPointsByid, pgHealthCheck, pgShutdown } from "@sk/db/pg";
+import { rdsGetMultiple, rdsGetRingStorage, rdsGetSingle, rdsHealthCheck, rdsShutdown } from "@sk/db/redis";
 import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
@@ -39,15 +39,25 @@ app.get(
 			uptime: process.uptime(),
 			services: {
 				redis: "unknown",
+				postgres: "unknown",
 			},
 		};
 
 		try {
-			const isHealthy = await rdsHealthCheck();
-			health.services.redis = isHealthy ? "ok" : "error";
-			if (!isHealthy) health.status = "degraded";
+			const redisHealthy = await rdsHealthCheck();
+			health.services.redis = redisHealthy ? "ok" : "error";
+			if (!redisHealthy) health.status = "degraded";
 		} catch (_err) {
 			health.services.redis = "error";
+			health.status = "degraded";
+		}
+
+		try {
+			const pgHealthy = await pgHealthCheck();
+			health.services.postgres = pgHealthy ? "ok" : "error";
+			if (!pgHealthy) health.status = "degraded";
+		} catch (_err) {
+			health.services.postgres = "error";
 			health.status = "degraded";
 		}
 
@@ -75,15 +85,22 @@ app.get(
 	"/health/ready",
 	asyncHandler(async (_req, res) => {
 		try {
-			const isHealthy = await rdsHealthCheck();
-			if (!isHealthy) {
+			const redisHealthy = await rdsHealthCheck();
+			const pgHealthy = await pgHealthCheck();
+
+			if (!redisHealthy || !pgHealthy) {
+				const reasons: string[] = [];
+				if (!redisHealthy) reasons.push("Redis connection failed");
+				if (!pgHealthy) reasons.push("PostgreSQL connection failed");
+
 				res.status(503).json({
 					status: "not-ready",
-					reason: "Redis connection failed",
+					reasons,
 					timestamp: new Date().toISOString(),
 				});
 				return;
 			}
+
 			res.json({
 				status: "ready",
 				timestamp: new Date().toISOString(),
@@ -91,7 +108,7 @@ app.get(
 		} catch (_err) {
 			res.status(503).json({
 				status: "not-ready",
-				reason: "Redis connection failed",
+				reasons: ["Health check failed"],
 				timestamp: new Date().toISOString(),
 			});
 		}
@@ -286,7 +303,16 @@ const gracefulShutdown = async (signal: string) => {
 	console.log(`\n${signal} signal received: closing HTTP server`);
 	server.close(async () => {
 		console.log("HTTP server closed");
-		await rdsShutdown();
+		try {
+			await rdsShutdown();
+		} catch (err) {
+			console.error("Error shutting down Redis:", err);
+		}
+		try {
+			await pgShutdown();
+		} catch (err) {
+			console.error("Error shutting down PostgreSQL:", err);
+		}
 		process.exit(0);
 	});
 
