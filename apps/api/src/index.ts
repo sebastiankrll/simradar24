@@ -20,8 +20,16 @@ app.use(cors());
 app.use(express.json());
 app.use(limiter);
 
-app.get("/static/versions", async (_req, res) => {
-	try {
+// Async error wrapper
+const asyncHandler =
+	(fn: (req: express.Request, res: express.Response, next: express.NextFunction) => Promise<void> | Promise<any>) =>
+	(req: express.Request, res: express.Response, next: express.NextFunction) => {
+		Promise.resolve(fn(req, res, next)).catch(next);
+	};
+
+app.get(
+	"/static/versions",
+	asyncHandler(async (_req, res) => {
 		const airportsVersion = await rdsGetSingle("static_airports:version");
 		const firsVersion = await rdsGetSingle("static_firs:version");
 		const traconsVersion = await rdsGetSingle("static_tracons:version");
@@ -33,133 +41,129 @@ app.get("/static/versions", async (_req, res) => {
 			traconsVersion,
 			airlinesVersion,
 		});
-	} catch (err) {
-		console.error(err);
-		res.status(500).json({ error: "Internal server error" });
-	}
-});
+	}),
+);
 
-app.get("/static/:type", async (req, res) => {
-	try {
+app.get(
+	"/static/:type",
+	asyncHandler(async (req, res) => {
 		const { type } = req.params;
 		const allowedTypes = ["airports", "tracons", "firs", "airlines"];
 
-		if (!allowedTypes.includes(type)) return res.status(400).json({ error: "Invalid static data type" });
+		if (!allowedTypes.includes(type)) {
+			return res.status(400).json({ error: "Invalid static data type" });
+		}
 
 		const data = await rdsGetSingle(`static_${type}:all`);
-		if (!data) return res.status(404).json({ error: "Static data not found" });
+		if (!data) {
+			return res.status(404).json({ error: "Static data not found" });
+		}
 
 		res.json(data);
-	} catch (err) {
-		console.error(err);
-		res.status(500).json({ error: "Internal server error" });
-	}
-});
+	}),
+);
 
-app.get("/data/init", async (_req, res) => {
-	try {
+app.get(
+	"/data/init",
+	asyncHandler(async (_req, res) => {
 		const all = await rdsGetSingle("ws:all");
-		if (!all) return res.status(404).json({ error: "Initial data not found" });
+		if (!all) {
+			return res.status(404).json({ error: "Initial data not found" });
+		}
 
 		res.json(all);
-	} catch (err) {
-		console.error(err);
-		res.status(500).json({ error: "Internal server error" });
-	}
-});
+	}),
+);
 
-app.get("/data/pilot/:id", async (req, res) => {
-	try {
+app.get(
+	"/data/pilot/:id",
+	asyncHandler(async (req, res) => {
 		const { id } = req.params;
-		// console.log("Requested pilot:", id);
 
 		const pilot = await rdsGetSingle(`pilot:${id}`);
-		if (!pilot) return res.status(404).json({ error: "Pilot not found" });
+		if (!pilot) {
+			return res.status(404).json({ error: "Pilot not found" });
+		}
 
 		res.json(pilot);
-	} catch (err) {
-		console.error(err);
-		res.status(500).json({ error: "Internal server error" });
-	}
-});
+	}),
+);
 
-app.get("/data/airport/:icao", async (req, res) => {
-	try {
+app.get(
+	"/data/airport/:icao",
+	asyncHandler(async (req, res) => {
 		const { icao } = req.params;
-		// console.log("Requested airport:", icao);
 
 		const airport = await rdsGetSingle(`airport:${icao}`);
-		if (!airport) return res.status(404).json({ error: "Airport not found" });
+		if (!airport) {
+			return res.status(404).json({ error: "Airport not found" });
+		}
 
 		res.json(airport);
-	} catch (err) {
-		console.error(err);
-		res.status(500).json({ error: "Internal server error" });
-	}
-});
+	}),
+);
 
-app.get("/data/controllers/:callsigns", async (req, res) => {
-	try {
+app.get(
+	"/data/controllers/:callsigns",
+	asyncHandler(async (req, res) => {
 		const { callsigns } = req.params;
-		// console.log("Requested controller:", callsigns);
 
 		const controllers = await rdsGetMultiple("controller", callsigns.split(","));
 		const validControllers = controllers.filter((controller) => controller !== null);
-		if (!validControllers) return res.status(404).json({ error: "Controller not found" });
+		if (validControllers.length === 0) {
+			return res.status(404).json({ error: "Controller not found" });
+		}
 
 		res.json(validControllers);
-	} catch (err) {
-		console.error(err);
-		res.status(500).json({ error: "Internal server error" });
-	}
-});
+	}),
+);
 
-app.get("/data/track/:id", async (req, res) => {
-	try {
+app.get(
+	"/data/track/:id",
+	asyncHandler(async (req, res) => {
 		const { id } = req.params;
-		// console.log("Requested track:", id);
 
 		const trackPoints = await pgGetTrackPointsByid(id);
+		if (!trackPoints || trackPoints.length === 0) {
+			return res.status(404).json({ error: "Track not found" });
+		}
 
 		res.json(trackPoints);
-	} catch (err) {
-		console.error(err);
-		res.status(500).json({ error: "Internal server error" });
-	}
-});
+	}),
+);
 
-app.get("/data/aircraft/:reg", async (req, res) => {
-	try {
+app.get(
+	"/data/aircraft/:reg",
+	asyncHandler(async (req, res) => {
 		const { reg } = req.params;
-		// console.log("Requested aircraft:", reg);
 
 		const aircraft = await rdsGetSingle(`static_fleet:${reg}`);
-		if (!aircraft) return res.status(404).json({ error: "Aircraft not found" });
+		if (!aircraft) {
+			return res.status(404).json({ error: "Aircraft not found" });
+		}
 
 		res.json(aircraft);
-	} catch (err) {
-		console.error(err);
-		res.status(500).json({ error: "Internal server error" });
-	}
-});
+	}),
+);
 
-app.get("/data/dashboard/", async (_req, res) => {
-	try {
+app.get(
+	"/data/dashboard/",
+	asyncHandler(async (_req, res) => {
 		const stats = await rdsGetSingle(`dashboard:stats`);
 		const history = await rdsGetRingStorage(`dashboard:history`, 24 * 60 * 60 * 1000);
 		const events = await rdsGetSingle(`dashboard:events`);
-		if (!stats || !history || !events) return res.status(404).json({ error: "Dashboard data not found" });
+
+		if (!stats || !history || !events) {
+			return res.status(404).json({ error: "Dashboard data not found" });
+		}
 
 		res.json({ stats, history, events });
-	} catch (err) {
-		console.error(err);
-		res.status(500).json({ error: "Internal server error" });
-	}
-});
+	}),
+);
 
-// GET /data/airport/<icao>/flights?direction=<direction>&limit=<limit>&cursor=<base64string>
-app.get("/data/airport/:icao/flights", async (req, res) => {
-	try {
+app.get(
+	"/data/airport/:icao/flights",
+	asyncHandler(async (req, res) => {
 		const icao = String(req.params.icao).toUpperCase();
 		const direction = (String(req.query.direction || "dep").toLowerCase() === "arr" ? "arr" : "dep") as "dep" | "arr";
 		const limit = Math.max(1, Math.min(200, Number(req.query.limit) || 20));
@@ -168,10 +172,23 @@ app.get("/data/airport/:icao/flights", async (req, res) => {
 
 		const data = await pgGetAirportPilots(icao, direction, limit, cursor, afterCursor);
 		res.json(data);
-	} catch (err) {
-		console.error(err);
-		res.status(500).json({ error: "Internal server error" });
-	}
+	}),
+);
+
+app.use((_req, res) => {
+	res.status(404).json({ error: "Endpoint not found" });
+});
+
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+	console.error("Error:", err);
+
+	const status = err.status || err.statusCode || 500;
+	const message = err.message || "Internal server error";
+
+	res.status(status).json({
+		error: message,
+		...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+	});
 });
 
 const PORT = process.env.API_PORT || 3001;
