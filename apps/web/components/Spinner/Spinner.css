@@ -9,6 +9,7 @@
 	align-items: center;
 	background-color: var(--color-blue);
 	z-index: 2;
+	min-height: 10rem;
 }
 
 .spinner-inner {

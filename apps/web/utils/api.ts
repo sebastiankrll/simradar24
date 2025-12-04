@@ -56,7 +56,7 @@ class ApiClient {
 			};
 		} catch (err) {
 			const error = err as ApiError;
-			console.error(`API Error (${endpoint}):`, error.message);
+			// console.error(`API Error (${endpoint}):`, error.message);
 			throw error;
 		}
 	}

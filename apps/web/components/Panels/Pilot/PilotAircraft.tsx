@@ -2,7 +2,7 @@ import type { StaticAircraft } from "@sk/types/db";
 import type { PilotLong } from "@sk/types/vatsim";
 import FlagSprite from "@/assets/images/sprites/flagSprite42.png";
 
-export function PilotAircraft({ pilot, aircraft }: { pilot: PilotLong; aircraft: StaticAircraft | null }) {
+export function PilotAircraft({ pilot, aircraft }: { pilot: PilotLong; aircraft: StaticAircraft | undefined }) {
 	const acType = `${aircraft?.manufacturerName || ""} ${aircraft?.model || ""}`;
 	return (
 		<div className="panel-sub-container sep">
