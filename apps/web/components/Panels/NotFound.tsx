@@ -2,10 +2,10 @@
 
 import { resetMap } from "../Map/utils/events";
 
-export default function NotFoundPanel({ title, text, enableHeader = true }: { title?: string; text?: string; enableHeader?: boolean }) {
+export default function NotFoundPanel({ title, text, disableHeader = false }: { title?: string; text?: string; disableHeader?: boolean }) {
 	return (
 		<>
-			{enableHeader !== false && (
+			{disableHeader !== true && (
 				<div className="panel-header">
 					<button className="panel-close" type="button" onClick={() => resetMap()}>
 						<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">

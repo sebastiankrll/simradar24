@@ -8,7 +8,7 @@ export default function Header() {
 	return (
 		<header>
 			<figure id="header-logo">
-				<Image src={simradar24Logo} alt="simradar24 logo" priority={true} />
+				<Image src={simradar24Logo} alt="simradar24 logo" height={40} width={200} priority />
 			</figure>
 			<div className="header-item">
 				<Clock />

@@ -1,5 +1,6 @@
 import type { FIRFeature, SimAwareTraconFeature, StaticAirline, StaticAirport } from "@sk/types/db";
 import Dexie, { type EntityTable } from "dexie";
+import { fetchApi } from "@/utils/api";
 
 interface StaticVersions {
 	airportsVersion: string;
@@ -27,10 +28,8 @@ db.version(1).stores({
 	airlines: "id",
 });
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-
 export async function dxInitDatabases(): Promise<void> {
-	const serverVersions = (await fetch(`${BASE_URL}/static/versions`).then((res) => res.json())) as StaticVersions;
+	const serverVersions = await fetchApi<StaticVersions>("/static/versions");
 	const localVersions: StaticVersions = JSON.parse(localStorage.getItem("databaseVersions") || "{}");
 
 	if (serverVersions.airportsVersion !== localVersions.airportsVersion) {
@@ -67,10 +66,7 @@ export async function dxInitDatabases(): Promise<void> {
 }
 
 async function fetchStaticData(type: string): Promise<any> {
-	const response = await fetch(`${BASE_URL}/static/${type}`);
-	const data = await response.json();
-
-	return data;
+	return await fetchApi<any>(`/static/data/${type}`);
 }
 
 async function storeData(data: any[], db: EntityTable<any, "id">): Promise<void> {

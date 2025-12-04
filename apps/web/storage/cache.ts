@@ -8,12 +8,11 @@ import { getMapView } from "@/components/Map/utils/init";
 import { initPilotFeatures, updatePilotFeatures } from "@/components/Map/utils/pilotFeatures";
 import { updateTrackFeatures } from "@/components/Map/utils/trackFeatures";
 import type { StatusMap } from "@/types/data";
+import { fetchApi } from "@/utils/api";
 import { wsClient } from "@/utils/ws";
 import { dxGetAirline, dxGetAirport, dxGetFirs, dxGetTracons, dxInitDatabases } from "./dexie";
 
 type StatusSetter = (status: Partial<StatusMap> | ((prev: Partial<StatusMap>) => Partial<StatusMap>)) => void;
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 let airportsShort: AirportShort[] = [];
 let controllersMerged: ControllerMerged[] = [];
@@ -28,7 +27,7 @@ export async function initData(setStatus: StatusSetter, pathname: string): Promi
 	await dxInitDatabases();
 	setStatus?.((prev) => ({ ...prev, indexedDB: true }));
 
-	const data = (await fetch(`${BASE_URL}/data/init`).then((res) => res.json())) as WsAll;
+	const data = await fetchApi<WsAll>("/data/init");
 	setStatus?.((prev) => ({ ...prev, initData: true }));
 
 	await initAirportFeatures();
@@ -44,9 +43,10 @@ export async function initData(setStatus: StatusSetter, pathname: string): Promi
 	}
 	setStatus?.((prev) => ({ ...prev, initMap: true }));
 
-	wsClient.addListener((msg) => {
-		updateCache(msg);
-	});
+	const handleMessage = (delta: WsDelta) => {
+		updateCache(delta);
+	};
+	wsClient.addListener(handleMessage);
 
 	setClickedFeature(pathname);
 	initialized = true;
@@ -141,7 +141,7 @@ export async function fetchTrackPoints(id: string): Promise<TrackPoint[]> {
 		return trackPointsPending;
 	}
 
-	trackPointsPending = fetch(`${BASE_URL}/data/track/${id}`).then((res) => res.json());
+	trackPointsPending = fetchApi<TrackPoint[]>(`/data/track/${id}`);
 	trackPointsCache = await trackPointsPending;
 	trackPointsPending = null;
 
@@ -158,14 +158,15 @@ export async function getControllersLong(id: string): Promise<ControllerLong[]> 
 	if (airportIds.length === 0 && firIds.length === 0) {
 		return [];
 	}
-	let response: Response;
+
+	let controllers: ControllerLong[] = [];
 	if (firIds.length === 0) {
-		response = await fetch(`${BASE_URL}/data/controllers/${airportIds.flat().join(",")}`);
+		controllers = await fetchApi<ControllerLong[]>(`/data/controllers/${airportIds.flat().join(",")}`);
 	} else if (airportIds.length === 0) {
-		response = await fetch(`${BASE_URL}/data/controllers/${firIds.flat().join(",")}`);
+		controllers = await fetchApi<ControllerLong[]>(`/data/controllers/${firIds.flat().join(",")}`);
 	} else {
-		response = await fetch(`${BASE_URL}/data/controllers/${airportIds.flat().join(",")},${firIds.flat().join(",")}`);
+		controllers = await fetchApi<ControllerLong[]>(`/data/controllers/${airportIds.flat().join(",")},${firIds.flat().join(",")}`);
 	}
 
-	return (await response.json()) as ControllerLong[];
+	return controllers;
 }

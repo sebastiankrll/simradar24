@@ -2,9 +2,9 @@ import { pipeline } from "node:stream/promises";
 import { rdsGetSingle, rdsSetMultiple, rdsSetSingle } from "@sk/db/redis";
 import type { StaticAircraft } from "@sk/types/db";
 import axios from "axios";
-import { fetch } from "undici";
 import StreamJson from "stream-json";
 import StreamArray from "stream-json/streamers/StreamArray.js";
+import { fetch } from "undici";
 
 const RELEASE_URL = "https://api.github.com/repos/sebastiankrll/simradar24-data/releases/latest";
 const BASE_DATA_URL = "https://github.com/sebastiankrll/simradar24-data/releases/download/";

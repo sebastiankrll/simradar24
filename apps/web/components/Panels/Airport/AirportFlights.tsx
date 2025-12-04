@@ -9,6 +9,7 @@ import { Fragment, useEffect, useState } from "react";
 import { setHoveredPilot } from "@/components/Map/utils/events";
 import Spinner from "@/components/Spinner/Spinner";
 import { cacheIsInitialized, getCachedAirline, getCachedAirport } from "@/storage/cache";
+import { fetchApi } from "@/utils/api";
 import { getDelayColor } from "../Pilot/PilotTimes";
 import { queryClient } from "./AirportPanel";
 
@@ -19,7 +20,6 @@ type ApiPage = {
 };
 type PageParam = { cursor?: string; afterCursor?: string };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 const LIMIT = 20;
 
 function normalizeDirection(direction: string): "dep" | "arr" {
@@ -58,9 +58,7 @@ function List({ icao, dir }: { icao: string; dir: "dep" | "arr" }) {
 			if (pageParam?.cursor) params.set("cursor", pageParam.cursor);
 			if (pageParam?.afterCursor) params.set("afterCursor", pageParam.afterCursor);
 
-			const res = await fetch(`${API_URL}/data/airport/${icao}/flights?${params.toString()}`, { cache: "no-store" });
-			if (!res.ok) throw new Error(`Failed to fetch flights: ${res.status}`);
-			const json = (await res.json()) as ApiPage;
+			const json = await fetchApi<ApiPage>(`/data/airport/${icao.toUpperCase()}/flights?${params.toString()}`);
 
 			json.nextCursor = json.nextCursor && json.nextCursor.length > 0 ? json.nextCursor : null;
 			json.prevCursor = json.prevCursor && json.prevCursor.length > 0 ? json.prevCursor : null;

@@ -2,7 +2,7 @@ import type { StaticAircraft } from "@sk/types/db";
 import type { PilotLong } from "@sk/types/vatsim";
 import FlagSprite from "@/assets/images/sprites/flagSprite42.png";
 
-export function PilotAircraft({ pilot, aircraft }: { pilot: PilotLong; aircraft: StaticAircraft | null }) {
+export function PilotAircraft({ pilot, aircraft }: { pilot: PilotLong; aircraft: StaticAircraft | undefined }) {
 	const acType = `${aircraft?.manufacturerName || ""} ${aircraft?.model || ""}`;
 	return (
 		<div className="panel-sub-container sep">
@@ -17,10 +17,16 @@ export function PilotAircraft({ pilot, aircraft }: { pilot: PilotLong; aircraft:
 				</svg>
 			</div>
 			<div className="panel-section-content" id="panel-pilot-aircraft">
-				<div className="panel-data-item">
+				<div className="panel-data-item" style={!aircraft ? { gridArea: "inherit" } : undefined}>
 					<p>Aircraft type</p>
 					<p>{acType.trim() ? acType : pilot.aircraft}</p>
 				</div>
+				{!aircraft && (
+					<div className="panel-data-item">
+						<p>Registration</p>
+						<p>{pilot.flight_plan?.ac_reg}</p>
+					</div>
+				)}
 				{aircraft && (
 					<>
 						<div className="panel-data-item">

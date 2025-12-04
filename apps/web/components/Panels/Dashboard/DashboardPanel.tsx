@@ -7,6 +7,9 @@ import { DashboardEvents } from "./DashboardEvents";
 import { DashboardHistory } from "./DashboardHistory";
 import { DashboardStats } from "./DashboardStats";
 import "./DashboardPanel.css";
+import useSWR from "swr";
+import Spinner from "@/components/Spinner/Spinner";
+import { fetchApi } from "@/utils/api";
 
 function storeOpenSections(sections: string[]) {
 	if (typeof window === "undefined") return;
@@ -28,10 +31,11 @@ function getStoredOpenSections(): string[] {
 	return [];
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+let initialized = false;
 
-export default function DashboardPanel({ initialData }: { initialData: DashboardData }) {
-	const [data, setData] = useState<DashboardData>(initialData);
+export default function DashboardPanel() {
+	const { data, isLoading } = useSWR<DashboardData>("/data/dashboard", fetchApi, { refreshInterval: 60_000 });
+
 	const historyRef = useRef<HTMLDivElement>(null);
 	const statsRef = useRef<HTMLDivElement>(null);
 	const eventsRef = useRef<HTMLDivElement>(null);
@@ -44,27 +48,18 @@ export default function DashboardPanel({ initialData }: { initialData: Dashboard
 	};
 
 	useEffect(() => {
+		if (initialized || isLoading) return;
+		initialized = true;
 		setOpenSection(getStoredOpenSections());
-		const fetchInterval = setInterval(async () => {
-			const newData = fetch(`${BASE_URL}/data/dashboard`, { cache: "no-store" })
-				.then((res) => {
-					if (!res.ok) return null;
-					return res.json();
-				})
-				.catch(() => null);
-			if (newData) {
-				setData(await newData);
-			}
-		}, 60000);
-
-		return () => clearInterval(fetchInterval);
-	}, []);
+	}, [isLoading]);
 
 	useEffect(() => {
 		setHeight(historyRef, openSection.includes("history"));
 		setHeight(statsRef, openSection.includes("stats"));
 		setHeight(eventsRef, openSection.includes("events"));
 	}, [openSection]);
+
+	if (!data || isLoading) return <Spinner />;
 
 	return (
 		<>

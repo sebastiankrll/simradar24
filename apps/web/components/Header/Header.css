@@ -28,11 +28,6 @@ header {
 	justify-content: center;
 }
 
-#header-logo img {
-	height: 75%;
-	width: auto;
-}
-
 .header-item {
 	background-color: white;
 	border: 1px solid var(--color-border);

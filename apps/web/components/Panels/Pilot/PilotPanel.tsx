@@ -5,9 +5,13 @@ import type { PilotLong, TrackPoint, WsDelta } from "@sk/types/vatsim";
 import { useEffect, useRef, useState } from "react";
 import { fetchTrackPoints, getCachedAirline, getCachedAirport } from "@/storage/cache";
 import "./PilotPanel.css";
+import useSWR from "swr";
+import Spinner from "@/components/Spinner/Spinner";
+import { fetchApi } from "@/utils/api";
 import { wsClient } from "@/utils/ws";
 import { followPilotOnMap, resetMap, showRouteOnMap } from "../../Map/utils/events";
 import { setHeight } from "../helpers";
+import NotFoundPanel from "../NotFound";
 import { PilotAircraft } from "./PilotAircraft";
 import { PilotCharts } from "./PilotCharts";
 import { PilotFlightplan } from "./PilotFlightplan";
@@ -25,34 +29,43 @@ export interface PilotPanelStatic {
 type AccordionSection = "info" | "charts" | "pilot" | null;
 type MapInteraction = "route" | "follow" | null;
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
-
 function onStatsClick(cid: number) {
 	window.open(`https://stats.vatsim.net/stats/${cid}`, "_blank");
 }
 
-export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: PilotLong; aircraft: StaticAircraft | null }) {
-	const [pilot, setPilot] = useState<PilotLong>(initialPilot);
+export default function PilotPanel({ id }: { id: string }) {
+	const {
+		data: pilotData,
+		isLoading,
+		mutate,
+	} = useSWR<PilotLong>(`/data/pilot/${id}`, fetchApi, {
+		refreshInterval: 60_000,
+	});
+
+	const registration = pilotData?.flight_plan?.ac_reg;
+	const { data: aircraftData } = useSWR<StaticAircraft>(registration ? `/data/aircraft/${registration}` : null, fetchApi, {
+		revalidateIfStale: false,
+		revalidateOnFocus: false,
+	});
+
 	const [trackPoints, setTrackPoints] = useState<TrackPoint[]>([]);
-	const [data, setData] = useState<PilotPanelStatic>({
+	const [staticData, setStaticData] = useState<PilotPanelStatic>({
 		airline: null,
 		departure: null,
 		arrival: null,
 	});
-	const callsignNumber = pilot.callsign.slice(3);
-	const flightNumber = data.airline?.iata ? data.airline.iata + callsignNumber : pilot?.callsign;
 
 	const [mapInteraction, setMapInteraction] = useState<MapInteraction>(null);
 	const toggleMapInteraction = (interaction: MapInteraction) => {
 		const newInteraction = mapInteraction === interaction ? null : interaction;
 		setMapInteraction(newInteraction);
-		showRouteOnMap(data.departure, data.arrival, newInteraction);
-		followPilotOnMap(pilot.id, newInteraction);
+		showRouteOnMap(staticData.departure, staticData.arrival, newInteraction);
+		followPilotOnMap(id, newInteraction);
 	};
 
 	const [shared, setShared] = useState(false);
 	const onShareClick = () => {
-		navigator.clipboard.writeText(`${window.location.origin}/pilot/${pilot.id}`);
+		navigator.clipboard.writeText(`${window.location.origin}/pilot/${id}`);
 		setShared(true);
 		setTimeout(() => setShared(false), 2000);
 	};
@@ -73,27 +86,32 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 	}, [openSection]);
 
 	useEffect(() => {
-		const airlineCode = initialPilot.callsign.slice(0, 3).toUpperCase();
+		if (!pilotData) return;
+
+		const airlineCode = pilotData.callsign.slice(0, 3).toUpperCase();
 		Promise.all([
 			getCachedAirline(airlineCode || ""),
-			getCachedAirport(initialPilot.flight_plan?.departure.icao || ""),
-			getCachedAirport(initialPilot.flight_plan?.arrival.icao || ""),
-			fetchTrackPoints(initialPilot.id),
+			getCachedAirport(pilotData.flight_plan?.departure.icao || ""),
+			getCachedAirport(pilotData.flight_plan?.arrival.icao || ""),
+			fetchTrackPoints(pilotData.id),
 		]).then(([airline, departure, arrival, trackPoints]) => {
-			setData({ airline, departure, arrival });
+			setStaticData({ airline, departure, arrival });
 			setTrackPoints(trackPoints);
 		});
-	}, [initialPilot]);
+	}, [pilotData]);
 
 	useEffect(() => {
-		const onDelta = (delta: WsDelta) => {
-			const updatedPilot = delta.pilots.updated.find((p) => p.id === pilot.id);
+		const handleMessage = (delta: WsDelta) => {
+			const updatedPilot = delta.pilots.updated.find((p) => p.id === id);
 
 			if (updatedPilot) {
-				setPilot((prev) => ({
-					...prev,
-					...updatedPilot,
-				}));
+				mutate((prev) => {
+					if (!prev) return prev;
+					return {
+						...prev,
+						...updatedPilot,
+					};
+				}, false);
 
 				const newTrackpoint: TrackPoint = {
 					id: updatedPilot.id,
@@ -110,31 +128,30 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 			}
 		};
 
-		const fetchPilot = async () => {
-			try {
-				const res = await fetch(`${BASE_URL}/data/pilot/${pilot.id}`);
-				if (res.ok) {
-					const updatedPilot: PilotLong = await res.json();
-					setPilot(updatedPilot);
-				}
-			} catch (error) {
-				console.error("Failed to fetch pilot data:", error);
-			}
-		};
-
-		wsClient.addListener(onDelta);
-		const interval = setInterval(fetchPilot, 60_000);
+		wsClient.addListener(handleMessage);
 
 		return () => {
-			wsClient.removeListener(onDelta);
-			clearInterval(interval);
+			wsClient.removeListener(handleMessage);
 		};
-	}, [pilot.id]);
+	}, [id, mutate]);
+
+	if (isLoading) return <Spinner />;
+	if (!pilotData)
+		return (
+			<NotFoundPanel
+				title="Pilot not found!"
+				text="This pilot does not exist or is currently unavailable, most likely because of an incorrect ID or disconnect."
+				disableHeader
+			/>
+		);
+
+	const callsignNumber = pilotData.callsign.slice(3);
+	const flightNumber = staticData.airline?.iata ? staticData.airline.iata + callsignNumber : pilotData.callsign;
 
 	return (
 		<>
 			<div className="panel-header">
-				<div className="panel-id">{pilot.callsign}</div>
+				<div className="panel-id">{pilotData.callsign}</div>
 				<button className="panel-close" type="button" onClick={() => resetMap()}>
 					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
 						<title>Close panel</title>
@@ -146,8 +163,8 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 					</svg>
 				</button>
 			</div>
-			<PilotTitle pilot={pilot} data={data} />
-			<PilotStatus pilot={pilot} data={data} />
+			<PilotTitle pilot={pilotData} data={staticData} />
+			<PilotStatus pilot={pilotData} data={staticData} />
 			<div className="panel-container main scrollable">
 				<button className={`panel-container-header${openSection === "info" ? " open" : ""}`} type="button" onClick={() => toggleSection("info")}>
 					<p>More {flightNumber} Information</p>
@@ -160,8 +177,8 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 						></path>
 					</svg>
 				</button>
-				<PilotFlightplan pilot={pilot} data={data} openSection={openSection} ref={infoRef} />
-				<PilotAircraft pilot={pilot} aircraft={aircraft} />
+				<PilotFlightplan pilot={pilotData} data={staticData} openSection={openSection} ref={infoRef} />
+				<PilotAircraft pilot={pilotData} aircraft={aircraftData} />
 				<button className={`panel-container-header${openSection === "charts" ? " open" : ""}`} type="button" onClick={() => toggleSection("charts")}>
 					<p>Speed & Altitude Graph</p>
 					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
@@ -174,7 +191,7 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 					</svg>
 				</button>
 				<PilotCharts trackPoints={trackPoints} openSection={openSection} ref={chartsRef} />
-				<PilotTelemetry pilot={pilot} />
+				<PilotTelemetry pilot={pilotData} />
 				<button className={`panel-container-header${openSection === "pilot" ? " open" : ""}`} type="button" onClick={() => toggleSection("pilot")}>
 					<p>Pilot Information</p>
 					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
@@ -186,8 +203,8 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 						></path>
 					</svg>
 				</button>
-				<PilotUser pilot={pilot} openSection={openSection} ref={userRef} />
-				<PilotMisc pilot={pilot} />
+				<PilotUser pilot={pilotData} openSection={openSection} ref={userRef} />
+				<PilotMisc pilot={pilotData} />
 			</div>
 			<div className="panel-navigation">
 				<button
@@ -231,7 +248,7 @@ export default function PilotPanel({ initialPilot, aircraft }: { initialPilot: P
 					</svg>
 					<p>{shared ? "Copied!" : "Share"}</p>
 				</button>
-				<button className={`panel-navigation-button`} type="button" onClick={() => onStatsClick(pilot.cid)}>
+				<button className={`panel-navigation-button`} type="button" onClick={() => onStatsClick(pilotData.cid)}>
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
 						<title>More</title>
 						<path

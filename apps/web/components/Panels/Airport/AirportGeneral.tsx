@@ -4,8 +4,12 @@ import type { SimAwareTraconFeature, StaticAirport } from "@sk/types/db";
 import type { AirportLong, ControllerLong } from "@sk/types/vatsim";
 import { parseMetar } from "metar-taf-parser";
 import { useEffect, useRef, useState } from "react";
+import useSWR from "swr";
+import Spinner from "@/components/Spinner/Spinner";
 import { cacheIsInitialized, getCachedAirport, getCachedTracon, getControllersLong } from "@/storage/cache";
+import { fetchApi } from "@/utils/api";
 import { setHeight } from "../helpers";
+import NotFoundPanel from "../NotFound";
 import { ControllerInfo } from "../shared/ControllerInfo";
 import { AirportConnections } from "./AirportConnections";
 import { AirportStatus } from "./AirportStatus";
@@ -19,32 +23,28 @@ export interface AirportPanelStatic {
 }
 type AccordionSection = "weather" | "stats" | "controllers" | null;
 
-export function AirportGeneral({ initialAirport }: { initialAirport: AirportLong }) {
-	const [airport, _setAirport] = useState<AirportLong>(initialAirport);
-	const parsedMetar = airport.metar ? parseMetar(airport.metar) : null;
+export function AirportGeneral({ icao }: { icao: string }) {
+	const { data, isLoading } = useSWR<AirportLong>(`/data/airport/${icao}`, fetchApi, { refreshInterval: 60_000 });
+	const parsedMetar = data?.metar ? parseMetar(data.metar) : null;
 
-	const [data, setData] = useState<AirportPanelStatic>({
+	const [staticData, setStaticData] = useState<AirportPanelStatic>({
 		airport: null,
 		controllers: [],
 		tracon: null,
 	});
 	useEffect(() => {
-		const loadData = async () => {
+		const loadStaticData = async () => {
 			while (!cacheIsInitialized()) {
 				await new Promise((resolve) => setTimeout(resolve, 50));
 			}
 
-			const [airport, controllers, tracon] = await Promise.all([
-				getCachedAirport(initialAirport.icao),
-				getControllersLong(initialAirport.icao),
-				getCachedTracon(initialAirport.icao),
-			]);
+			const [airport, controllers, tracon] = await Promise.all([getCachedAirport(icao), getControllersLong(icao), getCachedTracon(icao)]);
 
-			setData({ airport, controllers, tracon });
+			setStaticData({ airport, controllers, tracon });
 		};
 
-		loadData();
-	}, [initialAirport]);
+		loadStaticData();
+	}, [icao]);
 
 	const weatherRef = useRef<HTMLDivElement>(null);
 	const statsRef = useRef<HTMLDivElement>(null);
@@ -61,10 +61,20 @@ export function AirportGeneral({ initialAirport }: { initialAirport: AirportLong
 		setHeight(controllersRef, openSection === "controllers");
 	}, [openSection]);
 
+	if (isLoading) return <Spinner />;
+	if (!data)
+		return (
+			<NotFoundPanel
+				title="Airport not found!"
+				text="This airport does not exist or is currently unavailable, most likely because of an incorrect ICAO code."
+				disableHeader
+			/>
+		);
+
 	return (
 		<>
-			<AirportTitle staticAirport={data.airport} />
-			<AirportStatus airport={airport} parsedMetar={parsedMetar} />
+			<AirportTitle staticAirport={staticData.airport} />
+			<AirportStatus airport={data} parsedMetar={parsedMetar} />
 			<div className="panel-container main scrollable">
 				<button
 					className={`panel-container-header${openSection === "weather" ? " open" : ""}`}
@@ -81,8 +91,8 @@ export function AirportGeneral({ initialAirport }: { initialAirport: AirportLong
 						></path>
 					</svg>
 				</button>
-				<AirportWeather airport={airport} parsedMetar={parsedMetar} openSection={openSection} ref={weatherRef} />
-				<AirportConnections airport={airport} />
+				<AirportWeather airport={data} parsedMetar={parsedMetar} openSection={openSection} ref={weatherRef} />
+				<AirportConnections airport={data} />
 				<button
 					className={`panel-container-header${openSection === "weather" ? " open" : ""}`}
 					type="button"
@@ -98,7 +108,13 @@ export function AirportGeneral({ initialAirport }: { initialAirport: AirportLong
 						></path>
 					</svg>
 				</button>
-				<ControllerInfo controllers={data.controllers} airport={data.airport} tracon={data.tracon} openSection={openSection} ref={controllersRef} />
+				<ControllerInfo
+					controllers={staticData.controllers}
+					airport={staticData.airport}
+					tracon={staticData.tracon}
+					openSection={openSection}
+					ref={controllersRef}
+				/>
 			</div>
 		</>
 	);
