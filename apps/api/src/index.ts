@@ -5,7 +5,7 @@ import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
-import { validateCallsign, validateICAO, validateNumber, validateString } from "./validation";
+import { validateCallsign, validateICAO, validateNumber, validateString } from "./validation.js";
 
 const limiter = rateLimit({
 	windowMs: 60_000,
