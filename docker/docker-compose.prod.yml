@@ -61,6 +61,7 @@ services:
       POSTGRES_PORT: 5432
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      TRUST_PROXY: "true"
     depends_on:
       - timescaledb
       - redis
@@ -90,6 +91,7 @@ services:
       WEBSOCKET_HOST: 0.0.0.0
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      TRUST_PROXY: "true"
     depends_on:
       - timescaledb
       - redis

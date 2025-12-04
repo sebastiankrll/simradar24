@@ -16,6 +16,11 @@ const limiter = rateLimit({
 });
 
 const app = express();
+
+if (process.env.TRUST_PROXY === "true") {
+	app.set("trust proxy", 1);
+}
+
 app.use(helmet());
 app.use(cors());
 app.use(express.json());

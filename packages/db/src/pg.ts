@@ -7,12 +7,15 @@ const pool = new Pool({
 	database: process.env.POSTGRES_DB,
 	password: process.env.POSTGRES_PASSWORD,
 	port: Number(process.env.POSTGRES_PORT || 5432),
-	max: 20,
-	min: 5,
-	idleTimeoutMillis: 30000,
-	connectionTimeoutMillis: 10000,
-	statement_timeout: 30000,
+	max: 100,
+	min: 10,
+	idleTimeoutMillis: 10000,
+	connectionTimeoutMillis: 3000,
+	statement_timeout: 5000,
+	query_timeout: 5000,
 	application_name: "simradar24-api",
+	keepAlive: true,
+	keepAliveInitialDelayMillis: 10000,
 });
 
 pool.on("error", (err) => {
@@ -41,40 +44,39 @@ export async function pgShutdown(): Promise<void> {
 }
 
 export async function pgInitTrackPointsTable() {
-	const createTableQuery = `
+	try {
+		await pool.query(`
       CREATE TABLE IF NOT EXISTS track_points (
-        id TEXT NOT NULL,
+        id VARCHAR(10) NOT NULL,
         timestamp TIMESTAMPTZ NOT NULL,
         latitude DOUBLE PRECISION NOT NULL,
         longitude DOUBLE PRECISION NOT NULL,
-        altitude_agl DOUBLE PRECISION,
-        altitude_ms DOUBLE PRECISION,
-        groundspeed DOUBLE PRECISION,
-        vertical_speed DOUBLE PRECISION,
-        heading DOUBLE PRECISION,
+        altitude_agl INTEGER,
+        altitude_ms INTEGER,
+        groundspeed INTEGER,
+        vertical_speed INTEGER,
+        heading INTEGER,
         PRIMARY KEY (id, timestamp)
       );
-    `;
-
-	try {
-		await pool.query(`CREATE EXTENSION IF NOT EXISTS timescaledb;`);
-		await pool.query(createTableQuery);
-		await pool.query(`SELECT create_hypertable('track_points', 'timestamp', if_not_exists => TRUE);`);
-
-		const res = await pool.query(`
-      SELECT job_id
-      FROM timescaledb_information.jobs
-      WHERE hypertable_name = 'track_points'
-        AND proc_name = 'policy_retention'
     `);
 
-		if (res.rows.length === 0) {
-			await pool.query(`SELECT add_retention_policy('track_points', INTERVAL '2 days')`);
-		}
+		// Critical: Create index on id column for fast lookups
+		await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_track_points_id_timestamp 
+      ON track_points (id, timestamp DESC);
+    `);
 
-		console.log("track_points table is ready ✅");
+		// Convert to hypertable
+		await pool.query(`
+      SELECT create_hypertable('track_points', 'timestamp', 
+        chunk_time_interval => INTERVAL '1 day',
+        if_not_exists => TRUE
+      );
+    `);
+
+		console.log("✅ Track points table initialized with index");
 	} catch (err) {
-		console.error("Error initializing track_points table:", err);
+		console.error("❌ Error initializing track_points table:", err);
 		throw err;
 	}
 }
@@ -122,12 +124,15 @@ export async function pgGetTrackPointsByid(id: string): Promise<TrackPoint[]> {
 			throw new Error("Invalid track ID");
 		}
 
+		// Use pool.query instead of getting a client
+		// This is faster for simple queries
 		const query = `
-      SELECT id, timestamp, latitude, longitude, altitude_agl, altitude_ms, groundspeed, vertical_speed, heading
+      SELECT id, timestamp, latitude, longitude, altitude_agl, altitude_ms, 
+             groundspeed, vertical_speed, heading
       FROM track_points
       WHERE id = $1
       ORDER BY timestamp ASC
-      LIMIT 100000
+      LIMIT 5000
     `;
 
 		const { rows } = await pool.query(query, [id]);
