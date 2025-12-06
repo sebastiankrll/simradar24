@@ -1,11 +1,13 @@
 import "dotenv/config";
 import { pgGetAirportPilots, pgGetTrackPointsByid, pgHealthCheck, pgShutdown } from "@sr24/db/pg";
-import { rdsGetMultiple, rdsGetRingStorage, rdsGetSingle, rdsHealthCheck, rdsShutdown } from "@sr24/db/redis";
+import { rdsConnect, rdsGetMultiple, rdsGetRingStorage, rdsGetSingle, rdsHealthCheck, rdsShutdown } from "@sr24/db/redis";
 import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { validateCallsign, validateICAO, validateNumber, validateString } from "./validation.js";
+
+rdsConnect();
 
 const limiter = rateLimit({
 	windowMs: 60_000,

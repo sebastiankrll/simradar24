@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { pgCleanupStalePilots, pgInitPilotsTable, pgInitTrackPointsTable, pgUpsertPilots, pgUpsertTrackPoints } from "@sr24/db/pg";
-import { rdsPubWsDelta, rdsSetMultiple, rdsSetSingle } from "@sr24/db/redis";
+import { rdsConnect, rdsPubWsDelta, rdsSetMultiple, rdsSetSingle } from "@sr24/db/redis";
 import type { TrackPoint, VatsimData, VatsimTransceivers, WsAll, WsDelta } from "@sr24/types/vatsim";
 import axios from "axios";
 import { getAirportDelta, getAirportShort, mapAirports } from "./airport.js";
@@ -12,7 +12,7 @@ const VATSIM_DATA_URL = "https://data.vatsim.net/v3/vatsim-data.json";
 const VATSIM_TRANSCEIVERS_URL = "https://data.vatsim.net/v3/transceivers-data.json";
 const FETCH_INTERVAL = 5_000;
 
-let pgInitialized = false;
+let dbsInitialized = false;
 let updating = false;
 let lastVatsimUpdate = 0;
 let lastPgCleanUp = 0;
@@ -21,10 +21,11 @@ async function fetchVatsimData(): Promise<void> {
 	if (updating) return;
 	updating = true;
 
-	if (!pgInitialized) {
+	if (!dbsInitialized) {
 		await pgInitPilotsTable();
 		await pgInitTrackPointsTable();
-		pgInitialized = true;
+		await rdsConnect();
+		dbsInitialized = true;
 	}
 
 	try {

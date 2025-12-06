@@ -250,8 +250,9 @@ function sendWsDelta(data: WsDelta): void {
 	});
 }
 
-rdsSubWsDelta((data: WsDelta) => {
+rdsSubWsDelta((message: string) => {
 	try {
+		const data: WsDelta = JSON.parse(message);
 		sendWsDelta(data);
 	} catch (err) {
 		console.error("Error in rdsSubWsDelta callback:", err);

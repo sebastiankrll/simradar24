@@ -199,7 +199,8 @@ export async function pgInitPilotsTable() {
 		await pool.query(`CREATE INDEX IF NOT EXISTS pilots_callsign_idx ON pilots (callsign, last_update DESC)`);
 		await pool.query(`CREATE INDEX IF NOT EXISTS pilots_last_update_idx ON pilots (last_update)`);
 		await pool.query(`CREATE INDEX IF NOT EXISTS pilots_live_idx ON pilots (live, last_update DESC)`);
-		console.log("pilots table is ready ✅");
+
+		console.log("✅ Pilots table initialized with index");
 	} catch (err) {
 		console.error("Error initializing pilots table:", err);
 		throw err;
