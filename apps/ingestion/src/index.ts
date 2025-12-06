@@ -1,6 +1,6 @@
 import "dotenv/config";
-import { pgCleanupStalePilots, pgInitPilotsTable, pgInitTrackPointsTable, pgUpsertPilots, pgUpsertTrackPoints } from "@sr24/db/pg";
-import { rdsConnect, rdsPubWsDelta, rdsSetMultiple, rdsSetSingle } from "@sr24/db/redis";
+import { pgCleanupStalePilots, pgInitPilotsTable, pgInitTrackPointsTable, pgUpsertPilots } from "@sr24/db/pg";
+import { rdsConnect, rdsCreateIndexes, rdsPub, rdsSetMultiple, rdsSetMultipleTimeSeries, rdsSetSingle } from "@sr24/db/redis";
 import type { TrackPoint, VatsimData, VatsimTransceivers, WsAll, WsDelta } from "@sr24/types/vatsim";
 import axios from "axios";
 import { getAirportDelta, getAirportShort, mapAirports } from "./airport.js";
@@ -49,7 +49,7 @@ async function fetchVatsimData(): Promise<void> {
 				airports: getAirportDelta(),
 				controllers: getControllerDelta(),
 			};
-			rdsPubWsDelta(delta);
+			rdsPub("ws:delta", delta);
 
 			// Set full websocket data on redis ws:all
 			const all: WsAll = {
@@ -64,7 +64,13 @@ async function fetchVatsimData(): Promise<void> {
 			rdsSetMultiple(controllersLong, "controller", (c) => c.callsign, "controllers:live", 120);
 			rdsSetMultiple(airportsLong, "airport", (a) => a.icao, "airports:live", 120);
 
-			// Insert trackpoints in TimescaleDB
+			await pgUpsertPilots([...pilotsLong, ...deletedPilotsLong]);
+			const now = Date.now();
+			if (now > lastPgCleanUp + 30 * 60 * 1000) {
+				lastPgCleanUp = now;
+				await pgCleanupStalePilots();
+			}
+
 			const trackPoints: TrackPoint[] = pilotsLong.map((p) => ({
 				id: p.id,
 				cid: p.cid,
@@ -77,17 +83,10 @@ async function fetchVatsimData(): Promise<void> {
 				heading: p.heading,
 				timestamp: p.timestamp,
 			}));
-			await pgUpsertTrackPoints(trackPoints);
-			await pgUpsertPilots([...pilotsLong, ...deletedPilotsLong]);
-
-			const now = Date.now();
-			if (now > lastPgCleanUp + 30 * 60 * 1000) {
-				lastPgCleanUp = now;
-				await pgCleanupStalePilots();
-			}
+			await rdsSetMultipleTimeSeries(trackPoints, "pilot:tp", (tp) => tp.id, 12 * 60 * 60);
 
 			// Update dashboard data
-			updateDashboardData(vatsimData, controllersLong);
+			await updateDashboardData(vatsimData, controllersLong);
 
 			// console.log(`✅ Retrieved ${vatsimData.pilots.length} pilots and ${vatsimData.controllers.length} controllers.`);
 		} else {

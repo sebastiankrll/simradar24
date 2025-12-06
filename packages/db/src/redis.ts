@@ -1,5 +1,6 @@
-import type { WsDelta } from "@sr24/types/vatsim";
 import { createClient } from "redis";
+
+const BATCH_SIZE = 1000;
 
 const client = createClient({
 	url: `redis://${process.env.REDIS_HOST || "localhost"}:${process.env.REDIS_PORT || 6379}`,
@@ -32,16 +33,16 @@ export async function rdsShutdown(): Promise<void> {
 	console.log("Redis connection closed");
 }
 
-export async function rdsPubWsDelta(delta: WsDelta): Promise<void> {
+export async function rdsPub(channel: string, message: any): Promise<void> {
 	try {
-		await client.publish("ws:delta", JSON.stringify(delta));
+		await client.publish(channel, JSON.stringify(message));
 	} catch (err) {
-		console.error("Failed to publish ws:delta:", err);
+		console.error(`Failed to publish ${channel}:`, err);
 		throw err;
 	}
 }
 
-export async function rdsSubWsDelta(listener: (message: string) => void): Promise<void> {
+export async function rdsSub(channel: string, listener: (message: string) => void): Promise<void> {
 	const subscriber = client.duplicate();
 	await subscriber.connect();
 
@@ -49,7 +50,7 @@ export async function rdsSubWsDelta(listener: (message: string) => void): Promis
 		console.error("Subscriber error:", err);
 	});
 
-	await subscriber.subscribe("ws:delta", listener);
+	await subscriber.subscribe(channel, listener);
 }
 
 export async function rdsSetSingle(key: string, value: any, ttlSeconds: number | null = null): Promise<void> {
@@ -76,8 +77,6 @@ export async function rdsSetMultiple<T>(
 ): Promise<void> {
 	if (items.length === 0) return;
 
-	const BATCH_SIZE = 1000;
-
 	try {
 		for (let i = 0; i < items.length; i += BATCH_SIZE) {
 			const batch = items.slice(i, i + BATCH_SIZE);
@@ -97,7 +96,6 @@ export async function rdsSetMultiple<T>(
 
 			await pipeline.exec();
 		}
-
 		// console.log(`✅ ${totalSet} items set in ${activeSetName || keyPrefix}.`);
 	} catch (err) {
 		console.error(`Failed to set multiple items in ${keyPrefix}:`, err);
@@ -115,12 +113,13 @@ export async function rdsGetSingle(key: string): Promise<any> {
 	}
 }
 
-export async function rdsGetMultiple(keyPrefix: string, values: string[]): Promise<(any | null)[]> {
-	if (values.length === 0) return [];
+export async function rdsGetMultiple(keyPrefix: string, keys: string[]): Promise<(any | null)[]> {
+	if (keys.length === 0) return [];
 
 	try {
-		const keys = values.map((val) => `${keyPrefix}:${val}`);
-		const results = await client.mGet(keys);
+		const keysWithPrefix = keys.map((val) => `${keyPrefix}:${val}`);
+		const results = await client.mGet(keysWithPrefix);
+
 		return results.map((r) => (r ? JSON.parse(r) : null));
 	} catch (err) {
 		console.error(`Failed to get multiple keys with prefix ${keyPrefix}:`, err);
@@ -128,45 +127,23 @@ export async function rdsGetMultiple(keyPrefix: string, values: string[]): Promi
 	}
 }
 
-export async function rdsDeleteSingle(key: string): Promise<void> {
-	try {
-		await client.del(key);
-	} catch (err) {
-		console.error(`Failed to delete key ${key}:`, err);
-		throw err;
-	}
-}
-
-export async function rdsDeleteMultiple(keyPrefix: string, values: string[]): Promise<void> {
-	if (values.length === 0) return;
-
-	try {
-		const keys = values.map((val) => `${keyPrefix}:${val}`);
-		await client.del(keys);
-	} catch (err) {
-		console.error(`Failed to delete multiple keys with prefix ${keyPrefix}:`, err);
-		throw err;
-	}
-}
-
-export async function rdsSetRingStorage(key: string, value: any, windowMs: number): Promise<void> {
+export async function rdsSetRing(key: string, value: any): Promise<void> {
 	try {
 		const timestamp = Date.now();
 		const member = JSON.stringify({ t: timestamp, v: value });
 		await client.zAdd(key, { score: timestamp, value: member });
-		await client.zRemRangeByScore(key, 0, timestamp - windowMs);
 	} catch (err) {
 		console.error(`Failed to set ring storage for key ${key}:`, err);
 		throw err;
 	}
 }
 
-export async function rdsGetRingStorage(key: string, windowMs: number): Promise<any[]> {
+export async function rdsGetRing(key: string, windowMs: number): Promise<any[]> {
 	try {
 		const timestamp = Date.now();
 		const minScore = timestamp - windowMs;
-		const members = await client.zRangeByScore(key, minScore, timestamp);
 
+		const members = await client.zRangeByScore(key, minScore, timestamp);
 		return members
 			.map((m) => {
 				try {
@@ -175,18 +152,70 @@ export async function rdsGetRingStorage(key: string, windowMs: number): Promise<
 					return null;
 				}
 			})
-			.filter((item) => item !== null);
+			.filter((item) => item !== null) as any[];
 	} catch (err) {
 		console.error(`Failed to get ring storage for key ${key}:`, err);
 		throw err;
 	}
 }
 
-// export async function rdsSetTimeSeries(key: string, value: any, timestamp: number): Promise<void> {
-// 	try {
-// 		await redis.
-// 	} catch (err) {
-// 		console.error(`Failed to set time series for key ${key}:`, err);
-// 		throw err;
-// 	}
-// }
+export async function rdsTrimRing(key: string, maxAgeMs: number): Promise<void> {
+	try {
+		const timestamp = Date.now();
+		const maxScore = timestamp - maxAgeMs;
+		await client.zRemRangeByScore(key, 0, maxScore);
+	} catch (err) {
+		console.error(`Failed to clean ring storage for key ${key}:`, err);
+		throw err;
+	}
+}
+
+export async function rdsSetMultipleTimeSeries<T>(
+	items: T[],
+	keyPrefix: string,
+	keyExtractor: KeyExtractor<T>,
+	ttlSeconds: number | null = null,
+): Promise<void> {
+	if (items.length === 0) return;
+
+	const timestamp = Date.now();
+
+	try {
+		for (let i = 0; i < items.length; i += BATCH_SIZE) {
+			const batch = items.slice(i, i + BATCH_SIZE);
+			const pipeline = client.multi();
+
+			for (const item of batch) {
+				const key = `${keyPrefix}:${keyExtractor(item)}`;
+				pipeline.zAdd(key, { score: timestamp, value: JSON.stringify(item) });
+				if (ttlSeconds) {
+					pipeline.expire(key, ttlSeconds);
+				}
+			}
+
+			await pipeline.exec();
+		}
+		// console.log(`✅ ${totalSet} items set in ${activeSetName || keyPrefix}.`);
+	} catch (err) {
+		console.error(`Failed to set multiple items in ${keyPrefix}:`, err);
+		throw err;
+	}
+}
+
+export async function rdsGetTimeSeries(key: string): Promise<any[]> {
+	try {
+		const members = await client.ZRANGE(key, 0, -1);
+		return members
+			.map((m) => {
+				try {
+					return JSON.parse(m);
+				} catch {
+					return null;
+				}
+			})
+			.filter((item) => item !== null) as any[];
+	} catch (err) {
+		console.error(`Failed to get time series for key ${key}:`, err);
+		throw err;
+	}
+}

@@ -1,6 +1,6 @@
 import "dotenv/config";
-import { pgGetAirportPilots, pgGetTrackPointsByid, pgHealthCheck, pgShutdown } from "@sr24/db/pg";
-import { rdsConnect, rdsGetMultiple, rdsGetRingStorage, rdsGetSingle, rdsHealthCheck, rdsShutdown } from "@sr24/db/redis";
+import { pgGetAirportPilots, pgHealthCheck, pgShutdown } from "@sr24/db/pg";
+import { rdsConnect, rdsGetMultiple, rdsGetRing, rdsGetSingle, rdsGetTimeSeries, rdsHealthCheck, rdsShutdown } from "@sr24/db/redis";
 import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
@@ -229,7 +229,8 @@ app.get(
 	asyncHandler(async (req, res) => {
 		const id = validateString(req.params.id, "Track ID", 1, 10);
 
-		const trackPoints = await pgGetTrackPointsByid(id);
+		// const trackPoints = await pgGetTrackPointsByid(id);
+		const trackPoints = await rdsGetTimeSeries(`pilot:tp:${id}`);
 		if (!trackPoints || trackPoints.length === 0) {
 			res.status(404).json({ error: "Track not found" });
 			return;
@@ -258,7 +259,7 @@ app.get(
 	"/data/dashboard/",
 	asyncHandler(async (_req, res) => {
 		const stats = await rdsGetSingle(`dashboard:stats`);
-		const history = await rdsGetRingStorage(`dashboard:history`, 24 * 60 * 60 * 1000);
+		const history = await rdsGetRing(`dashboard:history`, 24 * 60 * 60 * 1000);
 		const events = await rdsGetSingle(`dashboard:events`);
 
 		if (!stats || !history || !events) {

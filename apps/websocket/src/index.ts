@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { createGzip } from "node:zlib";
-import { rdsHealthCheck, rdsShutdown, rdsSubWsDelta } from "@sr24/db/redis";
+import { rdsHealthCheck, rdsShutdown, rdsSub } from "@sr24/db/redis";
 import type { WsDelta } from "@sr24/types/vatsim";
 import { WebSocket, WebSocketServer } from "ws";
 
@@ -250,7 +250,7 @@ function sendWsDelta(data: WsDelta): void {
 	});
 }
 
-rdsSubWsDelta((message: string) => {
+rdsSub("ws:delta", (message: string) => {
 	try {
 		const data: WsDelta = JSON.parse(message);
 		sendWsDelta(data);
