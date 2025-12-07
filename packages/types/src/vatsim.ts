@@ -159,8 +159,8 @@ export interface PilotLong extends PilotShort {
 	qnh_i_hg: number;
 	qnh_mb: number;
 	flight_plan: PilotFlightPlan | null;
-	logon_time: Date;
 	times: PilotTimes | null;
+	logon_time: Date;
 	timestamp: Date;
 	live: boolean;
 }

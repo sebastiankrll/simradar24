@@ -6,3 +6,46 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model Pilot {
+  // PilotShort
+  pilot_id       String  @id @db.Char(10)
+  callsign       String
+  latitude       Float
+  longitude      Float
+  altitude_agl   Int
+  altitude_ms    Int
+  groundspeed    Int
+  vertical_speed Int
+  heading        Int
+  aircraft       String
+  transponder    String  @db.Char(4)
+  frequency      Int
+  route          String
+  ghost          Boolean
+
+  // PilotLong
+  cid             Int
+  name            String
+  server          String
+  pilot_rating    String
+  military_rating String
+  qnh_i_hg        Float
+  qnh_mb          Float
+  flight_plan     Json?
+  times           Json?
+  logon_time      DateTime
+  last_update     DateTime @default(now())
+  live            Boolean  @default(false)
+
+  sched_off_block DateTime?
+  sched_on_block  DateTime?
+  dep_icao        String?
+  arr_icao        String?
+
+  @@index([dep_icao, sched_off_block, pilot_id], map: "pilots_dep_idx")
+  @@index([arr_icao, sched_on_block, pilot_id], map: "pilots_arr_idx")
+  @@index([callsign])
+  @@index([cid])
+  @@index([name])
+}

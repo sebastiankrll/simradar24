@@ -24,9 +24,12 @@
 	"devDependencies": {
 		"@sr24/typescript-config": "*",
 		"@types/pg": "^8.15.6",
+		"prisma": "^7.1.0",
 		"typescript": "^5.9.3"
 	},
 	"dependencies": {
+		"@prisma/adapter-pg": "^7.1.0",
+		"@prisma/client": "^7.1.0",
 		"@sr24/types": "*",
 		"ioredis": "^5.8.2",
 		"pg": "^8.16.3",
