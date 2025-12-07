@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { pgCleanupStalePilots, pgInitPilotsTable, pgInitTrackPointsTable, pgUpsertPilots } from "@sr24/db/pg";
-import { rdsConnect, rdsCreateIndexes, rdsPub, rdsSetMultiple, rdsSetMultipleTimeSeries, rdsSetSingle } from "@sr24/db/redis";
+import { rdsConnect, rdsPub, rdsSetMultiple, rdsSetMultipleTimeSeries, rdsSetSingle } from "@sr24/db/redis";
 import type { TrackPoint, VatsimData, VatsimTransceivers, WsAll, WsDelta } from "@sr24/types/vatsim";
 import axios from "axios";
 import { getAirportDelta, getAirportShort, mapAirports } from "./airport.js";
