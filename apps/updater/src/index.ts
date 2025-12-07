@@ -17,6 +17,7 @@ CronJob.from({
 			dbsInitialized = true;
 		}
 
+		await updateAirlines();
 		await updateAirports();
 		await updateFirs();
 		await updateTracons();
@@ -28,5 +29,3 @@ CronJob.from({
 	runOnInit: true,
 	timeZone: "UTC",
 });
-
-updateAirlines();
