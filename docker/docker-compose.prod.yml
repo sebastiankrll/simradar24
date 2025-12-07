@@ -28,7 +28,7 @@ services:
       dockerfile: Dockerfile.migrations
     container_name: sr24_prisma
     environment:
-      DATABASE_URL: postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT}/${process.env.POSTGRES_DB}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?schema=public
     depends_on:
       timescaledb:
         condition: service_healthy
