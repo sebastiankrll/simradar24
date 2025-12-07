@@ -10,8 +10,17 @@ const client = createClient({
 	.on("error", (err) => console.log("Redis Client Error", err))
 	.on("connect", () => console.log("✅ Connected to Redis"));
 
-export async function rdsConnect(): Promise<void> {
-	await client.connect();
+export async function rdsConnect(retries = 5, delayMs = 2000): Promise<void> {
+	for (let i = 0; i < retries; i++) {
+		try {
+			await client.connect();
+			return;
+		} catch (_err) {
+			console.log(`Attempt ${i + 1} failed. Retrying in ${delayMs}ms...`);
+			await new Promise((res) => setTimeout(res, delayMs));
+		}
+	}
+	throw new Error("Failed to connect to the database after multiple attempts");
 }
 
 // Health check
