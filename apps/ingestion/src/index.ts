@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { pgCleanupStalePilots, pgInitPilotsTable, pgInitTrackPointsTable, pgUpsertPilots } from "@sr24/db/pg";
+import { pgCleanupStalePilots, pgInitPilotsTable, pgUpsertPilots } from "@sr24/db/pg";
 import { rdsConnect, rdsPub, rdsSetMultiple, rdsSetMultipleTimeSeries, rdsSetSingle } from "@sr24/db/redis";
 import type { TrackPoint, VatsimData, VatsimTransceivers, WsAll, WsDelta } from "@sr24/types/vatsim";
 import axios from "axios";
@@ -23,7 +23,6 @@ async function fetchVatsimData(): Promise<void> {
 
 	if (!dbsInitialized) {
 		await pgInitPilotsTable();
-		await pgInitTrackPointsTable();
 		await rdsConnect();
 		dbsInitialized = true;
 	}
