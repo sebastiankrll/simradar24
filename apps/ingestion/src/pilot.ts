@@ -175,6 +175,7 @@ function setPilotDelta(pilotsLong: PilotLong[]): void {
 			const pilotShort = getPilotShort(p, cachedPilot);
 			if (Object.keys(pilotShort).length > 1) {
 				updated.push(pilotShort);
+				console.log(pilotShort);
 			}
 		}
 	}
@@ -208,22 +209,23 @@ export function getPilotShort(p: PilotLong, c?: PilotLong): PilotShort {
 			ghost: p.ghost,
 		};
 	} else {
-		return {
-			id: p.id,
-			latitude: p.latitude !== c.latitude ? p.latitude : undefined,
-			longitude: p.longitude !== c.longitude ? p.longitude : undefined,
-			altitude_agl: p.altitude_agl !== c.altitude_agl ? p.altitude_agl : undefined,
-			altitude_ms: p.altitude_ms !== c.altitude_ms ? p.altitude_ms : undefined,
-			groundspeed: p.groundspeed !== c.groundspeed ? p.groundspeed : undefined,
-			vertical_speed: p.vertical_speed !== c.vertical_speed ? p.vertical_speed : undefined,
-			heading: p.heading !== c.heading ? p.heading : undefined,
-			callsign: p.callsign !== c.callsign ? p.callsign : undefined,
-			aircraft: p.aircraft !== c.aircraft ? p.aircraft : undefined,
-			transponder: p.transponder !== c.transponder ? p.transponder : undefined,
-			frequency: p.frequency !== c.frequency ? p.frequency : undefined,
-			route: p.route !== c.route ? p.route : undefined,
-			ghost: p.ghost !== c.ghost ? p.ghost : undefined,
-		};
+		const pilotShort: PilotShort = { id: p.id };
+
+		if (p.latitude !== c.latitude) pilotShort.latitude = p.latitude;
+		if (p.longitude !== c.longitude) pilotShort.longitude = p.longitude;
+		if (p.altitude_agl !== c.altitude_agl) pilotShort.altitude_agl = p.altitude_agl;
+		if (p.altitude_ms !== c.altitude_ms) pilotShort.altitude_ms = p.altitude_ms;
+		if (p.groundspeed !== c.groundspeed) pilotShort.groundspeed = p.groundspeed;
+		if (p.vertical_speed !== c.vertical_speed) pilotShort.vertical_speed = p.vertical_speed;
+		if (p.heading !== c.heading) pilotShort.heading = p.heading;
+		if (p.callsign !== c.callsign) pilotShort.callsign = p.callsign;
+		if (p.aircraft !== c.aircraft) pilotShort.aircraft = p.aircraft;
+		if (p.transponder !== c.transponder) pilotShort.transponder = p.transponder;
+		if (p.frequency !== c.frequency) pilotShort.frequency = p.frequency;
+		if (p.route !== c.route) pilotShort.route = p.route;
+		if (p.ghost !== c.ghost) pilotShort.ghost = p.ghost;
+
+		return pilotShort;
 	}
 }
 

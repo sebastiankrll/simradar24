@@ -199,13 +199,13 @@ interface PilotAirport {
 
 export interface ControllerShort {
 	callsign: string;
-	frequency: number;
-	facility: number;
-	atis: string[] | null;
-	connections: number;
+	frequency?: number;
+	facility?: number;
+	atis?: string[] | null;
+	connections?: number;
 }
 
-export interface ControllerLong extends ControllerShort {
+export interface ControllerLong extends Required<ControllerShort> {
 	cid: number;
 	name: string;
 	rating: number;
