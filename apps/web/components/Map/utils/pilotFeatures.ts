@@ -53,6 +53,10 @@ export function updatePilotFeatures(delta: PilotDelta): void {
 	const pilotsInDelta = new Set<string>();
 
 	for (const p of delta.updated) {
+		pilotsInDelta.add(p.id);
+
+		if (Object.keys(p).length === 1) continue;
+
 		const feature = pilotMap.get(p.id);
 		if (!feature) continue;
 
@@ -75,11 +79,11 @@ export function updatePilotFeatures(delta: PilotDelta): void {
 			feature,
 		};
 		items.push(item);
-
-		pilotsInDelta.add(p.id);
 	}
 
 	for (const p of delta.added) {
+		pilotsInDelta.add(p.id);
+
 		const props: PilotProperties = {
 			type: "pilot",
 			clicked: false,
@@ -102,8 +106,6 @@ export function updatePilotFeatures(delta: PilotDelta): void {
 			feature,
 		};
 		items.push(item);
-
-		pilotsInDelta.add(p.id);
 	}
 
 	for (const id of pilotMap.keys()) {

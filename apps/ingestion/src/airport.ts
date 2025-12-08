@@ -141,9 +141,7 @@ function setAirportDelta(airportsLong: AirportLong[]): void {
 			added.push(getAirportShort(a) as Required<AirportShort>);
 		} else {
 			const airportShort = getAirportShort(a, cachedAirport);
-			if (Object.keys(airportShort).length > 1) {
-				updated.push(airportShort);
-			}
+			updated.push(airportShort);
 		}
 	}
 
