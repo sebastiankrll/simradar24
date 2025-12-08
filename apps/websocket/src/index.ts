@@ -44,7 +44,7 @@ function checkRateLimit(clientContext: ClientContext): boolean {
 }
 
 const PORT = Number(process.env.WEBSOCKET_PORT) || 3002;
-const HOST = process.env.WEBSOCKET_HOST || "0.0.0.0";
+const HOST = process.env.WEBSOCKET_HOST || "localhost";
 
 // Create HTTP server first
 const server = createServer((req: any, res: any) => {

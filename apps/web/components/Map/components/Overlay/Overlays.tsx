@@ -1,7 +1,7 @@
 import type { Feature } from "ol";
 import "./Overlays.css";
 import type { FIRFeature, SimAwareTraconFeature, StaticAirline, StaticAirport } from "@sr24/types/db";
-import type { AirportShort, ControllerMerged } from "@sr24/types/vatsim";
+import type { AirportShort, ControllerMerged, ControllerShort } from "@sr24/types/vatsim";
 import type { Point } from "ol/geom";
 import { useState } from "react";
 import FlagSprite from "@/assets/images/sprites/flagSprite42.png";
@@ -90,12 +90,12 @@ export function AirportOverlay({
 	merged,
 }: {
 	cached: StaticAirport | null;
-	short: AirportShort | null;
+	short: Required<AirportShort> | null;
 	merged: ControllerMerged | null;
 }) {
 	const [activeController, setActiveController] = useState(null as string | null);
 
-	const controllers = merged?.controllers;
+	const controllers = merged?.controllers as Required<ControllerShort>[] | undefined;
 	const sortedControllers = controllers?.sort((a, b) => b.facility - a.facility);
 
 	return (
@@ -162,7 +162,7 @@ export function AirportOverlay({
 export function SectorOverlay({ cached, merged }: { cached: SimAwareTraconFeature | FIRFeature | null; merged: ControllerMerged | null }) {
 	const [activeController, setActiveController] = useState(null as string | null);
 
-	const controllers = merged?.controllers;
+	const controllers = merged?.controllers as Required<ControllerShort>[] | undefined;
 
 	return (
 		<div className="overlay-wrapper">

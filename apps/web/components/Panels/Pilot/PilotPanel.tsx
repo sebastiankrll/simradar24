@@ -113,18 +113,20 @@ export default function PilotPanel({ id }: { id: string }) {
 					};
 				}, false);
 
-				const newTrackpoint: TrackPoint = {
-					id: updatedPilot.id,
-					latitude: updatedPilot.latitude,
-					longitude: updatedPilot.longitude,
-					altitude_agl: updatedPilot.altitude_agl,
-					altitude_ms: updatedPilot.altitude_ms,
-					groundspeed: updatedPilot.groundspeed,
-					vertical_speed: updatedPilot.vertical_speed,
-					heading: updatedPilot.heading,
-					timestamp: new Date(),
-				};
-				setTrackPoints((prev) => [...prev, newTrackpoint]);
+				setTrackPoints((prev) => [
+					...prev,
+					{
+						id: updatedPilot.id,
+						latitude: updatedPilot.latitude ?? prev[prev.length - 1]?.latitude,
+						longitude: updatedPilot.longitude ?? prev[prev.length - 1]?.longitude,
+						altitude_agl: updatedPilot.altitude_agl ?? prev[prev.length - 1]?.altitude_agl,
+						altitude_ms: updatedPilot.altitude_ms ?? prev[prev.length - 1]?.altitude_ms,
+						groundspeed: updatedPilot.groundspeed ?? prev[prev.length - 1]?.groundspeed,
+						vertical_speed: updatedPilot.vertical_speed ?? prev[prev.length - 1]?.vertical_speed,
+						heading: updatedPilot.heading ?? prev[prev.length - 1]?.heading,
+						timestamp: new Date(),
+					},
+				]);
 			}
 		};
 
