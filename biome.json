@@ -20,6 +20,10 @@
 			"suspicious": {
 				"noExplicitAny": "off",
 				"noArrayIndexKey": "off"
+			},
+			"a11y": {
+				"noStaticElementInteractions": "off",
+				"useKeyWithClickEvents": "off"
 			}
 		}
 	},

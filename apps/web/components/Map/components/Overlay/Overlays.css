@@ -87,6 +87,10 @@
 	text-align: end;
 }
 
+.overlay-controller-save {
+	margin-left: 4px;
+}
+
 .overlay-main-wrapper {
 	display: flex;
 	background: var(--color-red);
