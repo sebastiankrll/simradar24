@@ -97,7 +97,7 @@ export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
 		source: controllerLabelSource,
 		style: getControllerLabelStyle,
 		properties: {
-			type: "controller_label",
+			type: "sector_label",
 		},
 		zIndex: 9,
 	});
