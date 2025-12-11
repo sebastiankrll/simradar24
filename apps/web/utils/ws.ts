@@ -30,6 +30,7 @@ class WsClient {
 	private config: Required<WsClientConfig>;
 	private isConnecting = false;
 	private isPageHidden = false;
+	private wasHiddenDisconnect = false;
 
 	constructor(config: WsClientConfig = {}) {
 		this.config = {
@@ -54,6 +55,7 @@ class WsClient {
 
 			if (document.hidden) {
 				// console.log("📱 Page hidden, pausing WebSocket...");
+				this.wasHiddenDisconnect = true;
 				this.disconnect();
 			} else {
 				// console.log("📱 Page visible, resuming WebSocket...");
@@ -106,6 +108,13 @@ class WsClient {
 		this.notifyStatusListeners("connected");
 		this.startHeartbeat();
 		this.flushMessageBuffer();
+
+		// Request latest data after reconnecting from visibility change
+		if (this.wasHiddenDisconnect) {
+			this.wasHiddenDisconnect = false;
+			console.log("🔄 Page returned to focus, requesting latest data via WebSocket");
+			this.requestLatestData();
+		}
 	}
 
 	private handleError(err: Event): void {
@@ -257,6 +266,20 @@ class WsClient {
 		this.disconnect();
 		this.isManualClose = false;
 		this.connect();
+	}
+
+	public requestLatestData(): void {
+		if (!this.isConnected()) {
+			console.warn("Cannot request latest data: WebSocket not connected");
+			return;
+		}
+
+		try {
+			this.ws?.send(JSON.stringify({ type: "request-latest" }));
+			console.log("📤 Requested latest data via WebSocket");
+		} catch (err) {
+			console.error("Failed to request latest data:", err);
+		}
 	}
 
 	public getMetrics(): {

@@ -136,6 +136,16 @@ wss.on("connection", (ws: WebSocket, _req: any) => {
 				return;
 			}
 
+			try {
+				const message = JSON.parse(msg.toString());
+				if (message.type === "request-latest") {
+					console.log(`📥 Client ${clientId} requested latest data`);
+					sendLatestDelta(ws, clientContext);
+				}
+			} catch (_err) {
+				// Not JSON, ignore
+			}
+
 			if (process.env.NODE_ENV === "development") {
 				// console.log(`📨 Message from ${clientId}:`, msg.toString().substring(0, 100));
 			}
@@ -169,7 +179,34 @@ const heartbeatInterval = setInterval(() => {
 	});
 }, 30000);
 
+let latestDeltaCache: Buffer | null = null;
+
+function sendLatestDelta(ws: WebSocket, clientContext: ClientContext): void {
+	if (!latestDeltaCache) {
+		console.log(`No cached delta available for ${clientContext.id}`);
+		return;
+	}
+
+	if (ws.readyState !== WebSocket.OPEN) return;
+
+	try {
+		ws.send(latestDeltaCache, (err) => {
+			if (err) {
+				console.error(`Failed to send latest delta to ${clientContext.id}:`, err.message);
+			} else {
+				clientContext.messagesSent++;
+				clientContext.lastMessageTime = new Date();
+				console.log(`✅ Sent latest delta to ${clientContext.id}`);
+			}
+		});
+	} catch (err) {
+		console.error(`Error sending latest delta to ${clientContext.id}:`, err);
+	}
+}
+
 function sendWsDelta(compressedData: Buffer): void {
+	latestDeltaCache = compressedData;
+
 	wss.clients.forEach((client) => {
 		if (client.readyState !== WebSocket.OPEN) return;
 

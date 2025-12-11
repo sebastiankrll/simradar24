@@ -12,8 +12,10 @@ interface Cached {
 	coords: [number, number];
 	index: number;
 	stroke?: Stroke;
+	timestamp?: number;
 }
 
+const STALE_MS = 60 * 1000;
 const cached: Cached = {
 	id: null,
 	coords: [0, 0],
@@ -54,6 +56,7 @@ export async function initTrackFeatures(id: string | null): Promise<void> {
 	trackSource.clear();
 	trackSource.addFeatures(trackFeatures);
 	cached.id = id;
+	cached.timestamp = Date.now();
 }
 
 export async function updateTrackFeatures(delta: PilotDelta): Promise<void> {
@@ -62,6 +65,11 @@ export async function updateTrackFeatures(delta: PilotDelta): Promise<void> {
 	const pilot = delta.updated.find((p) => `pilot_${p.id}` === cached.id);
 	if (!cached.id || !pilot) return;
 	if (pilot.latitude === undefined || pilot.longitude === undefined) return;
+
+	if (Date.now() - (cached.timestamp || 0) > STALE_MS) {
+		await initTrackFeatures(cached.id);
+		return;
+	}
 
 	const trackFeature = new Feature({
 		geometry: new LineString([cached.coords, [pilot.longitude, pilot.latitude]].map((coord) => fromLonLat(coord))),
