@@ -287,6 +287,23 @@ async function updateOverlay(feature: Feature<Point>, overlay: Overlay): Promise
 	}
 }
 
+export function animateOverlays(): void {
+	if (clickedOverlay) {
+		if (clickedFeature) {
+			const geom = clickedFeature.getGeometry();
+			const coords = geom?.getCoordinates();
+			clickedOverlay.setPosition(coords);
+		}
+	}
+	if (hoveredOverlay) {
+		if (hoveredFeature) {
+			const geom = hoveredFeature.getGeometry();
+			const coords = geom?.getCoordinates();
+			hoveredOverlay.setPosition(coords);
+		}
+	}
+}
+
 function toggleControllerSectorHover(feature: Feature<Point> | undefined | null, hovered: boolean, event: "hovered" | "clicked"): void {
 	if (feature?.get("type") === "tracon") {
 		const id = feature.getId()?.toString();

@@ -1,35 +1,31 @@
 import type { PilotDelta } from "@sr24/types/vatsim";
 import { Feature } from "ol";
-import { LineString } from "ol/geom";
+import type { Coordinate } from "ol/coordinate";
+import { LineString, type Point } from "ol/geom";
 import { fromLonLat } from "ol/proj";
 import Stroke from "ol/style/Stroke";
 import Style from "ol/style/Style";
 import { fetchTrackPoints } from "@/storage/cache";
-import { trackSource } from "./dataLayers";
-
-interface Cached {
-	id: string | null;
-	coords: [number, number];
-	index: number;
-	stroke?: Stroke;
-	timestamp?: number;
-}
+import { pilotMainSource, trackSource } from "./dataLayers";
 
 const STALE_MS = 60 * 1000;
-const cached: Cached = {
-	id: null,
-	coords: [0, 0],
-	index: -1,
-};
+
+let pilotId: string | null = null;
+let lastIndex = 0;
+let lastCoords: Coordinate = [0, 0];
+let lastStroke: Stroke | undefined;
+let lastTimestamp = 0;
+let animatedTrackFeature: Feature<LineString> | null = null;
+let pilotFeature: Feature<Point> | null = null;
 
 export async function initTrackFeatures(id: string | null): Promise<void> {
 	if (!id) return;
 	const trackPoints = await fetchTrackPoints(id.replace("pilot_", ""));
 	const trackFeatures: Feature<LineString>[] = [];
 
-	for (cached.index = 0; cached.index < trackPoints.length - 1; cached.index++) {
-		const start = trackPoints[cached.index];
-		const end = trackPoints[cached.index + 1];
+	for (lastIndex = 0; lastIndex < trackPoints.length - 1; lastIndex++) {
+		const start = trackPoints[lastIndex];
+		const end = trackPoints[lastIndex + 1];
 
 		const trackFeature = new Feature({
 			geometry: new LineString(
@@ -44,48 +40,63 @@ export async function initTrackFeatures(id: string | null): Promise<void> {
 		const style = new Style({ stroke: stroke });
 
 		trackFeature.setStyle(style);
-		trackFeature.setId(`track_${id}_${cached.index}`);
+		trackFeature.setId(`track_${id}_${lastIndex}`);
 		trackFeatures.push(trackFeature);
 
-		if (cached.index === trackPoints.length - 2) {
-			cached.coords = [end.longitude, end.latitude];
-			cached.stroke = stroke;
+		if (lastIndex === trackPoints.length - 2) {
+			lastCoords = fromLonLat([end.longitude, end.latitude]);
+			lastStroke = stroke;
+			animatedTrackFeature = trackFeature;
 		}
 	}
 
 	trackSource.clear();
 	trackSource.addFeatures(trackFeatures);
-	cached.id = id;
-	cached.timestamp = Date.now();
+
+	pilotId = id;
+	pilotFeature = pilotMainSource.getFeatureById(id) as Feature<Point>;
+	lastTimestamp = Date.now();
 }
 
 export async function updateTrackFeatures(delta: PilotDelta): Promise<void> {
 	if (trackSource.getFeatures().length === 0) return;
 
-	const pilot = delta.updated.find((p) => `pilot_${p.id}` === cached.id);
-	if (!cached.id || !pilot) return;
+	const pilot = delta.updated.find((p) => `pilot_${p.id}` === pilotId);
+	if (!pilotId || !pilot) return;
 	if (pilot.latitude === undefined || pilot.longitude === undefined) return;
 
-	if (Date.now() - (cached.timestamp || 0) > STALE_MS) {
-		await initTrackFeatures(cached.id);
+	if (Date.now() - (lastTimestamp || 0) > STALE_MS) {
+		await initTrackFeatures(pilotId);
 		return;
 	}
 
+	if (animatedTrackFeature) {
+		const geom = animatedTrackFeature.getGeometry() as LineString;
+		const coords = geom.getCoordinates();
+		coords[1] = lastCoords;
+		geom.setCoordinates(coords);
+		animatedTrackFeature.setGeometry(geom);
+	}
+
 	const trackFeature = new Feature({
-		geometry: new LineString([cached.coords, [pilot.longitude, pilot.latitude]].map((coord) => fromLonLat(coord))),
+		geometry: new LineString([lastCoords, fromLonLat([pilot.longitude, pilot.latitude])]),
 		type: "track",
 	});
 
 	const stroke =
-		pilot.altitude_agl !== undefined && pilot.altitude_ms !== undefined ? getTrackSegmentColor(pilot.altitude_agl, pilot.altitude_ms) : cached.stroke;
+		pilot.altitude_agl !== undefined && pilot.altitude_ms !== undefined ? getTrackSegmentColor(pilot.altitude_agl, pilot.altitude_ms) : lastStroke;
 	const style = new Style({ stroke: stroke });
 
 	trackFeature.setStyle(style);
-	trackFeature.setId(`track_${pilot.id}_${++cached.index}`);
+	trackFeature.setId(`track_${pilot.id}_${++lastIndex}`);
 
 	trackSource.addFeature(trackFeature);
 
-	cached.coords = [pilot.longitude, pilot.latitude];
+	lastCoords = fromLonLat([pilot.longitude, pilot.latitude]);
+	lastStroke = stroke;
+	pilotFeature = pilotMainSource.getFeatureById(`pilot_${pilot.id}`) as Feature<Point>;
+	lastTimestamp = Date.now();
+	animatedTrackFeature = trackFeature;
 }
 
 function getTrackSegmentColor(altitude_agl: number, altitude_ms: number): Stroke {
@@ -128,4 +139,17 @@ function getTrackSegmentColor(altitude_agl: number, altitude_ms: number): Stroke
 		color: `rgb(${resultRGB[0]}, ${resultRGB[1]}, ${resultRGB[2]})`,
 		width: 3,
 	});
+}
+
+export function animateTrackFeatures(): void {
+	if (!animatedTrackFeature || !pilotFeature || trackSource.getFeatures().length === 0) return;
+
+	const pilotCoords = pilotFeature.getGeometry()?.getCoordinates();
+	if (!pilotCoords) return;
+
+	const geom = animatedTrackFeature.getGeometry() as LineString;
+	const coords = geom.getCoordinates();
+	coords[1] = pilotCoords;
+	geom.setCoordinates(coords);
+	animatedTrackFeature.setGeometry(geom);
 }

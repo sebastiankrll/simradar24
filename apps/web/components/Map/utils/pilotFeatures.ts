@@ -1,14 +1,14 @@
 import type { PilotDelta, WsAll } from "@sr24/types/vatsim";
-import { Feature } from "ol";
+import { Feature, type Map as OlMap } from "ol";
 import type { Extent } from "ol/extent";
 import { Point } from "ol/geom";
 import { fromLonLat, transformExtent } from "ol/proj";
 import RBush from "rbush";
 import type { PilotProperties } from "@/types/ol";
 import { pilotMainSource } from "./dataLayers";
-import { resetMap } from "./events";
+import { animateOverlays, resetMap } from "./events";
 import { getMapView } from "./init";
-import { initTrackFeatures } from "./trackFeatures";
+import { animateTrackFeatures, initTrackFeatures } from "./trackFeatures";
 
 interface RBushPilotFeature {
 	minX: number;
@@ -169,11 +169,59 @@ export function moveToPilotFeature(id: string): Feature<Point> | null {
 	view?.animate({
 		center: coords,
 		duration: 200,
-		zoom: 8,
+		zoom: 10,
 	});
 
 	initTrackFeatures(`pilot_${id}`);
 	addHighlightedPilot(id);
 
 	return feature;
+}
+
+let timestamp = Date.now();
+let animating = false;
+
+export function animatePilotFeatures(map: OlMap) {
+	if (animating) return;
+	animating = true;
+
+	const resolution = map.getView().getResolution() || 0;
+	let interval = 1000;
+	if (resolution > 1) {
+		interval = Math.max(resolution * 10, 50);
+	}
+
+	const now = Date.now();
+	const elapsed = now - timestamp;
+
+	if (elapsed > interval) {
+		const features = pilotMainSource.getFeatures() as Feature<Point>[];
+
+		features.forEach((feature) => {
+			const groundspeed = (feature.get("groundspeed") as number) || 0;
+			const heading = (feature.get("heading") as number) || 0;
+			const latitude = (feature.get("latitude") as number) || 0;
+			const longitude = (feature.get("longitude") as number) || 0;
+
+			const distKm = (groundspeed * 0.514444 * elapsed) / 1000 / 1000;
+			const headingRad = (heading * Math.PI) / 180;
+			const dx = distKm * Math.sin(headingRad);
+			const dy = distKm * Math.cos(headingRad);
+
+			const newLat = latitude + (dy / 6378) * (180 / Math.PI);
+			const newLon = longitude + ((dx / 6378) * (180 / Math.PI)) / Math.cos((latitude * Math.PI) / 180);
+
+			feature.getGeometry()?.setCoordinates(fromLonLat([newLon, newLat]));
+
+			feature.set("latitude", newLat, true);
+			feature.set("longitude", newLon, true);
+		});
+		map.render();
+		animateOverlays();
+		animateTrackFeatures();
+
+		timestamp = now;
+	}
+
+	animating = false;
 }
