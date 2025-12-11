@@ -1,9 +1,13 @@
 import type { ControllerLong } from "@sr24/types/vatsim";
 import "./ControllerInfo.css";
-import type { SimAwareTraconFeature, StaticAirport } from "@sr24/types/db";
+import type { FIRFeature, SimAwareTraconFeature, StaticAirport } from "@sr24/types/db";
 import { getControllerColor } from "@/components/Map/components/Overlay/Overlays";
 
-function getControllerName(facility: number, tracon: SimAwareTraconFeature | null, airport: StaticAirport | null): string {
+function getControllerName(
+	facility: number,
+	sector: SimAwareTraconFeature | FIRFeature | undefined | null,
+	airport: StaticAirport | undefined | null,
+): string {
 	switch (facility) {
 		case -1:
 			return `${airport?.city || "Unknown Airport"} ATIS`;
@@ -14,7 +18,9 @@ function getControllerName(facility: number, tracon: SimAwareTraconFeature | nul
 		case 4:
 			return `${airport?.city || "Unknown Airport"} Tower`;
 		case 5:
-			return tracon?.properties.name || "Unknown Approach";
+			return sector?.properties.name || "Unknown Approach";
+		case 6:
+			return sector?.properties.name || "Unknown Approach";
 		default:
 			return "UNKNOWN";
 	}
@@ -39,17 +45,18 @@ function getOnlineTime(logonTime: string | Date): string {
 export function ControllerInfo({
 	controllers,
 	airport,
-	tracon,
+	sector,
 	openSection,
 	ref,
 }: {
 	controllers: ControllerLong[];
-	airport: StaticAirport | null;
-	tracon: SimAwareTraconFeature | null;
+	airport?: StaticAirport | null;
+	sector?: SimAwareTraconFeature | FIRFeature | null;
 	openSection: string | null;
 	ref: React.Ref<HTMLDivElement>;
 }) {
 	const sortedControllers = controllers?.sort((a, b) => b.facility - a.facility);
+	console.log(sector);
 
 	return (
 		<div ref={ref} className={`panel-sub-container accordion${openSection === "controllers" ? " open" : ""}`}>
@@ -69,7 +76,7 @@ export function ControllerInfo({
 						<div className="panel-controller-title">
 							<p>{c.callsign}</p>
 							<p>{(c.frequency / 1000).toFixed(3)}</p>
-							<p>{getControllerName(c.facility, tracon, airport)}</p>
+							<p>{getControllerName(c.facility, sector, airport)}</p>
 						</div>
 						<div className="panel-controller-content">
 							<div className="panel-data-item">

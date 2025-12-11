@@ -127,7 +127,7 @@ export async function onClick(evt: MapBrowserEvent): Promise<void> {
 
 	if (!clickedFeature) return;
 
-	const type = clickedFeature.get("type");
+	const type = clickedFeature.get("type") as string | undefined;
 	const id = clickedFeature.getId()?.toString() || null;
 	if (type === "pilot" && id) {
 		initTrackFeatures(id);

@@ -6,7 +6,7 @@ import { parseMetar } from "metar-taf-parser";
 import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import Spinner from "@/components/Spinner/Spinner";
-import { cacheIsInitialized, getCachedAirport, getCachedTracon, getControllersLong } from "@/storage/cache";
+import { cacheIsInitialized, getCachedAirport, getCachedTracon, getControllersApiRequest } from "@/storage/cache";
 import { fetchApi } from "@/utils/api";
 import { setHeight } from "../helpers";
 import NotFoundPanel from "../NotFound";
@@ -19,7 +19,6 @@ import { AirportWeather } from "./AirportWeather";
 export interface AirportPanelStatic {
 	airport: StaticAirport | null;
 	tracon: SimAwareTraconFeature | null;
-	controllers: ControllerLong[];
 }
 type AccordionSection = "weather" | "stats" | "controllers" | null;
 interface WeatherResponse {
@@ -36,6 +35,11 @@ export function AirportGeneral({ icao }: { icao: string }) {
 		refreshInterval: 5 * 60_000,
 		shouldRetryOnError: false,
 	});
+	const controllerApiRequest = getControllersApiRequest(icao, "airport");
+	const { data: controllers } = useSWR<ControllerLong[]>(controllerApiRequest, fetchApi, {
+		refreshInterval: 60_000,
+		shouldRetryOnError: false,
+	});
 
 	const parsedMetar = weatherData?.metar ? parseMetar(weatherData.metar) : null;
 
@@ -43,7 +47,6 @@ export function AirportGeneral({ icao }: { icao: string }) {
 
 	const [staticData, setStaticData] = useState<AirportPanelStatic>({
 		airport: null,
-		controllers: [],
 		tracon: null,
 	});
 	useEffect(() => {
@@ -55,9 +58,9 @@ export function AirportGeneral({ icao }: { icao: string }) {
 				await new Promise((resolve) => setTimeout(resolve, 50));
 			}
 
-			const [airport, controllers, tracon] = await Promise.all([getCachedAirport(icao), getControllersLong(icao), getCachedTracon(icao)]);
+			const [airport, tracon] = await Promise.all([getCachedAirport(icao), getCachedTracon(icao)]);
 
-			setStaticData({ airport, controllers, tracon });
+			setStaticData({ airport, tracon });
 		};
 
 		loadStaticData();
@@ -110,10 +113,10 @@ export function AirportGeneral({ icao }: { icao: string }) {
 				</button>
 				<AirportWeather parsedMetar={parsedMetar} metar={weatherData?.metar} taf={weatherData?.taf} openSection={openSection} ref={weatherRef} />
 				<AirportConnections airport={airportData} />
-				{staticData.controllers.length > 0 && (
+				{controllers && controllers.length > 0 && (
 					<>
 						<button
-							className={`panel-container-header${openSection === "weather" ? " open" : ""}`}
+							className={`panel-container-header${openSection === "controllers" ? " open" : ""}`}
 							type="button"
 							onClick={() => toggleSection("controllers")}
 						>
@@ -128,9 +131,9 @@ export function AirportGeneral({ icao }: { icao: string }) {
 							</svg>
 						</button>
 						<ControllerInfo
-							controllers={staticData.controllers}
+							controllers={controllers}
 							airport={staticData.airport}
-							tracon={staticData.tracon}
+							sector={staticData.tracon}
 							openSection={openSection}
 							ref={controllersRef}
 						/>
