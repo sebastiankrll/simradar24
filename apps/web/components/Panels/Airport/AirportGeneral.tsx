@@ -110,28 +110,32 @@ export function AirportGeneral({ icao }: { icao: string }) {
 				</button>
 				<AirportWeather parsedMetar={parsedMetar} metar={weatherData?.metar} taf={weatherData?.taf} openSection={openSection} ref={weatherRef} />
 				<AirportConnections airport={airportData} />
-				<button
-					className={`panel-container-header${openSection === "weather" ? " open" : ""}`}
-					type="button"
-					onClick={() => toggleSection("controllers")}
-				>
-					<p>Controller Information</p>
-					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-						<title>Controllers</title>
-						<path
-							fillRule="evenodd"
-							d="M11.842 18 .237 7.26a.686.686 0 0 1 0-1.038.8.8 0 0 1 1.105 0L11.842 16l10.816-9.704a.8.8 0 0 1 1.105 0 .686.686 0 0 1 0 1.037z"
-							clipRule="evenodd"
-						></path>
-					</svg>
-				</button>
-				<ControllerInfo
-					controllers={staticData.controllers}
-					airport={staticData.airport}
-					tracon={staticData.tracon}
-					openSection={openSection}
-					ref={controllersRef}
-				/>
+				{staticData.controllers.length > 0 && (
+					<>
+						<button
+							className={`panel-container-header${openSection === "weather" ? " open" : ""}`}
+							type="button"
+							onClick={() => toggleSection("controllers")}
+						>
+							<p>Controller Information</p>
+							<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+								<title>Controllers</title>
+								<path
+									fillRule="evenodd"
+									d="M11.842 18 .237 7.26a.686.686 0 0 1 0-1.038.8.8 0 0 1 1.105 0L11.842 16l10.816-9.704a.8.8 0 0 1 1.105 0 .686.686 0 0 1 0 1.037z"
+									clipRule="evenodd"
+								></path>
+							</svg>
+						</button>
+						<ControllerInfo
+							controllers={staticData.controllers}
+							airport={staticData.airport}
+							tracon={staticData.tracon}
+							openSection={openSection}
+							ref={controllersRef}
+						/>
+					</>
+				)}
 			</div>
 		</>
 	);
