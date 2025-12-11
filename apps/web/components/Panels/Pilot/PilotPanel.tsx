@@ -3,7 +3,7 @@
 import type { StaticAircraft, StaticAirline, StaticAirport } from "@sr24/types/db";
 import type { PilotLong, TrackPoint, WsDelta } from "@sr24/types/vatsim";
 import { useEffect, useRef, useState } from "react";
-import { fetchTrackPoints, getCachedAirline, getCachedAirport } from "@/storage/cache";
+import { cacheIsInitialized, fetchTrackPoints, getCachedAirline, getCachedAirport } from "@/storage/cache";
 import "./PilotPanel.css";
 import useSWR from "swr";
 import Spinner from "@/components/Spinner/Spinner";
@@ -93,15 +93,23 @@ export default function PilotPanel({ id }: { id: string }) {
 		lastIdRef.current = pilotData.id;
 
 		const airlineCode = pilotData.callsign.slice(0, 3).toUpperCase();
-		Promise.all([
-			getCachedAirline(airlineCode || ""),
-			getCachedAirport(pilotData.flight_plan?.departure.icao || ""),
-			getCachedAirport(pilotData.flight_plan?.arrival.icao || ""),
-			fetchTrackPoints(pilotData.id),
-		]).then(([airline, departure, arrival, trackPoints]) => {
-			setStaticData({ airline, departure, arrival });
-			setTrackPoints(trackPoints);
-		});
+		const loadStaticData = async () => {
+			while (!cacheIsInitialized()) {
+				await new Promise((resolve) => setTimeout(resolve, 50));
+			}
+
+			Promise.all([
+				getCachedAirline(airlineCode || ""),
+				getCachedAirport(pilotData.flight_plan?.departure.icao || ""),
+				getCachedAirport(pilotData.flight_plan?.arrival.icao || ""),
+				fetchTrackPoints(pilotData.id),
+			]).then(([airline, departure, arrival, trackPoints]) => {
+				setStaticData({ airline, departure, arrival });
+				setTrackPoints(trackPoints);
+			});
+		};
+
+		loadStaticData();
 	}, [pilotData]);
 
 	useEffect(() => {

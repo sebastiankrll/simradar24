@@ -4,7 +4,6 @@
 	gap: 0.2rem;
 	position: relative;
 	border: none;
-	user-select: none;
 	max-width: 300px;
 }
 
@@ -49,11 +48,16 @@
 	cursor: pointer;
 }
 
+.overlay-live-item.controller.active {
+	background-color: var(--color-green);
+}
+
 .overlay-live-item.controller:hover {
 	background-color: var(--color-main-text);
 }
 
-.overlay-live-item.controller:hover * {
+.overlay-live-item.controller:hover *,
+.overlay-live-item.controller.active * {
 	color: white;
 }
 
@@ -81,6 +85,10 @@
 .overlay-controller-connections {
 	width: 25px;
 	text-align: end;
+}
+
+.overlay-controller-save {
+	margin-left: 4px;
 }
 
 .overlay-main-wrapper {

@@ -1,5 +1,5 @@
 import type { FIRFeature, SimAwareTraconFeature, StaticAirline, StaticAirport } from "@sr24/types/db";
-import type { AirportShort, ControllerLong, ControllerMerged, TrackPoint, WsAll, WsDelta } from "@sr24/types/vatsim";
+import type { AirportShort, ControllerMerged, TrackPoint, WsAll, WsDelta } from "@sr24/types/vatsim";
 import { initAirportFeatures } from "@/components/Map/utils/airportFeatures";
 import { initControllerFeatures, updateControllerFeatures } from "@/components/Map/utils/controllerFeatures";
 import { setFeatures } from "@/components/Map/utils/dataLayers";
@@ -31,8 +31,8 @@ export async function initData(setStatus: StatusSetter, pathname: string): Promi
 	setStatus?.((prev) => ({ ...prev, initData: true }));
 
 	await initAirportFeatures();
+	await initControllerFeatures(data);
 	initPilotFeatures(data);
-	initControllerFeatures(data);
 
 	airportsShort = data.airports;
 	controllersMerged = data.controllers;
@@ -166,25 +166,24 @@ export async function fetchTrackPoints(id: string): Promise<TrackPoint[]> {
 	return trackPointsCache;
 }
 
-export async function getControllersLong(id: string): Promise<ControllerLong[]> {
-	const airportIds = controllersMerged
-		.filter((c) => c.id === `airport_${id}` || c.id === `tracon_${id}`)
-		.map((c) => c.controllers.map((ctl) => ctl.callsign));
-
+export function getControllersApiRequest(id: string, type: "airport" | "sector"): string | null {
+	const airportIds = controllersMerged.filter((c) => c.id === `airport_${id}`).map((c) => c.controllers.map((ctl) => ctl.callsign));
+	const traconIds = controllersMerged.filter((c) => c.id === `tracon_${id}`).map((c) => c.controllers.map((ctl) => ctl.callsign));
 	const firIds = controllersMerged.filter((c) => c.id === `fir_${id}`).map((c) => c.controllers.map((ctl) => ctl.callsign));
 
-	if (airportIds.length === 0 && firIds.length === 0) {
-		return [];
+	if (airportIds.length === 0 && type === "airport") {
+		return null;
+	}
+	if (traconIds.length === 0 && firIds.length === 0 && type === "sector") {
+		return null;
 	}
 
-	let controllers: ControllerLong[] = [];
-	if (firIds.length === 0) {
-		controllers = await fetchApi<ControllerLong[]>(`/data/controllers/${airportIds.flat().join(",")}`);
-	} else if (airportIds.length === 0) {
-		controllers = await fetchApi<ControllerLong[]>(`/data/controllers/${firIds.flat().join(",")}`);
+	if (type === "airport") {
+		return `/data/controllers/${airportIds.flat().join(",")},${traconIds.flat().join(",")}`;
+	}
+	if (type === "sector" && firIds.length > 0) {
+		return `/data/controllers/${firIds.flat().join(",")}`;
 	} else {
-		controllers = await fetchApi<ControllerLong[]>(`/data/controllers/${airportIds.flat().join(",")},${firIds.flat().join(",")}`);
+		return `/data/controllers/${traconIds.flat().join(",")}`;
 	}
-
-	return controllers;
 }

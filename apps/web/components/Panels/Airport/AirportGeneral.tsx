@@ -6,7 +6,7 @@ import { parseMetar } from "metar-taf-parser";
 import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import Spinner from "@/components/Spinner/Spinner";
-import { cacheIsInitialized, getCachedAirport, getCachedTracon, getControllersLong } from "@/storage/cache";
+import { cacheIsInitialized, getCachedAirport, getCachedTracon, getControllersApiRequest } from "@/storage/cache";
 import { fetchApi } from "@/utils/api";
 import { setHeight } from "../helpers";
 import NotFoundPanel from "../NotFound";
@@ -19,7 +19,6 @@ import { AirportWeather } from "./AirportWeather";
 export interface AirportPanelStatic {
 	airport: StaticAirport | null;
 	tracon: SimAwareTraconFeature | null;
-	controllers: ControllerLong[];
 }
 type AccordionSection = "weather" | "stats" | "controllers" | null;
 interface WeatherResponse {
@@ -36,16 +35,17 @@ export function AirportGeneral({ icao }: { icao: string }) {
 		refreshInterval: 5 * 60_000,
 		shouldRetryOnError: false,
 	});
+	const controllerApiRequest = getControllersApiRequest(icao, "airport");
+	const { data: controllers } = useSWR<ControllerLong[]>(controllerApiRequest, fetchApi, {
+		refreshInterval: 60_000,
+		shouldRetryOnError: false,
+	});
 
 	const parsedMetar = weatherData?.metar ? parseMetar(weatherData.metar) : null;
 
 	const lastIcaoRef = useRef<string | null>(null);
 
-	const [staticData, setStaticData] = useState<AirportPanelStatic>({
-		airport: null,
-		controllers: [],
-		tracon: null,
-	});
+	const [staticData, setStaticData] = useState<AirportPanelStatic | null>(null);
 	useEffect(() => {
 		if (!icao || lastIcaoRef.current === icao) return;
 		lastIcaoRef.current = icao;
@@ -55,9 +55,9 @@ export function AirportGeneral({ icao }: { icao: string }) {
 				await new Promise((resolve) => setTimeout(resolve, 50));
 			}
 
-			const [airport, controllers, tracon] = await Promise.all([getCachedAirport(icao), getControllersLong(icao), getCachedTracon(icao)]);
+			const [airport, tracon] = await Promise.all([getCachedAirport(icao), getCachedTracon(icao)]);
 
-			setStaticData({ airport, controllers, tracon });
+			setStaticData({ airport, tracon });
 		};
 
 		loadStaticData();
@@ -78,7 +78,7 @@ export function AirportGeneral({ icao }: { icao: string }) {
 		setHeight(controllersRef, openSection === "controllers");
 	}, [openSection]);
 
-	if (isLoading) return <Spinner />;
+	if (isLoading || !staticData) return <Spinner />;
 	if (!staticData.airport)
 		return (
 			<NotFoundPanel
@@ -110,28 +110,32 @@ export function AirportGeneral({ icao }: { icao: string }) {
 				</button>
 				<AirportWeather parsedMetar={parsedMetar} metar={weatherData?.metar} taf={weatherData?.taf} openSection={openSection} ref={weatherRef} />
 				<AirportConnections airport={airportData} />
-				<button
-					className={`panel-container-header${openSection === "weather" ? " open" : ""}`}
-					type="button"
-					onClick={() => toggleSection("controllers")}
-				>
-					<p>Controller Information</p>
-					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-						<title>Controllers</title>
-						<path
-							fillRule="evenodd"
-							d="M11.842 18 .237 7.26a.686.686 0 0 1 0-1.038.8.8 0 0 1 1.105 0L11.842 16l10.816-9.704a.8.8 0 0 1 1.105 0 .686.686 0 0 1 0 1.037z"
-							clipRule="evenodd"
-						></path>
-					</svg>
-				</button>
-				<ControllerInfo
-					controllers={staticData.controllers}
-					airport={staticData.airport}
-					tracon={staticData.tracon}
-					openSection={openSection}
-					ref={controllersRef}
-				/>
+				{controllers && controllers.length > 0 && (
+					<>
+						<button
+							className={`panel-container-header${openSection === "controllers" ? " open" : ""}`}
+							type="button"
+							onClick={() => toggleSection("controllers")}
+						>
+							<p>Controller Information</p>
+							<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+								<title>Controllers</title>
+								<path
+									fillRule="evenodd"
+									d="M11.842 18 .237 7.26a.686.686 0 0 1 0-1.038.8.8 0 0 1 1.105 0L11.842 16l10.816-9.704a.8.8 0 0 1 1.105 0 .686.686 0 0 1 0 1.037z"
+									clipRule="evenodd"
+								></path>
+							</svg>
+						</button>
+						<ControllerInfo
+							controllers={controllers}
+							airport={staticData.airport}
+							sector={staticData.tracon}
+							openSection={openSection}
+							ref={controllersRef}
+						/>
+					</>
+				)}
 			</div>
 		</>
 	);

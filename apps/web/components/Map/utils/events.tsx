@@ -8,6 +8,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { getAirportShort, getCachedAirline, getCachedAirport, getCachedFir, getCachedTracon, getControllerMerged } from "@/storage/cache";
 import { AirportOverlay, PilotOverlay, SectorOverlay } from "../components/Overlay/Overlays";
 import { addHighlightedAirport, clearHighlightedAirport, moveToAirportFeature } from "./airportFeatures";
+import { moveToSectorFeature } from "./controllerFeatures";
 import { firSource, pilotMainSource, setFeatures, trackSource, traconSource } from "./dataLayers";
 import { getMap, getMapView } from "./init";
 import { addHighlightedPilot, clearHighlightedPilot, moveToPilotFeature } from "./pilotFeatures";
@@ -43,14 +44,21 @@ export async function onPointerMove(evt: MapBrowserEvent): Promise<void> {
 	const map = evt.map;
 	const pixel = evt.pixel;
 
-	if (!(evt.originalEvent.target instanceof HTMLCanvasElement)) {
+	if (!(evt.originalEvent.target instanceof HTMLCanvasElement) && clickedFeature) {
 		map.getTargetElement().style.cursor = "";
 		hovering = false;
+
+		if (hoveredOverlay) {
+			map.removeOverlay(hoveredOverlay);
+			hoveredOverlay = null;
+			hoveredFeature?.set("hovered", false);
+			hoveredFeature = null;
+		}
 		return;
 	}
 
 	const feature = map.forEachFeatureAtPixel(pixel, (f) => f, {
-		layerFilter: (layer) => layer.get("type") === "airport_main" || layer.get("type") === "pilot_main" || layer.get("type") === "controller_label",
+		layerFilter: (layer) => layer.get("type") === "airport_main" || layer.get("type") === "pilot_main" || layer.get("type") === "sector_label",
 		hitTolerance: 10,
 	}) as Feature<Point> | undefined;
 
@@ -85,7 +93,7 @@ export async function onClick(evt: MapBrowserEvent): Promise<void> {
 	const pixel = evt.pixel;
 
 	const feature = map.forEachFeatureAtPixel(pixel, (f) => f, {
-		layerFilter: (layer) => layer.get("type") === "airport_main" || layer.get("type") === "pilot_main" || layer.get("type") === "controller_label",
+		layerFilter: (layer) => layer.get("type") === "airport_main" || layer.get("type") === "pilot_main" || layer.get("type") === "sector_label",
 		hitTolerance: 10,
 	}) as Feature<Point> | undefined;
 
@@ -120,25 +128,25 @@ export async function onClick(evt: MapBrowserEvent): Promise<void> {
 
 	if (!clickedFeature) return;
 
-	const type = clickedFeature.get("type");
-	if (type === "pilot") {
-		const id = clickedFeature.getId()?.toString() || null;
+	const type = clickedFeature.get("type") as string | undefined;
+	const id = clickedFeature.getId()?.toString() || null;
+	if (type === "pilot" && id) {
 		initTrackFeatures(id);
 
-		if (id) {
-			const strippedId = id.toString().replace(/^pilot_/, "");
-			navigate?.(`/pilot/${strippedId}`);
-			addHighlightedPilot(strippedId);
-		}
+		const strippedId = id.toString().replace(/^pilot_/, "");
+		navigate?.(`/pilot/${strippedId}`);
+		addHighlightedPilot(strippedId);
 	}
 
-	if (type === "airport") {
-		const id = clickedFeature.getId()?.toString();
-		if (id) {
-			const strippedId = id.toString().replace(/^airport_/, "");
-			navigate?.(`/airport/${strippedId}`);
-			addHighlightedAirport(strippedId);
-		}
+	if (type === "airport" && id) {
+		const strippedId = id.toString().replace(/^airport_/, "");
+		navigate?.(`/airport/${strippedId}`);
+		addHighlightedAirport(strippedId);
+	}
+
+	if ((type === "tracon" || type === "fir") && id) {
+		const strippedId = id.toString().replace(/^(sector)_/, "");
+		navigate?.(`/sector/${strippedId}`);
 	}
 }
 
@@ -176,7 +184,7 @@ async function createOverlay(feature: Feature<Point>): Promise<Overlay> {
 			feature
 				.getId()
 				?.toString()
-				.replace(/^controller_/, "") || "";
+				.replace(/^sector_/, "") || "";
 
 		const cachedTracon = await getCachedTracon(id);
 		const controllerMerged = getControllerMerged(`tracon_${id}`);
@@ -188,7 +196,7 @@ async function createOverlay(feature: Feature<Point>): Promise<Overlay> {
 			feature
 				.getId()
 				?.toString()
-				.replace(/^controller_/, "") || "";
+				.replace(/^sector_/, "") || "";
 
 		const cachedFir = await getCachedFir(id);
 		const controllerMerged = getControllerMerged(`fir_${id}`);
@@ -221,7 +229,7 @@ async function updateOverlay(feature: Feature<Point>, overlay: Overlay): Promise
 	if (!feature || !overlay) {
 		resetMap(true);
 		return;
-	};
+	}
 
 	const geom = feature.getGeometry();
 	const coords = geom?.getCoordinates();
@@ -259,7 +267,7 @@ async function updateOverlay(feature: Feature<Point>, overlay: Overlay): Promise
 			feature
 				.getId()
 				?.toString()
-				.replace(/^controller_/, "") || "";
+				.replace(/^sector_/, "") || "";
 
 		const cachedTracon = await getCachedTracon(id);
 		const controllerMerged = getControllerMerged(`tracon_${id}`);
@@ -271,7 +279,7 @@ async function updateOverlay(feature: Feature<Point>, overlay: Overlay): Promise
 			feature
 				.getId()
 				?.toString()
-				.replace(/^controller_/, "") || "";
+				.replace(/^sector_/, "") || "";
 
 		const cachedFir = await getCachedFir(id);
 		const controllerMerged = getControllerMerged(`fir_${id}`);
@@ -439,6 +447,10 @@ export function setClickedFeature(path: string): void {
 	}
 	if (type === "airport") {
 		clickedFeature = moveToAirportFeature(id);
+	}
+	if (type === "sector") {
+		clickedFeature = moveToSectorFeature(id);
+		toggleControllerSectorHover(clickedFeature, true, "clicked");
 	}
 
 	if (clickedFeature) {

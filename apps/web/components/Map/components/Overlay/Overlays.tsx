@@ -84,6 +84,11 @@ export function getControllerColor(facility: number): string {
 	}
 }
 
+function copyControllerAtisToClipboard(controller: ControllerShort | undefined) {
+	const atis = controller?.atis?.join("\n") || "";
+	navigator.clipboard.writeText(atis);
+}
+
 export function AirportOverlay({
 	cached,
 	short,
@@ -93,29 +98,46 @@ export function AirportOverlay({
 	short: Required<AirportShort> | null;
 	merged: ControllerMerged | null;
 }) {
-	const [activeController, setActiveController] = useState(null as string | null);
+	const [hoveredController, setHoveredController] = useState(null as string | null);
+	const [clickedController, setClickedController] = useState(null as string | null);
+	const [copied, setCopied] = useState(false);
 
 	const controllers = merged?.controllers as Required<ControllerShort>[] | undefined;
 	const sortedControllers = controllers?.sort((a, b) => b.facility - a.facility);
 
+	const handleCopyClick = () => {
+		copyControllerAtisToClipboard(sortedControllers?.find((c) => c.callsign === hoveredController));
+		setCopied(true);
+		setTimeout(() => setCopied(false), 2000);
+	};
+
 	return (
 		<div className="overlay-wrapper">
-			{activeController && (
+			{(clickedController || hoveredController) && (
 				<div className="overlay-atis">
 					<div className="overlay-atis-item">
-						{sortedControllers?.find((c) => c.callsign === activeController)?.atis?.join("\n") || "Currently unavailable"}
+						{sortedControllers?.find((c) => c.callsign === clickedController || c.callsign === hoveredController)?.atis?.join("\n") ||
+							"Currently unavailable"}
 					</div>
 				</div>
 			)}
 			{sortedControllers && sortedControllers.length > 0 && (
-				<div className="overlay-live controller" onPointerLeave={() => setActiveController(null)}>
+				<div className="overlay-live controller" onPointerLeave={() => setHoveredController(null)}>
 					{sortedControllers?.map((c) => {
 						return (
-							<div key={c.callsign} className="overlay-live-item controller" onPointerEnter={() => setActiveController(c.callsign)}>
+							<div
+								key={c.callsign}
+								className={`overlay-live-item controller${clickedController === c.callsign ? " active" : ""}`}
+								onPointerEnter={() => setHoveredController(c.callsign)}
+								onClick={() => setClickedController(c.callsign)}
+							>
 								<div className="overlay-controller-color" style={{ backgroundColor: getControllerColor(c.facility) }}></div>
 								<div className="overlay-controller-callsign">{c.callsign}</div>
 								<div className="overlay-controller-frequency">{(c.frequency / 1000).toFixed(3)}</div>
 								<div className="overlay-controller-connections">{c.connections}</div>
+								<button type="button" className="overlay-controller-save" onClick={handleCopyClick}>
+									{copied && hoveredController === c.callsign ? "✅" : "📋"}
+								</button>
 							</div>
 						);
 					})}
@@ -160,28 +182,45 @@ export function AirportOverlay({
 }
 
 export function SectorOverlay({ cached, merged }: { cached: SimAwareTraconFeature | FIRFeature | null; merged: ControllerMerged | null }) {
-	const [activeController, setActiveController] = useState(null as string | null);
+	const [hoveredController, setHoveredController] = useState(null as string | null);
+	const [clickedController, setClickedController] = useState(null as string | null);
+	const [copied, setCopied] = useState(false);
 
 	const controllers = merged?.controllers as Required<ControllerShort>[] | undefined;
 
+	const handleCopyClick = () => {
+		copyControllerAtisToClipboard(controllers?.find((c) => c.callsign === hoveredController));
+		setCopied(true);
+		setTimeout(() => setCopied(false), 2000);
+	};
+
 	return (
 		<div className="overlay-wrapper">
-			{activeController && (
+			{(clickedController || hoveredController) && (
 				<div className="overlay-atis">
 					<div className="overlay-atis-item">
-						{controllers?.find((c) => c.callsign === activeController)?.atis?.join("\n") || "Currently unavailable"}
+						{controllers?.find((c) => c.callsign === clickedController || c.callsign === hoveredController)?.atis?.join("\n") ||
+							"Currently unavailable"}
 					</div>
 				</div>
 			)}
 			{controllers && controllers.length > 0 && (
-				<div className="overlay-live controller" onPointerLeave={() => setActiveController(null)}>
+				<div className="overlay-live controller" onPointerLeave={() => setHoveredController(null)}>
 					{controllers?.map((c) => {
 						return (
-							<div key={c.callsign} className="overlay-live-item controller" onPointerEnter={() => setActiveController(c.callsign)}>
+							<div
+								key={c.callsign}
+								className={`overlay-live-item controller${clickedController === c.callsign ? " active" : ""}`}
+								onPointerEnter={() => setHoveredController(c.callsign)}
+								onClick={() => setClickedController(c.callsign)}
+							>
 								<div className="overlay-controller-color" style={{ backgroundColor: getControllerColor(c.facility) }}></div>
 								<div className="overlay-controller-callsign">{c.callsign}</div>
 								<div className="overlay-controller-frequency">{(c.frequency / 1000).toFixed(3)}</div>
 								<div className="overlay-controller-connections">{c.connections}</div>
+								<button type="button" className="overlay-controller-save" onClick={handleCopyClick}>
+									{copied && hoveredController === c.callsign ? "✅" : "📋"}
+								</button>
 							</div>
 						);
 					})}

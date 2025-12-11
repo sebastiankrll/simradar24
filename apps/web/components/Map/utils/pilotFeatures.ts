@@ -6,9 +6,9 @@ import { fromLonLat, transformExtent } from "ol/proj";
 import RBush from "rbush";
 import type { PilotProperties } from "@/types/ol";
 import { pilotMainSource } from "./dataLayers";
+import { resetMap } from "./events";
 import { getMapView } from "./init";
 import { initTrackFeatures } from "./trackFeatures";
-import { resetMap } from "./events";
 
 interface RBushPilotFeature {
 	minX: number;

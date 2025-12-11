@@ -12,6 +12,7 @@ import { getCachedAirport, getCachedFir, getCachedTracon } from "@/storage/cache
 import type { AirportLabelProperties, ControllerLabelProperties } from "@/types/ol";
 import { getAirportSize } from "./airportFeatures";
 import { airportLabelSource, controllerLabelSource, firSource, traconSource } from "./dataLayers";
+import { getMapView } from "./init";
 
 export function getControllerLabelStyle(feature: FeatureLike, resolution: number): Style {
 	const label = feature.get("label") as string;
@@ -47,7 +48,7 @@ const readGeoJSONFeature = (geojson: SimAwareTraconFeature | FIRFeature, type: "
 	}) as Feature<MultiPolygon>;
 
 	feature.setProperties({ type });
-	feature.setId(`controller_${id}`);
+	feature.setId(`sector_${id}`);
 	return feature;
 };
 
@@ -78,7 +79,7 @@ export async function initControllerFeatures(data: WsAll): Promise<void> {
 				const feature = new Feature(polygon);
 
 				feature.setProperties({ type: "tracon" });
-				feature.setId(`controller_${id}`);
+				feature.setId(`sector_${id}`);
 
 				traconSource.addFeature(feature);
 				cachedTracons.set(id, feature);
@@ -148,7 +149,7 @@ export async function updateControllerFeatures(delta: ControllerDelta): Promise<
 				const feature = new Feature(polygon);
 
 				feature.setProperties({ type: "tracon" });
-				feature.setId(`controller_${id}`);
+				feature.setId(`sector_${id}`);
 
 				traconSource.addFeature(feature);
 				cachedTracons.set(id, feature);
@@ -179,7 +180,7 @@ export async function updateControllerFeatures(delta: ControllerDelta): Promise<
 			const shortId = id.replace(/^(tracon_|airport_|fir_)/, "");
 			controllerList.delete(id);
 
-			const labelFeature = controllerLabelSource.getFeatureById(`controller_${shortId}`);
+			const labelFeature = controllerLabelSource.getFeatureById(`sector_${shortId}`);
 			if (labelFeature) {
 				controllerLabelSource.removeFeature(labelFeature);
 			}
@@ -199,7 +200,7 @@ export async function updateControllerFeatures(delta: ControllerDelta): Promise<
 			}
 
 			if (id.startsWith("airport_")) {
-				const airportLabel = airportLabelSource.getFeatureById(`controller_${shortId}`);
+				const airportLabel = airportLabelSource.getFeatureById(`sector_${shortId}`);
 				if (airportLabel) {
 					airportLabelSource.removeFeature(airportLabel);
 				}
@@ -220,7 +221,7 @@ function createControllerLabel(lon: number, lat: number, label: string, type: "t
 	};
 
 	labelFeature.setProperties(props);
-	labelFeature.setId(`controller_${label}`);
+	labelFeature.setId(`sector_${label}`);
 	controllerLabelSource.addFeature(labelFeature);
 }
 
@@ -250,13 +251,13 @@ async function createAirportLabel(controllerMerged: ControllerMerged): Promise<v
 	};
 
 	labelFeature.setProperties(props);
-	labelFeature.setId(`controller_${id}`);
+	labelFeature.setId(`sector_${id}`);
 	airportLabelSource.addFeature(labelFeature);
 }
 
 function updateAirportLabel(controllerMerged: ControllerMerged): void {
 	const id = controllerMerged.id.replace(/^(tracon_|airport_|fir_)/, "");
-	const labelFeature = airportLabelSource.getFeatureById(`controller_${id}`);
+	const labelFeature = airportLabelSource.getFeatureById(`sector_${id}`);
 	if (!labelFeature) return;
 
 	const stations = getAirportLabelStations(controllerMerged);
@@ -281,4 +282,22 @@ function getAirportLabelStations(controllerMerged: ControllerMerged): number[] {
 	});
 
 	return stations;
+}
+
+export function moveToSectorFeature(id: string): Feature<Point> | null {
+	console.log(controllerLabelSource.getFeatures());
+	const labelFeature = controllerLabelSource.getFeatureById(`sector_${id}`) as Feature<Point> | null;
+
+	const view = getMapView();
+	const geom = labelFeature?.getGeometry();
+	const coords = geom?.getCoordinates();
+	if (!coords) return null;
+
+	view?.animate({
+		center: coords,
+		duration: 200,
+		zoom: 7,
+	});
+
+	return labelFeature;
 }
