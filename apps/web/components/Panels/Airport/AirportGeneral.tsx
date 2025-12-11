@@ -22,10 +22,22 @@ export interface AirportPanelStatic {
 	controllers: ControllerLong[];
 }
 type AccordionSection = "weather" | "stats" | "controllers" | null;
+interface WeatherResponse {
+	metar: string;
+	taf: string;
+}
 
 export function AirportGeneral({ icao }: { icao: string }) {
-	const { data, isLoading } = useSWR<AirportLong>(`/data/airport/${icao}`, fetchApi, { refreshInterval: 60_000 });
-	const parsedMetar = data?.metar ? parseMetar(data.metar) : null;
+	const { data: airportData, isLoading } = useSWR<AirportLong>(`/data/airport/${icao}`, fetchApi, {
+		refreshInterval: 60_000,
+		shouldRetryOnError: false,
+	});
+	const { data: weatherData } = useSWR<WeatherResponse>(`/data/weather/${icao}`, fetchApi, {
+		refreshInterval: 5 * 60_000,
+		shouldRetryOnError: false,
+	});
+
+	const parsedMetar = weatherData?.metar ? parseMetar(weatherData.metar) : null;
 
 	const lastIcaoRef = useRef<string | null>(null);
 
@@ -67,7 +79,7 @@ export function AirportGeneral({ icao }: { icao: string }) {
 	}, [openSection]);
 
 	if (isLoading) return <Spinner />;
-	if (!data)
+	if (!staticData.airport)
 		return (
 			<NotFoundPanel
 				title="Airport not found!"
@@ -79,7 +91,7 @@ export function AirportGeneral({ icao }: { icao: string }) {
 	return (
 		<>
 			<AirportTitle staticAirport={staticData.airport} />
-			<AirportStatus airport={data} parsedMetar={parsedMetar} />
+			<AirportStatus airport={airportData} parsedMetar={parsedMetar} />
 			<div className="panel-container main scrollable">
 				<button
 					className={`panel-container-header${openSection === "weather" ? " open" : ""}`}
@@ -96,8 +108,8 @@ export function AirportGeneral({ icao }: { icao: string }) {
 						></path>
 					</svg>
 				</button>
-				<AirportWeather airport={data} parsedMetar={parsedMetar} openSection={openSection} ref={weatherRef} />
-				<AirportConnections airport={data} />
+				<AirportWeather parsedMetar={parsedMetar} metar={weatherData?.metar} taf={weatherData?.taf} openSection={openSection} ref={weatherRef} />
+				<AirportConnections airport={airportData} />
 				<button
 					className={`panel-container-header${openSection === "weather" ? " open" : ""}`}
 					type="button"

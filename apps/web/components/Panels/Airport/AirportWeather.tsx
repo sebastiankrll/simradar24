@@ -1,4 +1,3 @@
-import type { AirportLong } from "@sr24/types/vatsim";
 import type { IAltimeter, IMetar, Visibility } from "metar-taf-parser";
 
 function getAltimeter(altimeter: IAltimeter | undefined): string {
@@ -70,13 +69,15 @@ function getLastUpdated(parsedMetar: IMetar | null): string {
 }
 
 export function AirportWeather({
-	airport,
 	parsedMetar,
+	metar,
+	taf,
 	openSection,
 	ref,
 }: {
-	airport: AirportLong;
 	parsedMetar: IMetar | null;
+	metar: string | undefined;
+	taf: string | undefined;
 	openSection: string | null;
 	ref: React.Ref<HTMLDivElement>;
 }) {
@@ -123,11 +124,11 @@ export function AirportWeather({
 				</div>
 				<div className="panel-data-item">
 					<p>Latest METAR</p>
-					<p>{airport.metar}</p>
+					<p>{metar || "N/A"}</p>
 				</div>
 				<div className="panel-data-item">
 					<p>Latest TAF</p>
-					<p>{airport.taf}</p>
+					<p>{taf || "N/A"}</p>
 				</div>
 			</div>
 		</div>

@@ -50,7 +50,6 @@ export function ControllerInfo({
 	ref: React.Ref<HTMLDivElement>;
 }) {
 	const sortedControllers = controllers?.sort((a, b) => b.facility - a.facility);
-	console.log(controllers);
 
 	return (
 		<div ref={ref} className={`panel-sub-container accordion${openSection === "controllers" ? " open" : ""}`}>

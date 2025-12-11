@@ -9,6 +9,9 @@ import { validateCallsign, validateICAO, validateNumber, validateString } from "
 
 rdsConnect();
 
+const WEATHER_CACHE_DURATION = 10 * 60 * 1000;
+const cachedWeathers = new Map<string, { timestamp: number; rawMetar: string; rawTaf: string }>();
+
 const limiter = rateLimit({
 	windowMs: 60_000,
 	max: 60,
@@ -204,6 +207,50 @@ app.get(
 		}
 
 		res.json(airport);
+	}),
+);
+
+app.get(
+	"/data/weather/:icao",
+	asyncHandler(async (req, res) => {
+		const icao = validateICAO(req.params.icao).toUpperCase();
+
+		const cachedWeather = cachedWeathers.get(icao);
+		const now = Date.now();
+
+		if (cachedWeather && now - cachedWeather.timestamp < WEATHER_CACHE_DURATION) {
+			res.json({ metar: cachedWeather.rawMetar, taf: cachedWeather.rawTaf });
+			return;
+		}
+
+		const metarResponse = await fetch(`https://aviationweather.gov/api/data/metar?ids=${icao}&format=json`);
+		const tafResponse = await fetch(`https://aviationweather.gov/api/data/taf?ids=${icao}&format=json`);
+
+		if (!metarResponse.ok && !tafResponse.ok) {
+			res.status(404).json({ error: "Weather data not found" });
+			return;
+		}
+
+		const safeParse = (text: string): any[] => {
+			try {
+				const parsed = JSON.parse(text);
+				return Array.isArray(parsed) ? parsed : [];
+			} catch (_err) {
+				return [];
+			}
+		};
+
+		const metarText = await metarResponse.text();
+		const tafText = await tafResponse.text();
+		const metarData = safeParse(metarText);
+		const tafData = safeParse(tafText);
+
+		const rawMetar = metarData.length > 0 && metarData[0]?.rawOb ? metarData[0].rawOb : "";
+		const rawTaf = tafData.length > 0 && (tafData[0]?.rawTAF || tafData[0]?.rawOb) ? tafData[0].rawTAF || tafData[0].rawOb : "";
+
+		cachedWeathers.set(icao, { timestamp: now, rawMetar, rawTaf });
+
+		res.json({ metar: rawMetar, taf: rawTaf });
 	}),
 );
 

@@ -108,8 +108,8 @@ export function getDelayColor(avgDelay: number) {
 	return "green";
 }
 
-export function AirportStatus({ airport, parsedMetar }: { airport: AirportLong; parsedMetar: IMetar | null }) {
-	const avgDelay = Math.round((airport.dep_traffic.average_delay + airport.arr_traffic.average_delay) / 2);
+export function AirportStatus({ airport, parsedMetar }: { airport: AirportLong | undefined; parsedMetar: IMetar | null }) {
+	const avgDelay = airport ? Math.round((airport.dep_traffic.average_delay + airport.arr_traffic.average_delay) / 2) : 0;
 
 	return (
 		<div className="panel-container" id="panel-airport-status">
@@ -132,11 +132,11 @@ export function AirportStatus({ airport, parsedMetar }: { airport: AirportLong; 
 			<div id="panel-airport-status-flights">
 				<div className="panel-airport-status-item">
 					<p>Departures</p>
-					<p>{airport.dep_traffic.traffic_count}</p>
+					<p>{airport?.dep_traffic.traffic_count || 0}</p>
 				</div>
 				<div className="panel-airport-status-item">
 					<p>Arrivals</p>
-					<p>{airport.arr_traffic.traffic_count}</p>
+					<p>{airport?.arr_traffic.traffic_count || 0}</p>
 				</div>
 				<div className="panel-airport-status-item">
 					<p>Avg. Delay</p>

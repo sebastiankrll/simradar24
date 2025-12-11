@@ -230,8 +230,6 @@ export interface AirportShort {
 export interface AirportLong extends Required<AirportShort> {
 	busiest: { departure: string; arrival: string };
 	unique: { departures: number; arrivals: number };
-	metar: string | null;
-	taf: string | null;
 }
 
 export interface AirportTraffic {
