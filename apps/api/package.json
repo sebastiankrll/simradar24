@@ -18,10 +18,12 @@
 	},
 	"dependencies": {
 		"@sr24/db": "*",
+		"axios": "^1.13.2",
 		"cors": "^2.8.5",
 		"dotenv": "^17.2.3",
 		"express": "^5.1.0",
 		"express-rate-limit": "^8.2.1",
-		"helmet": "^8.1.0"
+		"helmet": "^8.1.0",
+		"xml2js": "^0.6.2"
 	}
 }
