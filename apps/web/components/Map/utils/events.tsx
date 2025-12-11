@@ -43,9 +43,16 @@ export async function onPointerMove(evt: MapBrowserEvent): Promise<void> {
 	const map = evt.map;
 	const pixel = evt.pixel;
 
-	if (!(evt.originalEvent.target instanceof HTMLCanvasElement)) {
+	if (!(evt.originalEvent.target instanceof HTMLCanvasElement) && clickedFeature) {
 		map.getTargetElement().style.cursor = "";
 		hovering = false;
+
+		if (hoveredOverlay) {
+			map.removeOverlay(hoveredOverlay);
+			hoveredOverlay = null;
+			hoveredFeature?.set("hovered", false);
+			hoveredFeature = null;
+		}
 		return;
 	}
 
@@ -221,7 +228,7 @@ async function updateOverlay(feature: Feature<Point>, overlay: Overlay): Promise
 	if (!feature || !overlay) {
 		resetMap(true);
 		return;
-	};
+	}
 
 	const geom = feature.getGeometry();
 	const coords = geom?.getCoordinates();
