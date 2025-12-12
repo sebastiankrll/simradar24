@@ -125,44 +125,6 @@ app.get(
 );
 
 app.get(
-	"/static/versions",
-	asyncHandler(async (_req, res) => {
-		const airportsVersion = await rdsGetSingle("static_airports:version");
-		const firsVersion = await rdsGetSingle("static_firs:version");
-		const traconsVersion = await rdsGetSingle("static_tracons:version");
-		const airlinesVersion = await rdsGetSingle("static_airlines:version");
-
-		res.json({
-			airportsVersion,
-			firsVersion,
-			traconsVersion,
-			airlinesVersion,
-		});
-	}),
-);
-
-app.get(
-	"/static/:type",
-	asyncHandler(async (req, res) => {
-		const type = validateString(req.params.type, "Type", 1, 20);
-		const allowedTypes = ["airports", "tracons", "firs", "airlines"];
-
-		if (!allowedTypes.includes(type)) {
-			res.status(400).json({ error: "Invalid static data type" });
-			return;
-		}
-
-		const data = await rdsGetSingle(`static_${type}:all`);
-		if (!data) {
-			res.status(404).json({ error: "Static data not found" });
-			return;
-		}
-
-		res.json(data);
-	}),
-);
-
-app.get(
 	"/data/init",
 	asyncHandler(async (_req, res) => {
 		const all = await rdsGetSingle("ws:all");
