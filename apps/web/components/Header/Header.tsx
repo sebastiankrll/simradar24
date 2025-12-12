@@ -9,9 +9,12 @@ export default function Header() {
 			<figure id="header-logo">
 				<Image src={simradar24Logo} alt="simradar24 logo" height={40} width={200} priority />
 			</figure>
-			<div className="header-item">
+			<div id="header-search-wrapper">
 				<Search />
 			</div>
+			<button type="button" id="header-vatsim-login">
+				Login with VATSIM
+			</button>
 		</header>
 	);
 }
