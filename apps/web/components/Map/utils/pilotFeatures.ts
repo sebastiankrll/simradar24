@@ -50,7 +50,6 @@ export function initPilotFeatures(data: WsAll): void {
 }
 
 export function updatePilotFeatures(delta: PilotDelta): void {
-	const items: RBushPilotFeature[] = [];
 	const pilotsInDelta = new Set<string>();
 
 	for (const p of delta.updated) {
@@ -71,15 +70,6 @@ export function updatePilotFeatures(delta: PilotDelta): void {
 		}
 
 		pilotMap.set(p.id, feature);
-
-		const item: RBushPilotFeature = {
-			minX: p.longitude ?? props.longitude,
-			minY: p.latitude ?? props.latitude,
-			maxX: p.longitude ?? props.longitude,
-			maxY: p.latitude ?? props.latitude,
-			feature,
-		};
-		items.push(item);
 	}
 
 	for (const p of delta.added) {
@@ -98,15 +88,6 @@ export function updatePilotFeatures(delta: PilotDelta): void {
 		feature.setId(`pilot_${p.id}`);
 
 		pilotMap.set(p.id, feature);
-
-		const item: RBushPilotFeature = {
-			minX: p.longitude,
-			minY: p.latitude,
-			maxX: p.longitude,
-			maxY: p.latitude,
-			feature,
-		};
-		items.push(item);
 	}
 
 	for (const id of pilotMap.keys()) {
@@ -118,6 +99,18 @@ export function updatePilotFeatures(delta: PilotDelta): void {
 	if (highlightedPilot && !pilotMap.has(highlightedPilot)) {
 		highlightedPilot = null;
 		resetMap(true);
+	}
+
+	const items: RBushPilotFeature[] = [];
+	for (const [_id, feature] of pilotMap.entries()) {
+		const props = feature.getProperties() as PilotProperties;
+		items.push({
+			minX: props.longitude,
+			minY: props.latitude,
+			maxX: props.longitude,
+			maxY: props.latitude,
+			feature,
+		});
 	}
 
 	pilotRBush.clear();
@@ -134,8 +127,10 @@ export function clearHighlightedPilot(): void {
 	highlightedPilot = null;
 }
 
+let initialized = false;
 export function setPilotFeatures(extent: Extent, zoom: number): void {
-	if (zoom > 10) {
+	if (zoom > 12 && !initialized) {
+		initialized = true;
 		return;
 	}
 
