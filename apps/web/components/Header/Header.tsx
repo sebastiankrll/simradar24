@@ -9,9 +9,6 @@ export default function Header() {
 			<figure id="header-logo">
 				<Image src={simradar24Logo} alt="simradar24 logo" height={40} width={200} priority />
 			</figure>
-			<button type="button" className="header-item icon">
-				Settings
-			</button>
 			<div className="header-item">
 				<Search />
 			</div>
