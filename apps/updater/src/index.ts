@@ -5,8 +5,8 @@ import { updateAirlines } from "./airlines.js";
 import { updateAirports } from "./airports.js";
 import { updateFirs } from "./fir.js";
 import { updateFleets } from "./fleet.js";
-import { updateTracons } from "./tracon.js";
 import { updateR2Storage } from "./s3.js";
+import { updateTracons } from "./tracon.js";
 
 let dbsInitialized = false;
 
