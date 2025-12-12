@@ -1,4 +1,4 @@
-# simradar24
+# simradar21
 Yet another VATSIM network tracking service. 😉
 
-**Now live**: [simradar24](https://radar.skruellex.com/)
+**Now live**: [simradar21](https://simradar21.com/)
