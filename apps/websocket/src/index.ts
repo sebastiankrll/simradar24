@@ -46,8 +46,21 @@ function checkRateLimit(clientContext: ClientContext): boolean {
 const PORT = Number(process.env.WS_PORT) || 3002;
 const HOST = process.env.WS_HOST || "localhost";
 
-// Create HTTP server first
+const setCorsHeaders = (res: any) => {
+	res.setHeader("Access-Control-Allow-Origin", "*");
+	res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+	res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+};
+
 const server = createServer((req: any, res: any) => {
+	setCorsHeaders(res);
+
+	if (req.method === "OPTIONS") {
+		res.writeHead(204);
+		res.end();
+		return;
+	}
+
 	if (req.url === "/health" && req.method === "GET") {
 		res.writeHead(200, { "Content-Type": "application/json" });
 		res.end(JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }));
@@ -112,7 +125,7 @@ wss.on("connection", (ws: WebSocket, _req: any) => {
 	};
 
 	clientContextMap.set(ws, clientContext);
-	// console.log(`✅ Client connected: ${clientId} from ${clientIp} (Total: ${clientContextMap.size})`);
+	// console.log(`✅ Client connected: ${clientId} (Total: ${clientContextMap.size})`);
 
 	ws.on("pong", () => {
 		clientContext.isAlive = true;
@@ -156,10 +169,7 @@ wss.on("connection", (ws: WebSocket, _req: any) => {
 
 	ws.on("close", () => {
 		clientContextMap.delete(ws);
-		// const duration = Date.now() - clientContext.connectedAt.getTime();
-		// console.log(
-		// 	`❌ Client disconnected: ${clientId} (connected for ${duration}ms, sent ${clientContext.messagesSent} messages, Total: ${clientContextMap.size})`,
-		// );
+		// console.log(`❌ Client disconnected: ${clientId} (Total: ${clientContextMap.size})`);
 	});
 });
 
@@ -170,6 +180,7 @@ const heartbeatInterval = setInterval(() => {
 
 		if (!clientContext.isAlive) {
 			console.warn(`⏱️  Terminating inactive client: ${clientContext.id}`);
+			clientContextMap.delete(ws);
 			ws.terminate();
 			return;
 		}

@@ -1,0 +1,75 @@
+footer {
+	position: absolute;
+	left: 0rem;
+	right: 0rem;
+	bottom: 0rem;
+	height: 1.5rem;
+	display: flex;
+	align-items: center;
+	padding: 0 1rem;
+	box-sizing: border-box;
+	gap: 1rem;
+	background: linear-gradient(0deg, rgba(77, 95, 131, 0.3) 0%, rgba(77, 95, 131, 0) 120%);
+	border-top: 1px solid var(--color-border);
+	z-index: 1;
+}
+
+.footer-item {
+	background: white;
+	height: 100%;
+	border-left: 1px solid var(--color-border);
+	border-right: 1px solid var(--color-border);
+	box-sizing: border-box;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 0rem 10px;
+	font-size: 12px;
+}
+
+#footer-clients span {
+	font-weight: 700;
+	margin-right: 5px;
+}
+
+#footer-timestamp span {
+	margin-right: 8px;
+	height: 8px;
+	width: 8px;
+	background: var(--color-green);
+	border-radius: 50%;
+	animation: connected-blink 2s infinite;
+}
+
+@keyframes connected-blink {
+	0%,
+	50%,
+	100% {
+		opacity: 1;
+	}
+	25%,
+	75% {
+		opacity: 0;
+	}
+}
+
+#footer-github,
+#footer-version {
+	background: none;
+	border: none;
+	color: white;
+	padding: 0rem;
+}
+
+#footer-github {
+	margin-left: auto;
+}
+
+#footer-github a {
+	font-weight: 700;
+	text-decoration: underline;
+}
+
+#footer-github a:hover {
+	color: var(--color-green);
+}
