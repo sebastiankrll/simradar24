@@ -263,6 +263,7 @@ export interface WsDelta {
 	pilots: PilotDelta;
 	controllers: ControllerDelta;
 	airports: AirportDelta;
+	timestamp: Date;
 }
 
 export interface VatsimEventData {

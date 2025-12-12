@@ -169,7 +169,7 @@ wss.on("connection", (ws: WebSocket, _req: any) => {
 
 	ws.on("close", () => {
 		clientContextMap.delete(ws);
-		console.log(`❌ Client disconnected: ${clientId} (Total: ${clientContextMap.size})`);
+		// console.log(`❌ Client disconnected: ${clientId} (Total: ${clientContextMap.size})`);
 	});
 });
 

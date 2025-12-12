@@ -50,6 +50,7 @@ async function fetchVatsimData(): Promise<void> {
 				pilots: getPilotDelta(),
 				airports: getAirportDelta(),
 				controllers: getControllerDelta(),
+				timestamp: new Date(vatsimData.general.update_timestamp),
 			};
 			const gzDelta = await gzipAsync(JSON.stringify(delta));
 			rdsPub("ws:delta", gzDelta.toString("base64"));

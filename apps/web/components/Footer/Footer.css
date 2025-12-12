@@ -36,9 +36,9 @@ footer {
 	margin-right: 8px;
 	height: 8px;
 	width: 8px;
-	background: var(--color-orange);
+	background: var(--color-green);
 	border-radius: 50%;
-	animation: connected-blink 1s infinite;
+	animation: connected-blink 2s infinite;
 }
 
 @keyframes connected-blink {
