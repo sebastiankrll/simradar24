@@ -8,6 +8,7 @@ import { MessageBoxCloseButton } from "../MessageBox/MessageBox";
 import { onClick, onMoveEnd, onPointerMove, setNavigator } from "./utils/events";
 import { initMap } from "./utils/init";
 import { animatePilotFeatures } from "./utils/pilotFeatures";
+import MapControls from "./components/MapControls";
 
 export default function OMap() {
 	const router = useRouter();
@@ -39,6 +40,7 @@ export default function OMap() {
 	return (
 		<>
 			<ToastContainer closeButton={MessageBoxCloseButton} icon={false} theme="colored" />
+			<MapControls />
 			<div id="map" />
 		</>
 	);
