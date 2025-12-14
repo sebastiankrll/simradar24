@@ -5,7 +5,6 @@
 #panel-airport-status-weather,
 #panel-airport-status-flights {
 	display: flex;
-	border-radius: 0.5rem;
 	background: var(--color-light-grey);
 	border: 1px solid var(--color-border);
 	padding: 4px 0rem;
@@ -101,7 +100,7 @@
 #panel-airport-flights-list {
 	display: flex;
 	flex-flow: column;
-	gap: 2px;
+	gap: 4px;
 }
 
 .panel-airport-flights-page {
@@ -126,14 +125,14 @@
 
 .panel-airport-flights-item {
 	display: flex;
-	background: white;
+	background: var(--color-bg);
 	border-top: 1px solid var(--color-border);
 	border-bottom: 1px solid var(--color-border);
 	gap: 4px;
 }
 
 .panel-airport-flights-item:hover {
-	background: var(--color-main-text);
+	background: var(--color-hover);
 }
 
 .panel-airport-flights-item:hover * {
@@ -174,7 +173,7 @@
 	justify-content: center;
 	height: 40px;
 	aspect-ratio: 1 / 1;
-	background-color: white;
+	background-color: var(--color-bg);
 	border: 1px solid var(--color-border);
 	box-sizing: border-box;
 	margin: 2px 0px;

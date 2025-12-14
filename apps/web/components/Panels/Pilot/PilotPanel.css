@@ -8,7 +8,6 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	border-radius: 0.5rem;
 	background-color: var(--color-light-grey);
 	border: 1px solid var(--color-border);
 	overflow: hidden;
@@ -27,7 +26,7 @@
 }
 
 .panel-pilot-airport:hover {
-	background-color: var(--color-main-text);
+	background-color: var(--color-hover);
 }
 
 .panel-pilot-airport:hover * {
@@ -70,7 +69,6 @@
 	place-items: center;
 	grid-template-columns: 1fr 2.5rem 2.5rem 1fr;
 	grid-template-rows: auto auto;
-	border-radius: 0.5rem;
 	background: var(--color-light-grey);
 	border: 1px solid var(--color-border);
 	padding: 4px 0rem;
@@ -104,7 +102,6 @@
 }
 
 #panel-pilot-progress {
-	border-radius: 0.5rem;
 	background-color: var(--color-light-grey);
 	border: 1px solid var(--color-border);
 	padding: 0.5rem;

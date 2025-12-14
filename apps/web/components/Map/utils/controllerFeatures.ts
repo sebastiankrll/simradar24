@@ -256,7 +256,7 @@ async function createAirportLabel(controllerMerged: ControllerMerged): Promise<v
 	const props: AirportLabelProperties = {
 		type: "airport",
 		size: getAirportSize(airport.size),
-		offset: parseInt(stations.join(""), 2) * 36,
+		offset: (parseInt(stations.join(""), 2) - 1) * 36,
 	};
 
 	labelFeature.setProperties(props);
@@ -270,7 +270,7 @@ function updateAirportLabel(controllerMerged: ControllerMerged): void {
 	if (!labelFeature) return;
 
 	const stations = getAirportLabelStations(controllerMerged);
-	labelFeature.set("offset", parseInt(stations.join(""), 2) * 36);
+	labelFeature.set("offset", (parseInt(stations.join(""), 2) - 1) * 36);
 }
 
 function getAirportLabelStations(controllerMerged: ControllerMerged): number[] {

@@ -9,7 +9,7 @@
 	display: flex;
 	flex-flow: column;
 	border-left: 4px solid var(--color-light-text);
-	background: white;
+	background: var(--color-bg);
 	border-top: 1px solid var(--color-border);
 	border-bottom: 1px solid var(--color-border);
 	padding: 4px;
@@ -18,7 +18,7 @@
 .panel-controller-title {
 	display: grid;
 	grid-template-columns: 1fr auto;
-	background: rgb(238, 240, 245);
+	background: var(--color-light-grey);
 	padding: 2px 5px;
 }
 

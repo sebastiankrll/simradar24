@@ -11,7 +11,6 @@ type AltitudeUnit = "feet" | "meters";
 type DistanceUnit = "km" | "miles" | "nm";
 
 interface SettingsState {
-	darkMode: boolean;
 	dayNightLayer: boolean;
 	dayNightLayerBrightness: number;
 	airportMarkers: boolean;
@@ -28,7 +27,6 @@ interface SettingsState {
 	altitudeUnit: AltitudeUnit;
 	distanceUnit: DistanceUnit;
 
-	setDarkMode: (value: boolean) => void;
 	setDayNightLayer: (value: boolean) => void;
 	setDayNightLayerBrightness: (value: number) => void;
 	setAirportMarkers: (value: boolean) => void;
@@ -49,7 +47,6 @@ interface SettingsState {
 }
 
 const defaultSettings = {
-	darkMode: false as const,
 	dayNightLayer: true as const,
 	dayNightLayerBrightness: 50 as const,
 	airportMarkers: true as const,
@@ -72,7 +69,6 @@ export const useSettingsStore = create<SettingsState>()(
 		(set) => ({
 			...defaultSettings,
 
-			setDarkMode: (value) => set({ darkMode: value }),
 			setDayNightLayer: (value) => set({ dayNightLayer: value }),
 			setDayNightLayerBrightness: (value) => set({ dayNightLayerBrightness: value }),
 			setAirportMarkers: (value) => set({ airportMarkers: value }),

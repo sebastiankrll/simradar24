@@ -42,7 +42,7 @@ export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; ai
 				</div>
 			</div>
 			<div className="overlay-main-wrapper">
-				<div className="overlay-icon" style={{ backgroundColor: airline?.bg ?? "white" }}>
+				<div className="overlay-icon" style={{ backgroundColor: airline?.bg ?? "" }}>
 					<p
 						style={{
 							color: airline?.font ?? "var(--color-green)",

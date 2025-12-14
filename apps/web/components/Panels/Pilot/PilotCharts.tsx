@@ -31,8 +31,26 @@ export function PilotCharts({
 			<div className="panel-section-content">
 				<ResponsiveContainer width="100%" aspect={1.618} maxHeight={500}>
 					<LineChart data={data} margin={{ top: 5, right: 5, bottom: 10, left: 5 }}>
-						<YAxis yAxisId="alt" orientation="left" fontSize="10px" width={33} tickSize={4} tickLine={false} axisLine={false} />
-						<YAxis yAxisId="spd" orientation="right" fontSize="10px" width={23} tickSize={4} tickLine={false} axisLine={false} />
+						<YAxis
+							yAxisId="alt"
+							stroke="var(--color-main-text)"
+							orientation="left"
+							fontSize="10px"
+							width={33}
+							tickSize={4}
+							tickLine={false}
+							axisLine={false}
+						/>
+						<YAxis
+							yAxisId="spd"
+							stroke="var(--color-main-text)"
+							orientation="right"
+							fontSize="10px"
+							width={23}
+							tickSize={4}
+							tickLine={false}
+							axisLine={false}
+						/>
 						<XAxis dataKey="name" tick={false} mirror={true} axisLine={false} />
 						<Line type="monotone" dataKey="altitude" yAxisId="alt" stroke="var(--color-red)" dot={false} name="Barometric Altitude (ft)" />
 						<Line type="monotone" dataKey="speed" yAxisId="spd" stroke="var(--color-green)" dot={false} name="Groundspeed (kt)" />

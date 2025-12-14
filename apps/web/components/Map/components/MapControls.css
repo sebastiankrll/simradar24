@@ -5,7 +5,7 @@
 	display: flex;
 	flex-flow: column;
 	gap: 1rem;
-	background: rgba(255, 255, 255, 0.5);
+	background: var(--color-glass-bg);
 	backdrop-filter: blur(5px);
 	border: 1px solid var(--color-border);
 	padding: 0.5rem;
@@ -14,7 +14,7 @@
 .map-control-item {
 	width: 2rem;
 	height: 2rem;
-	background: white;
+	background: var(--color-bg);
 	box-shadow: 1px 1px 5px 1px var(--color-box-shadow);
 	display: flex;
 	align-items: center;
@@ -22,6 +22,6 @@
 }
 
 .map-control-item:hover {
-	background: var(--color-main-text);
+	background: var(--color-hover);
 	color: white;
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import "./globals.css";
 import "@/assets/images/sprites/freakflags.css";
+import { ThemeProvider } from "next-themes";
 import Footer from "@/components/Footer/Footer";
 import Header from "@/components/Header/Header";
 import Loader from "@/components/Loader/Loader";
@@ -24,13 +25,15 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en" className={manrope.className}>
+		<html lang="en" className={manrope.className} suppressHydrationWarning>
 			<body>
-				<Header />
-				<Loader />
-				<OMap />
-				<BasePanel>{children}</BasePanel>
-				<Footer />
+				<ThemeProvider>
+					<Header />
+					<Loader />
+					<OMap />
+					<BasePanel>{children}</BasePanel>
+					<Footer />
+				</ThemeProvider>
 			</body>
 		</html>
 	);

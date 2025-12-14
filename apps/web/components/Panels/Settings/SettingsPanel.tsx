@@ -2,11 +2,13 @@
 
 import { resetMap } from "@/components/Map/utils/events";
 import "./SettingsPanel.css";
+import { useTheme } from "next-themes";
 import { useId } from "react";
 import { useSettingsStore } from "@/storage/zustand";
 
 export default function SettingsPanel() {
 	const settings = useSettingsStore();
+	const { theme, setTheme } = useTheme();
 
 	return (
 		<>
@@ -27,7 +29,7 @@ export default function SettingsPanel() {
 				<div className="panel-data-separator">General</div>
 				<div className="setting-item">
 					<p className="setting-item-title">Dark mode</p>
-					<ToggleSwitch checked={settings.darkMode} onChange={(e) => settings.setDarkMode(e.target.checked)} />
+					<ToggleSwitch checked={theme === "dark"} onChange={(e) => setTheme(e.target.checked ? "dark" : "light")} />
 				</div>
 				<div className="setting-item">
 					<p className="setting-item-title">Day / night layer</p>

@@ -29,7 +29,7 @@ header {
 }
 
 #header-search-wrapper {
-	background-color: white;
+	background-color: var(--color-bg);
 	height: 2rem;
 	display: flex;
 	justify-content: center;

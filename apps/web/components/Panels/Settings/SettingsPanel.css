@@ -53,14 +53,7 @@
 	cursor: pointer;
 	inset: 0;
 	background: var(--color-light-text);
-	opacity: 0.5;
-	transition:
-		all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-		opacity 0.2s;
-}
-
-.tgl-switch-slider:hover {
-	opacity: 1;
+	transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .tgl-switch-slider:before {
@@ -104,14 +97,8 @@
 		var(--color-light-text) calc(var(--value, 50) / var(--max, 100) * 100%),
 		var(--color-light-text) 100%
 	);
-	opacity: 0.5;
 	outline: none;
-	transition: opacity 0.2s;
 	border-radius: 3px;
-}
-
-.sld-switch input[type="range"]:hover {
-	opacity: 1;
 }
 
 .sld-switch input[type="range"]::-webkit-slider-thumb {
@@ -140,14 +127,8 @@
 	grid-template-columns: repeat(var(--count, 4), 1fr);
 	align-items: center;
 	background: var(--color-dark-grey);
-	opacity: 0.5;
-	transition: opacity 0.2s;
 	height: 20px;
 	color: var(--color-light-text);
-}
-
-.choose-switch:hover {
-	opacity: 1;
 }
 
 .choose-switch-thumb {

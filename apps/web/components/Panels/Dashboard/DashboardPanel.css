@@ -55,8 +55,7 @@
 }
 
 .dashboard-table-button:hover {
-	background: var(--color-main-text);
-	color: white;
+	color: var(--color-green);
 }
 
 .dashboard-table-header {
@@ -82,7 +81,7 @@
 }
 
 .dashboard-event-item:hover {
-	background: var(--color-main-text);
+	background: var(--color-hover);
 }
 
 .dashboard-event-item:hover * {

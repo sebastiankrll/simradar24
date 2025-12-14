@@ -3,15 +3,20 @@
 import { useEffect } from "react";
 import "./Map.css";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { ToastContainer } from "react-toastify";
+import { useSettingsStore } from "@/storage/zustand";
 import { MessageBoxCloseButton } from "../MessageBox/MessageBox";
 import MapControls from "./components/MapControls";
 import { onClick, onMoveEnd, onPointerMove, setNavigator } from "./utils/events";
-import { initMap } from "./utils/init";
+import { initMap, setMapTheme } from "./utils/init";
 import { animatePilotFeatures } from "./utils/pilotFeatures";
+import { toggleSunLayer } from "./utils/sunLayer";
 
 export default function OMap() {
 	const router = useRouter();
+	const { theme } = useTheme();
+	const { dayNightLayer } = useSettingsStore();
 
 	useEffect(() => {
 		setNavigator((href) => router.push(href));
@@ -36,6 +41,14 @@ export default function OMap() {
 			window.cancelAnimationFrame(animationFrameId);
 		};
 	}, [router]);
+
+	useEffect(() => {
+		setMapTheme(theme === "dark");
+	}, [theme]);
+
+	useEffect(() => {
+		toggleSunLayer(dayNightLayer);
+	}, [dayNightLayer]);
 
 	return (
 		<>
