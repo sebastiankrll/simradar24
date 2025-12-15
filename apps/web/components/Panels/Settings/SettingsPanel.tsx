@@ -3,7 +3,8 @@
 import { resetMap } from "@/components/Map/utils/events";
 import "./SettingsPanel.css";
 import { useTheme } from "next-themes";
-import { useId } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { HexColorPicker } from "react-colorful";
 import { useSettingsStore } from "@/storage/zustand";
 
 export default function SettingsPanel() {
@@ -39,6 +40,7 @@ export default function SettingsPanel() {
 					<p className="setting-item-title">Day / night brightness</p>
 					<SliderSwitch value={settings.dayNightLayerBrightness} onChange={settings.setDayNightLayerBrightness} />
 				</div>
+
 				<div className="panel-data-separator">Airports</div>
 				<div className="setting-item">
 					<p className="setting-item-title">Airport markers</p>
@@ -48,6 +50,7 @@ export default function SettingsPanel() {
 					<p className="setting-item-title">Airport marker size</p>
 					<SliderSwitch value={settings.airportMarkerSize} onChange={settings.setAirportMarkerSize} />
 				</div>
+
 				<div className="panel-data-separator">Planes</div>
 				<div className="setting-item column">
 					<p className="setting-item-title">Plane overlay</p>
@@ -62,6 +65,29 @@ export default function SettingsPanel() {
 					<ToggleSwitch checked={settings.animatedPlaneMarkers} onChange={(e) => settings.setAnimatedPlaneMarkers(e.target.checked)} />
 					<p className="setting-item-desc">Turn off to improve performance on low-end devices.</p>
 				</div>
+
+				<div className="panel-data-separator">Sectors</div>
+				<div className="setting-item">
+					<p className="setting-item-title">Sector areas</p>
+					<ToggleSwitch checked={settings.sectorAreas} onChange={(e) => settings.setSectorAreas(e.target.checked)} />
+				</div>
+				<div className="setting-item">
+					<p className="setting-item-title">TRACON color</p>
+					<ColorPicker color={settings.traconColor} onChange={settings.setTraconColor} />
+				</div>
+				<div className="setting-item">
+					<p className="setting-item-title">TRACON transparency</p>
+					<SliderSwitch value={settings.traconTransparency} onChange={settings.setTraconTransparency} />
+				</div>
+				<div className="setting-item">
+					<p className="setting-item-title">FIR color</p>
+					<ColorPicker color={settings.firColor} onChange={settings.setFirColor} />
+				</div>
+				<div className="setting-item">
+					<p className="setting-item-title">FIR transparency</p>
+					<SliderSwitch value={settings.firTransparency} onChange={settings.setFirTransparency} />
+				</div>
+
 				<div className="panel-data-separator">Units</div>
 				<div className="setting-item column">
 					<p className="setting-item-title">Time Zone</p>
@@ -162,5 +188,40 @@ function ChooseSwitch<const T extends readonly string[]>({
 				</button>
 			))}
 		</fieldset>
+	);
+}
+
+function ColorPicker({ color, onChange }: { color: string; onChange: (color: string) => void }) {
+	const [isOpen, setIsOpen] = useState(false);
+	const ref = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		function handleClickOutside(event: MouseEvent) {
+			if (ref.current && !ref.current.contains(event.target as Node)) {
+				setIsOpen(false);
+			}
+		}
+
+		if (isOpen) {
+			document.addEventListener("mousedown", handleClickOutside);
+			return () => document.removeEventListener("mousedown", handleClickOutside);
+		}
+	}, [isOpen]);
+
+	return (
+		<div className="color-picker-wrapper" ref={ref}>
+			<button
+				type="button"
+				className="color-picker-swatch"
+				style={{ backgroundColor: color, borderColor: isOpen ? "white" : "" }}
+				onClick={() => setIsOpen(!isOpen)}
+				aria-label="Open color picker"
+			/>
+			{isOpen && (
+				<div className="color-picker-popover">
+					<HexColorPicker color={color} onChange={onChange} />
+				</div>
+			)}
+		</div>
 	);
 }

@@ -116,29 +116,9 @@ export const webglConfig = {
 		"icon-rotate-with-view": false,
 	},
 	controller: {
-		"stroke-color": [
-			"case",
-			["any", ["==", ["get", "clicked"], 1], ["==", ["get", "hovered"], 1]],
-			[234, 89, 121, 1],
-			[
-				"case",
-				["==", ["get", "type"], "tracon"],
-				["case", ["var", "theme"], [222, 89, 234, 1], [222, 89, 234, 1]],
-				["case", ["var", "theme"], [126, 138, 161, 1], [77, 95, 131, 1]],
-			],
-		],
+		"stroke-color": ["case", ["any", ["==", ["get", "clicked"], 1], ["==", ["get", "hovered"], 1]], [234, 89, 121, 1], ["var", "stroke"]],
 		"stroke-width": 1,
 		"stroke-offset": 0,
-		"fill-color": [
-			"case",
-			["any", ["==", ["get", "clicked"], 1], ["==", ["get", "hovered"], 1]],
-			[234, 89, 121, 0.3],
-			[
-				"case",
-				["==", ["get", "type"], "tracon"],
-				["case", ["var", "theme"], [222, 89, 234, 0.1], [222, 89, 234, 0.1]],
-				["case", ["var", "theme"], [126, 138, 161, 0.1], [77, 95, 131, 0.1]],
-			],
-		],
+		"fill-color": ["case", ["any", ["==", ["get", "clicked"], 1], ["==", ["get", "hovered"], 1]], [234, 89, 121, 0.3], ["var", "fill"]],
 	},
 };

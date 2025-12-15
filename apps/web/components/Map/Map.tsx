@@ -17,7 +17,19 @@ import { setSunLayerSettings } from "./utils/sunLayer";
 export default function OMap() {
 	const router = useRouter();
 	const { theme } = useTheme();
-	const { dayNightLayer, dayNightLayerBrightness, airportMarkers, airportMarkerSize, planeMarkerSize, animatedPlaneMarkers } = useSettingsStore();
+	const {
+		dayNightLayer,
+		dayNightLayerBrightness,
+		airportMarkers,
+		airportMarkerSize,
+		planeMarkerSize,
+		animatedPlaneMarkers,
+		sectorAreas,
+		traconColor,
+		traconTransparency,
+		firColor,
+		firTransparency,
+	} = useSettingsStore();
 
 	useEffect(() => {
 		setNavigator((href) => router.push(href));
@@ -59,8 +71,28 @@ export default function OMap() {
 
 	useEffect(() => {
 		setSunLayerSettings(dayNightLayer, dayNightLayerBrightness);
-		setDataLayersSettings(airportMarkers, airportMarkerSize, planeMarkerSize);
-	}, [dayNightLayer, dayNightLayerBrightness, airportMarkers, airportMarkerSize, planeMarkerSize]);
+		setDataLayersSettings(
+			airportMarkers,
+			airportMarkerSize,
+			planeMarkerSize,
+			sectorAreas,
+			traconColor,
+			traconTransparency,
+			firColor,
+			firTransparency,
+		);
+	}, [
+		dayNightLayer,
+		dayNightLayerBrightness,
+		airportMarkers,
+		airportMarkerSize,
+		planeMarkerSize,
+		sectorAreas,
+		traconColor,
+		traconTransparency,
+		firColor,
+		firTransparency,
+	]);
 
 	return (
 		<>

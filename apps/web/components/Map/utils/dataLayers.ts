@@ -32,7 +32,8 @@ export const airportLabelSource = new VectorSource({
 const firLayer = new WebGLVectorLayer({
 	source: firSource,
 	variables: {
-		theme: false,
+		fill: "rgba(77, 95, 131, 0.1)",
+		stroke: "rgba(77, 95, 131, 1)",
 	},
 	style: webglConfig.controller,
 	properties: {
@@ -44,7 +45,8 @@ const firLayer = new WebGLVectorLayer({
 const traconLayer = new WebGLVectorLayer({
 	source: traconSource,
 	variables: {
-		theme: false,
+		fill: "rgba(222, 89, 234, 0.1)",
+		stroke: "rgba(222, 89, 234, 1)",
 	},
 	style: webglConfig.controller,
 	properties: {
@@ -53,17 +55,12 @@ const traconLayer = new WebGLVectorLayer({
 	zIndex: 2,
 });
 
-const pilotMainLayer = new WebGLVectorLayer({
-	source: pilotMainSource,
-	variables: {
-		theme: false,
-		size: 1,
-	},
-	style: webglConfig.pilot_main,
+const trackLayer = new VectorLayer({
+	source: trackSource,
 	properties: {
-		type: "pilot_main",
+		type: "track",
 	},
-	zIndex: 5,
+	zIndex: 3,
 });
 
 const pilotShadowLayer = new WebGLVectorLayer({
@@ -77,6 +74,19 @@ const pilotShadowLayer = new WebGLVectorLayer({
 		type: "pilot_shadow",
 	},
 	zIndex: 4,
+});
+
+const pilotMainLayer = new WebGLVectorLayer({
+	source: pilotMainSource,
+	variables: {
+		theme: false,
+		size: 1,
+	},
+	style: webglConfig.pilot_main,
+	properties: {
+		type: "pilot_main",
+	},
+	zIndex: 5,
 });
 
 const airportLabelLayer = new WebGLVectorLayer({
@@ -103,24 +113,16 @@ const airportMainLayer = new WebGLVectorLayer({
 	zIndex: 7,
 });
 
+const controllerLabelLayer = new VectorLayer({
+	source: controllerLabelSource,
+	style: getControllerLabelStyle,
+	properties: {
+		type: "sector_label",
+	},
+	zIndex: 8,
+});
+
 export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
-	const trackLayer = new VectorLayer({
-		source: trackSource,
-		properties: {
-			type: "track",
-		},
-		zIndex: 3,
-	});
-
-	const controllerLabelLayer = new VectorLayer({
-		source: controllerLabelSource,
-		style: getControllerLabelStyle,
-		properties: {
-			type: "sector_label",
-		},
-		zIndex: 9,
-	});
-
 	return [firLayer, traconLayer, trackLayer, pilotShadowLayer, pilotMainLayer, airportLabelLayer, airportMainLayer, controllerLabelLayer];
 }
 
@@ -136,7 +138,16 @@ export function setDataLayersTheme(theme: boolean): void {
 	traconLayer.updateStyleVariables({ theme });
 }
 
-export function setDataLayersSettings(airportMarkers: boolean, airportMarkerSize: number, planeMarkerSize: number): void {
+export function setDataLayersSettings(
+	airportMarkers: boolean,
+	airportMarkerSize: number,
+	planeMarkerSize: number,
+	sectorAreas: boolean,
+	traconColor: string,
+	traconTransparency: number,
+	firColor: string,
+	firTransparency: number,
+): void {
 	airportMainLayer.setVisible(airportMarkers);
 	airportLabelLayer.setVisible(airportMarkers);
 
@@ -147,4 +158,17 @@ export function setDataLayersSettings(airportMarkers: boolean, airportMarkerSize
 	const planeSize = planeMarkerSize / 50;
 	pilotMainLayer.updateStyleVariables({ size: planeSize });
 	pilotShadowLayer.updateStyleVariables({ size: planeSize });
+
+	firLayer.setVisible(sectorAreas);
+	traconLayer.setVisible(sectorAreas);
+	controllerLabelLayer.setVisible(sectorAreas);
+
+	firLayer.updateStyleVariables({
+		fill: firColor.replace("1)", `${firTransparency / 100})`),
+		stroke: firColor.replace("1)", "1)"),
+	});
+	traconLayer.updateStyleVariables({
+		fill: traconColor.replace("1)", `${traconTransparency / 100})`),
+		stroke: traconColor.replace("1)", "1)"),
+	});
 }
