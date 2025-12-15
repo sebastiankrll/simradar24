@@ -48,20 +48,20 @@ interface SettingsState {
 
 const defaultSettings = {
 	dayNightLayer: true as const,
-	dayNightLayerBrightness: 50 as const,
+	dayNightLayerBrightness: 35 as const,
 	airportMarkers: true as const,
 	airportMarkerSize: 50 as const,
 	planeOverlay: "full" as const,
 	planeMarkerSize: 50 as const,
 	animatedPlaneMarkers: true as const,
-	timeZone: "local" as const,
+	timeZone: "utc" as const,
 	timeFormat: "24h" as const,
 	temperatureUnit: "celsius" as const,
 	speedUnit: "knots" as const,
 	verticalSpeedUnit: "fpm" as const,
 	windSpeedUnit: "knots" as const,
 	altitudeUnit: "feet" as const,
-	distanceUnit: "km" as const,
+	distanceUnit: "nm" as const,
 };
 
 export const useSettingsStore = create<SettingsState>()(

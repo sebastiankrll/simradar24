@@ -33,7 +33,7 @@ export function PilotStatus({ pilot, data }: { pilot: PilotLong; data: PilotPane
 				></div>
 				<PilotAirport airport={data.arrival} />
 			</div>
-			<PilotTimes pilot={pilot} />
+			<PilotTimes pilot={pilot} departure={data.departure} arrival={data.arrival} />
 			<PilotProgress pilot={pilot} departure={data.departure} arrival={data.arrival} />
 		</div>
 	);

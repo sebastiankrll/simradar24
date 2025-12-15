@@ -1,5 +1,7 @@
 import type { TrackPoint } from "@sr24/types/vatsim";
 import { Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useSettingsStore } from "@/storage/zustand";
+import { convertAltitude, convertSpeed, convertTime } from "@/utils/helpers";
 
 export function PilotCharts({
 	trackPoints,
@@ -10,10 +12,12 @@ export function PilotCharts({
 	openSection: string | null;
 	ref: React.Ref<HTMLDivElement>;
 }) {
+	const { altitudeUnit, speedUnit, timeFormat, timeZone } = useSettingsStore();
+
 	const data = trackPoints.map((point, _index) => ({
-		name: new Date(point.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-		altitude: point.altitude_ms,
-		speed: point.groundspeed,
+		name: convertTime(point.timestamp, timeFormat, timeZone),
+		altitude: convertAltitude(point.altitude_ms, altitudeUnit, false),
+		speed: convertSpeed(point.groundspeed, speedUnit, false),
 	}));
 
 	return (
@@ -52,10 +56,24 @@ export function PilotCharts({
 							axisLine={false}
 						/>
 						<XAxis dataKey="name" tick={false} mirror={true} axisLine={false} />
-						<Line type="monotone" dataKey="altitude" yAxisId="alt" stroke="var(--color-red)" dot={false} name="Barometric Altitude (ft)" />
-						<Line type="monotone" dataKey="speed" yAxisId="spd" stroke="var(--color-green)" dot={false} name="Groundspeed (kt)" />
+						<Line
+							type="monotone"
+							dataKey="altitude"
+							yAxisId="alt"
+							stroke="var(--color-red)"
+							dot={false}
+							name={`Barometric Altitude (${altitudeUnit === "feet" ? "ft" : "m"})`}
+						/>
+						<Line
+							type="monotone"
+							dataKey="speed"
+							yAxisId="spd"
+							stroke="var(--color-green)"
+							dot={false}
+							name={`Groundspeed (${speedUnit === "knots" ? "kt" : speedUnit === "kmh" ? "km/h" : speedUnit === "mph" ? "mph" : "m/s"})`}
+						/>
 						<Legend verticalAlign="bottom" height={5} iconSize={10} wrapperStyle={{ fontSize: "10px" }} />
-						<Tooltip wrapperStyle={{ fontSize: "10px" }} />
+						<Tooltip wrapperStyle={{ fontSize: "10px" }} contentStyle={{ background: "var(--color-bg)", borderColor: "var(--color-border)" }} />
 					</LineChart>
 				</ResponsiveContainer>
 			</div>

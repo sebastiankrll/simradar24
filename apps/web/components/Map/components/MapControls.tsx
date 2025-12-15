@@ -14,7 +14,7 @@ export default function MapControls() {
 			<button type="button" className="map-control-item">
 				-
 			</button>
-			<button type="button" className="map-control-item" onClick={() => router.push("settings")}>
+			<button type="button" className="map-control-item" onClick={() => router.push("/settings")}>
 				S
 			</button>
 		</div>

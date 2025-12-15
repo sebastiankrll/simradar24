@@ -1,5 +1,7 @@
 import type { AirportLong } from "@sr24/types/vatsim";
 import { CloudQuantity, Descriptive, type IMetar, Intensity, type IWind, Phenomenon } from "metar-taf-parser";
+import { useSettingsStore } from "@/storage/zustand";
+import { convertSpeed, convertTemperature } from "@/utils/helpers";
 
 function getConditions(metar: IMetar): string {
 	if (metar.cavok) {
@@ -79,22 +81,35 @@ function getConditions(metar: IMetar): string {
 	return "Clear";
 }
 
-function getTemperature(temp: number | undefined): string {
-	if (!temp) {
-		return "N/A";
-	}
-	return `${temp} °C`;
-}
-
-function getWind(wind: IWind | undefined): string {
+function getWind(wind: IWind | undefined, windUnit: "knots" | "kmh" | "mph" | "ms"): string {
 	if (!wind) {
 		return "N/A";
 	}
-	const unit = wind.unit || "KT";
-	if (wind.degrees) {
-		return `${wind.degrees}° / ${wind.speed}${wind.gust ? `G${wind.gust}` : ""} ${unit}`;
+
+	let factor = 1;
+
+	if (wind.unit === "MPS") {
+		factor = 1.94384;
+	} else if (wind.unit === "KM/H") {
+		factor = 0.539957;
 	}
-	return `${wind.direction} / ${wind.speed}${wind.gust ? `G${wind.gust}` : ""} ${unit}`;
+
+	const speed = convertSpeed(wind.speed * factor, windUnit, false);
+	const gust = convertSpeed((wind.gust || 0) * factor, windUnit, false);
+
+	let shortUnit = "KT";
+	if (windUnit === "kmh") {
+		shortUnit = "KMH";
+	} else if (windUnit === "mph") {
+		shortUnit = "MPH";
+	} else if (windUnit === "ms") {
+		shortUnit = "MS";
+	}
+
+	if (wind.degrees) {
+		return `${wind.degrees}° / ${speed}${wind.gust ? `G${gust}` : ""} ${shortUnit}`;
+	}
+	return `${wind.direction} / ${speed}${wind.gust ? `G${gust}` : ""} ${shortUnit}`;
 }
 
 export function getDelayColor(avgDelay: number) {
@@ -109,6 +124,8 @@ export function getDelayColor(avgDelay: number) {
 }
 
 export function AirportStatus({ airport, parsedMetar }: { airport: AirportLong | undefined; parsedMetar: IMetar | null }) {
+	const { temperatureUnit, windSpeedUnit } = useSettingsStore();
+
 	const avgDelay = airport ? Math.round((airport.dep_traffic.average_delay + airport.arr_traffic.average_delay) / 2) : 0;
 
 	return (
@@ -121,11 +138,11 @@ export function AirportStatus({ airport, parsedMetar }: { airport: AirportLong |
 					</div>
 					<div className="panel-airport-status-item">
 						<p>Temp.</p>
-						<p>{getTemperature(parsedMetar.temperature)}</p>
+						<p>{convertTemperature(parsedMetar.temperature, temperatureUnit)}</p>
 					</div>
 					<div className="panel-airport-status-item">
 						<p>Wind</p>
-						<p>{getWind(parsedMetar.wind)}</p>
+						<p>{getWind(parsedMetar.wind, windSpeedUnit)}</p>
 					</div>
 				</div>
 			)}

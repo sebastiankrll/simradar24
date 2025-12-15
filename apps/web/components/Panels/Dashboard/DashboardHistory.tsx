@@ -1,18 +1,16 @@
 import type { DashboardData } from "@sr24/types/vatsim";
 import { Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useSettingsStore } from "@/storage/zustand";
+import { convertTime } from "@/utils/helpers";
 
 export function DashboardHistory({ history }: { history: DashboardData["history"] }) {
-	const data = history.map((point) => {
-		const date = new Date(point.t);
-		const hours = date.getHours().toString().padStart(2, "0");
-		const minutes = date.getMinutes().toString().padStart(2, "0");
+	const { timeZone, timeFormat } = useSettingsStore();
 
-		return {
-			name: `${hours}:${minutes}`,
-			controllers: point.v.controllers,
-			pilots: point.v.pilots,
-		};
-	});
+	const data = history.map((point) => ({
+		name: convertTime(point.t, timeFormat, timeZone),
+		controllers: point.v.controllers,
+		pilots: point.v.pilots,
+	}));
 
 	return (
 		<ResponsiveContainer width="100%" height={150} maxHeight={500}>

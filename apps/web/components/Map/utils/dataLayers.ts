@@ -57,6 +57,7 @@ const pilotMainLayer = new WebGLVectorLayer({
 	source: pilotMainSource,
 	variables: {
 		theme: false,
+		size: 1,
 	},
 	style: webglConfig.pilot_main,
 	properties: {
@@ -69,12 +70,37 @@ const pilotShadowLayer = new WebGLVectorLayer({
 	source: pilotMainSource,
 	variables: {
 		theme: false,
+		size: 1,
 	},
 	style: webglConfig.pilot_shadow,
 	properties: {
 		type: "pilot_shadow",
 	},
 	zIndex: 4,
+});
+
+const airportLabelLayer = new WebGLVectorLayer({
+	source: airportLabelSource,
+	variables: {
+		size: 1,
+	},
+	style: webglConfig.airport_label,
+	properties: {
+		type: "airport_label",
+	},
+	zIndex: 6,
+});
+
+const airportMainLayer = new WebGLVectorLayer({
+	source: airportMainSource,
+	variables: {
+		size: 1,
+	},
+	style: webglConfig.airport_main,
+	properties: {
+		type: "airport_main",
+	},
+	zIndex: 7,
 });
 
 export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
@@ -84,24 +110,6 @@ export function initDataLayers(): (WebGLVectorLayer | VectorLayer)[] {
 			type: "track",
 		},
 		zIndex: 3,
-	});
-
-	const airportLabelLayer = new WebGLVectorLayer({
-		source: airportLabelSource,
-		style: webglConfig.airport_label,
-		properties: {
-			type: "airport_label",
-		},
-		zIndex: 6,
-	});
-
-	const airportMainLayer = new WebGLVectorLayer({
-		source: airportMainSource,
-		style: webglConfig.airport_main,
-		properties: {
-			type: "airport_main",
-		},
-		zIndex: 7,
 	});
 
 	const controllerLabelLayer = new VectorLayer({
@@ -126,4 +134,17 @@ export function setDataLayersTheme(theme: boolean): void {
 	pilotShadowLayer.updateStyleVariables({ theme });
 	firLayer.updateStyleVariables({ theme });
 	traconLayer.updateStyleVariables({ theme });
+}
+
+export function setDataLayersSettings(airportMarkers: boolean, airportMarkerSize: number, planeMarkerSize: number): void {
+	airportMainLayer.setVisible(airportMarkers);
+	airportLabelLayer.setVisible(airportMarkers);
+
+	const airportSize = airportMarkerSize / 50;
+	airportMainLayer.updateStyleVariables({ size: airportSize });
+	airportLabelLayer.updateStyleVariables({ size: airportSize });
+
+	const planeSize = planeMarkerSize / 50;
+	pilotMainLayer.updateStyleVariables({ size: planeSize });
+	pilotShadowLayer.updateStyleVariables({ size: planeSize });
 }

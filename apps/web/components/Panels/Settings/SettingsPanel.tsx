@@ -46,7 +46,7 @@ export default function SettingsPanel() {
 				</div>
 				<div className="setting-item">
 					<p className="setting-item-title">Airport marker size</p>
-					<SliderSwitch value={settings.airportMarkerSize} onChange={settings.setAirportMarkerSize} step={25} />
+					<SliderSwitch value={settings.airportMarkerSize} onChange={settings.setAirportMarkerSize} />
 				</div>
 				<div className="panel-data-separator">Planes</div>
 				<div className="setting-item column">
@@ -55,7 +55,7 @@ export default function SettingsPanel() {
 				</div>
 				<div className="setting-item">
 					<p className="setting-item-title">Plane marker size</p>
-					<SliderSwitch value={settings.planeMarkerSize} onChange={settings.setPlaneMarkerSize} step={25} />
+					<SliderSwitch value={settings.planeMarkerSize} onChange={settings.setPlaneMarkerSize} />
 				</div>
 				<div className="setting-item">
 					<p className="setting-item-title">Animated plane markers</p>

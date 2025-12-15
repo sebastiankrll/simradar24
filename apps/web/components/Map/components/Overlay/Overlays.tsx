@@ -5,13 +5,14 @@ import type { AirportShort, ControllerMerged, ControllerShort } from "@sr24/type
 import type { Point } from "ol/geom";
 import { useState } from "react";
 import FlagSprite from "@/assets/images/sprites/flagSprite42.png";
+import { useSettingsStore } from "@/storage/zustand";
 import type { PilotProperties } from "@/types/ol";
+import { convertAltitude, convertSpeed, convertVerticalSpeed } from "@/utils/helpers";
 
 export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; airline: StaticAirline | null }) {
-	const data = feature.getProperties() as PilotProperties;
+	const { planeOverlay, altitudeUnit, verticalSpeedUnit, speedUnit } = useSettingsStore();
 
-	const roundedVS = Math.round(data.vertical_speed / 50) * 50;
-	const vs = (roundedVS > 0 ? "+" : "") + roundedVS;
+	const data = feature.getProperties() as PilotProperties;
 
 	let hdg = String(data.heading);
 	if (hdg.length === 1) {
@@ -23,43 +24,48 @@ export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; ai
 
 	return (
 		<div className="overlay-wrapper">
-			<div className="overlay-live pilot">
-				<div className="overlay-live-item">
-					<span>ALT</span>
-					{Math.round(data.altitude_ms / 250) * 250}
+			{planeOverlay === "full" && (
+				<div className="overlay-live pilot">
+					<div className="overlay-live-item">
+						<span>ALT</span>
+						{convertAltitude(Math.round(data.altitude_ms / 250) * 250, altitudeUnit, false)}
+					</div>
+					<div className="overlay-live-item">
+						<span>FPM</span>
+						{convertVerticalSpeed(Math.round(data.vertical_speed / 50) * 50, verticalSpeedUnit, false)}
+					</div>
+					<div className="overlay-live-item">
+						<span>GS</span>
+						{convertSpeed(data.groundspeed, speedUnit, false)}
+					</div>
+					<div className="overlay-live-item">
+						<span>HDG</span>
+						{hdg}
+					</div>
 				</div>
-				<div className="overlay-live-item">
-					<span>FPM</span>
-					{vs}
+			)}
+			{planeOverlay !== "callsign" && (
+				<div className="overlay-main-wrapper">
+					<div className="overlay-icon" style={{ backgroundColor: airline?.bg ?? "" }}>
+						<p
+							style={{
+								color: airline?.font ?? "var(--color-green)",
+							}}
+						>
+							{airline?.iata || "?"}
+						</p>
+					</div>
+					<div className="overlay-title">
+						<p>{data.callsign}</p>
+						<p>{data.route}</p>
+					</div>
+					<div className="overlay-misc">
+						<div className="overlay-pilot-ac-type">{data.aircraft}</div>
+						<div className="overlay-pilot-frequency">{(data.frequency / 1000).toFixed(3)}</div>
+					</div>
 				</div>
-				<div className="overlay-live-item">
-					<span>GS</span>
-					{data.groundspeed}
-				</div>
-				<div className="overlay-live-item">
-					<span>HDG</span>
-					{hdg}
-				</div>
-			</div>
-			<div className="overlay-main-wrapper">
-				<div className="overlay-icon" style={{ backgroundColor: airline?.bg ?? "" }}>
-					<p
-						style={{
-							color: airline?.font ?? "var(--color-green)",
-						}}
-					>
-						{airline?.iata || "?"}
-					</p>
-				</div>
-				<div className="overlay-title">
-					<p>{data.callsign}</p>
-					<p>{data.route}</p>
-				</div>
-				<div className="overlay-misc">
-					<div className="overlay-pilot-ac-type">{data.aircraft}</div>
-					<div className="overlay-pilot-frequency">{(data.frequency / 1000).toFixed(3)}</div>
-				</div>
-			</div>
+			)}
+			{planeOverlay === "callsign" && <div className="overlay-main-wrapper minimal">{data.callsign}</div>}
 			<div className="overlay-anchor"></div>
 		</div>
 	);

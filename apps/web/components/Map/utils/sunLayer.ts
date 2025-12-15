@@ -13,7 +13,7 @@ const sunLayer = new WebGLVectorLayer({
 		theme: false,
 	},
 	style: {
-		"fill-color": ["case", ["var", "theme"], [0, 0, 0, 0.05], [77, 95, 131, 0.07]],
+		"fill-color": ["case", ["var", "theme"], [0, 0, 0, 0.15], [77, 95, 131, 0.2]],
 	},
 	properties: {
 		type: "sun",
@@ -119,6 +119,7 @@ export function setSunLayerTheme(theme: boolean): void {
 	sunLayer.updateStyleVariables({ theme });
 }
 
-export function toggleSunLayer(show: boolean): void {
+export function setSunLayerSettings(show: boolean, brightness: number): void {
 	sunLayer.setVisible(show);
+	sunLayer.setOpacity(brightness / 100);
 }
