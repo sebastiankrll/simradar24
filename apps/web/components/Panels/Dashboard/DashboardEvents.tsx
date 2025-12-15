@@ -1,4 +1,6 @@
 import type { VatsimEvent } from "@sr24/types/vatsim";
+import { useSettingsStore } from "@/storage/zustand";
+import { convertTime } from "@/utils/helpers";
 
 export function DashboardEvents({ events, ref, openSection }: { events: VatsimEvent[]; ref: React.Ref<HTMLDivElement>; openSection: string[] }) {
 	return (
@@ -11,7 +13,19 @@ export function DashboardEvents({ events, ref, openSection }: { events: VatsimEv
 	);
 }
 
+function getDurationString(start: string, end: string, timeFormat: "12h" | "24h", timeZone: "utc" | "local"): string {
+	const startDate = new Date(start);
+	const endDate = new Date(end);
+
+	const startDay = String(startDate.getUTCDate()).padStart(2, "0");
+	const startMonth = String(startDate.getUTCMonth() + 1).padStart(2, "0");
+
+	return `${startDay}.${startMonth} ${convertTime(startDate, timeFormat, timeZone, false)} - ${convertTime(endDate, timeFormat, timeZone, false)}`;
+}
+
 function Events({ events, dayFilter }: { events: VatsimEvent[]; dayFilter: Date }) {
+	const { timeZone, timeFormat } = useSettingsStore();
+
 	const todaysEvents = events.filter((event) => {
 		const eventDate = new Date(event.start_time);
 		return (
@@ -20,16 +34,6 @@ function Events({ events, dayFilter }: { events: VatsimEvent[]; dayFilter: Date 
 			eventDate.getFullYear() === dayFilter.getFullYear()
 		);
 	});
-
-	const getTimeString = (start: string, end: string) => {
-		const startDate = new Date(start);
-		const endDate = new Date(end);
-
-		const startDay = String(startDate.getUTCDate()).padStart(2, "0");
-		const startMonth = String(startDate.getUTCMonth() + 1).padStart(2, "0");
-
-		return `${startDay}.${startMonth} ${startDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false })} - ${endDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false })}z`;
-	};
 
 	return (
 		<div className="panel-sub-container events">
@@ -40,7 +44,7 @@ function Events({ events, dayFilter }: { events: VatsimEvent[]; dayFilter: Date 
 					<a key={event.id} className="dashboard-event-item" href={event.link} target="_blank" rel="noreferrer">
 						<p className="dashboard-event-title">{event.name}</p>
 						<p>{event.airports.map((airport) => airport.icao).join(", ")}</p>
-						<p>{getTimeString(event.start_time, event.end_time)}</p>
+						<p>{getDurationString(event.start_time, event.end_time, timeFormat, timeZone)}</p>
 					</a>
 				))
 			)}

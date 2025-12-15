@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { fetchApi } from "@/utils/api";
 import { wsClient } from "@/utils/ws";
+import Clock from "./Clock";
 
 interface Metrics {
 	connectedClients: number;
@@ -18,7 +19,7 @@ interface Metrics {
 const WS_URL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || "ws://localhost:3002";
 
 function getTimestamp(date: Date | string): string {
-	return `${new Date(date).toISOString().split("T")[1].split(".")[0]}z`;
+	return new Date(date).toISOString().split("T")[1].split(".")[0];
 }
 
 export default function Footer() {
@@ -50,11 +51,14 @@ export default function Footer() {
 	return (
 		<footer>
 			<div className="footer-item" id="footer-clients">
-				<span>{isLoading ? "..." : (metrics?.connectedClients ?? "0")}</span>visitors online
+				<span>{isLoading ? "..." : metrics?.connectedClients ? metrics.connectedClients + 1 : 1}</span>visitors online
 			</div>
 			<div className="footer-item" id="footer-timestamp">
 				<span style={{ background: stale ? "var(--color-red)" : "", animationDuration: stale ? "1s" : "" }}></span>
 				{timestamp}
+			</div>
+			<div className="footer-item" id="footer-clock">
+				<Clock />
 			</div>
 			<div className="footer-item" id="footer-github">
 				Report a bug, request a feature, or send ❤️ on&nbsp;

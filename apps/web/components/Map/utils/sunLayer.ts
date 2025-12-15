@@ -9,8 +9,11 @@ const sunSource = new VectorSource({
 });
 const sunLayer = new WebGLVectorLayer({
 	source: sunSource,
+	variables: {
+		theme: false,
+	},
 	style: {
-		"fill-color": [77, 95, 131, 0.07],
+		"fill-color": ["case", ["var", "theme"], [0, 0, 0, 0.15], [77, 95, 131, 0.2]],
 	},
 	properties: {
 		type: "sun",
@@ -110,4 +113,13 @@ function calculateSunPosition(time: Date): number[] {
 	const lon = -(true_solar_time_in_deg < 0 ? true_solar_time_in_deg + 180 : true_solar_time_in_deg - 180);
 
 	return [lon, lat];
+}
+
+export function setSunLayerTheme(theme: boolean): void {
+	sunLayer.updateStyleVariables({ theme });
+}
+
+export function setSunLayerSettings(show: boolean, brightness: number): void {
+	sunLayer.setVisible(show);
+	sunLayer.setOpacity(brightness / 100);
 }

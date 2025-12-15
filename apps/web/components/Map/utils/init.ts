@@ -1,8 +1,8 @@
 import { Map as OlMap, View } from "ol";
 import { fromLonLat, transformExtent } from "ol/proj";
-import { initBaseLayer } from "./baseLayer";
-import { initDataLayers } from "./dataLayers";
-import { initSunLayer } from "./sunLayer";
+import { initBaseLayer, setBaseLayerTheme } from "./baseLayer";
+import { initDataLayers, setDataLayersTheme } from "./dataLayers";
+import { initSunLayer, setSunLayerTheme } from "./sunLayer";
 
 let map: OlMap | null = null;
 
@@ -53,4 +53,10 @@ export function getMapView(): View | null {
 
 export function getMap(): OlMap | null {
 	return map;
+}
+
+export function setMapTheme(theme: boolean): void {
+	setBaseLayerTheme(theme);
+	setDataLayersTheme(theme);
+	setSunLayerTheme(theme);
 }

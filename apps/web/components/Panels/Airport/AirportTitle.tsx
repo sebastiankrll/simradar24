@@ -12,14 +12,6 @@ function formatLocalTime(tz: string): string {
 		hour12: false,
 	}).format(now);
 
-	// const tzAbbrev =
-	// 	new Intl.DateTimeFormat("en-US", {
-	// 		timeZone: tz,
-	// 		timeZoneName: "short",
-	// 	})
-	// 		.formatToParts(now)
-	// 		.find((part) => part.type === "timeZoneName")?.value || "UTC";
-
 	const offsetMinutes = new Date(now.toLocaleString("en-US", { timeZone: tz })).getTimezoneOffset() * -1;
 
 	const sign = offsetMinutes >= 0 ? "+" : "-";

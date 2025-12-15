@@ -1,8 +1,9 @@
 import type { PilotLong } from "@sr24/types/vatsim";
+import { useSettingsStore } from "@/storage/zustand";
+import { convertAltitude, convertSpeed, convertVerticalSpeed } from "@/utils/helpers";
 
 export function PilotTelemetry({ pilot }: { pilot: PilotLong }) {
-	const roundedVS = Math.round(pilot.vertical_speed / 50) * 50;
-	const vs = (roundedVS > 0 ? "+" : "") + roundedVS;
+	const { altitudeUnit, speedUnit, verticalSpeedUnit } = useSettingsStore();
 
 	let hdg = String(pilot.heading);
 	if (hdg.length === 1) {
@@ -27,15 +28,15 @@ export function PilotTelemetry({ pilot }: { pilot: PilotLong }) {
 			<div className="panel-section-content" id="panel-pilot-telemetry">
 				<div className="panel-data-item">
 					<p>Barometric Altitude</p>
-					<p>{`${(Math.round(pilot.altitude_ms / 250) * 250).toLocaleString()} ft`}</p>
+					<p>{convertAltitude(Math.round(pilot.altitude_ms / 250) * 250, altitudeUnit)}</p>
 				</div>
 				<div className="panel-data-item">
 					<p>Radar Altitude</p>
-					<p>{`${(Math.round(pilot.altitude_agl / 250) * 250).toLocaleString()} ft`}</p>
+					<p>{convertAltitude(Math.round(pilot.altitude_agl / 250) * 250, altitudeUnit)}</p>
 				</div>
 				<div className="panel-data-item">
 					<p>Vertical Speed</p>
-					<p>{`${vs} fpm`}</p>
+					<p>{convertVerticalSpeed(Math.round(pilot.vertical_speed / 50) * 50, verticalSpeedUnit)}</p>
 				</div>
 				<div className="panel-data-item">
 					<p>Track</p>
@@ -47,7 +48,7 @@ export function PilotTelemetry({ pilot }: { pilot: PilotLong }) {
 				</div>
 				<div className="panel-data-item">
 					<p>Ground Speed</p>
-					<p>{`${pilot.groundspeed} kts`}</p>
+					<p>{convertSpeed(pilot.groundspeed, speedUnit)}</p>
 				</div>
 			</div>
 		</div>

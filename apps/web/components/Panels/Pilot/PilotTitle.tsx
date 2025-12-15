@@ -7,7 +7,7 @@ export function PilotTitle({ pilot, data }: { pilot: PilotLong; data: PilotPanel
 
 	return (
 		<div className="panel-container title-section">
-			<div className="panel-icon" style={{ backgroundColor: data.airline?.bg ?? "none" }}>
+			<div className="panel-icon" style={{ backgroundColor: data.airline?.bg ?? "" }}>
 				<p
 					style={{
 						color: data.airline?.font ?? "var(--color-green)",

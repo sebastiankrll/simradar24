@@ -1,5 +1,6 @@
 import type { PilotLong } from "@sr24/types/vatsim";
-import { haversineDistance } from "@/utils/helpers";
+import { useSettingsStore } from "@/storage/zustand";
+import { convertDistance, haversineDistance } from "@/utils/helpers";
 import type { PilotPanelStatic } from "./PilotPanel";
 
 export function PilotFlightplan({
@@ -13,6 +14,8 @@ export function PilotFlightplan({
 	openSection: string | null;
 	ref: React.Ref<HTMLDivElement>;
 }) {
+	const { distanceUnit } = useSettingsStore();
+
 	const distKm =
 		data.departure && data.arrival
 			? haversineDistance([data.departure.latitude, data.departure.longitude], [data.arrival.latitude, data.arrival.longitude])
@@ -44,7 +47,7 @@ export function PilotFlightplan({
 				<div className="panel-sub-container">
 					<div className="panel-data-item">
 						<p>Great circle distance</p>
-						<p>{distKm !== null ? `${distKm} km` : "N/A"}</p>
+						<p>{distKm !== null ? `${convertDistance(distKm, distanceUnit)}` : "N/A"}</p>
 					</div>
 					<div className="panel-data-item">
 						<p>Enroute time</p>

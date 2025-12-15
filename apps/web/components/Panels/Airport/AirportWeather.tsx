@@ -1,4 +1,6 @@
 import type { IAltimeter, IMetar, Visibility } from "metar-taf-parser";
+import { useSettingsStore } from "@/storage/zustand";
+import { convertAltitude, convertTemperature, convertTime } from "@/utils/helpers";
 
 function getAltimeter(altimeter: IAltimeter | undefined): string {
 	if (!altimeter) {
@@ -6,13 +8,6 @@ function getAltimeter(altimeter: IAltimeter | undefined): string {
 	}
 	const unit = altimeter.unit || "inHg";
 	return `${altimeter.value} ${unit}`;
-}
-
-function getDewPoint(dewPoint: number | undefined): string {
-	if (dewPoint === undefined) {
-		return "N/A";
-	}
-	return `${dewPoint} °C`;
 }
 
 function getHumidity(parsedMetar: IMetar | null): string {
@@ -34,7 +29,7 @@ function getVisibility(visibility: Visibility | undefined): string {
 	return `${visibility.value >= 9999 ? ">9999" : visibility.value} ${visibility.unit || "m"}`;
 }
 
-function getClouds(parsedMetar: IMetar | null): string {
+function getClouds(parsedMetar: IMetar | null, altitudeUnit: "feet" | "meters"): string {
 	if (!parsedMetar || !parsedMetar.clouds || parsedMetar.clouds.length === 0) {
 		return "N/A";
 	}
@@ -58,14 +53,14 @@ function getClouds(parsedMetar: IMetar | null): string {
 		return "N/A";
 	}
 
-	return `${maxCloud.quantity} @ ${maxCloud.height.toLocaleString("en-US")} ft`;
+	return `${maxCloud.quantity} @ ${convertAltitude(maxCloud.height, altitudeUnit)}`;
 }
 
-function getLastUpdated(parsedMetar: IMetar | null): string {
+function getLastUpdated(parsedMetar: IMetar | null, timeFormat: "24h" | "12h", timeZone: "local" | "utc"): string {
 	if (!parsedMetar || !parsedMetar.hour || !parsedMetar.minute) {
 		return "N/A";
 	}
-	return `${parsedMetar.hour}:${parsedMetar.minute}z`;
+	return convertTime(new Date().setUTCHours(parsedMetar.hour, parsedMetar.minute, 0, 0), timeFormat, timeZone);
 }
 
 export function AirportWeather({
@@ -81,6 +76,8 @@ export function AirportWeather({
 	openSection: string | null;
 	ref: React.Ref<HTMLDivElement>;
 }) {
+	const { temperatureUnit, altitudeUnit, timeFormat, timeZone } = useSettingsStore();
+
 	return (
 		<div ref={ref} className={`panel-sub-container accordion${openSection === "weather" ? " open" : ""}`}>
 			<div className="panel-section-title">
@@ -100,7 +97,7 @@ export function AirportWeather({
 				</div>
 				<div className="panel-data-item">
 					<p>Dew point</p>
-					<p>{getDewPoint(parsedMetar?.dewPoint)}</p>
+					<p>{convertTemperature(parsedMetar?.dewPoint, temperatureUnit)}</p>
 				</div>
 				<div className="panel-data-item">
 					<p>Humidity</p>
@@ -112,11 +109,11 @@ export function AirportWeather({
 				</div>
 				<div className="panel-data-item">
 					<p>Clouds</p>
-					<p>{getClouds(parsedMetar)}</p>
+					<p>{getClouds(parsedMetar, altitudeUnit)}</p>
 				</div>
 				<div className="panel-data-item">
 					<p>Last updated</p>
-					<p>{getLastUpdated(parsedMetar)}</p>
+					<p>{getLastUpdated(parsedMetar, timeFormat, timeZone)}</p>
 				</div>
 				<div className="panel-data-item">
 					<p>Remarks</p>

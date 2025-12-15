@@ -1,16 +1,7 @@
+import type { StaticAirport } from "@sr24/types/db";
 import type { PilotLong } from "@sr24/types/vatsim";
-
-function getTime(time: string | Date | undefined) {
-	if (!time) {
-		return "xx:xx";
-	}
-
-	const date = new Date(time);
-	const hours = String(date.getUTCHours()).padStart(2, "0");
-	const minutes = String(date.getUTCMinutes()).padStart(2, "0");
-
-	return `${hours}:${minutes}`;
-}
+import { useSettingsStore } from "@/storage/zustand";
+import { convertTime } from "@/utils/helpers";
 
 export function getDelayColor(scheduled: string | Date | undefined, actual: string | Date | undefined) {
 	if (!scheduled || !actual) {
@@ -46,20 +37,21 @@ function getTimeStatus(times: PilotLong["times"]): { off: boolean; on: boolean }
 	return { off, on };
 }
 
-export function PilotTimes({ pilot }: { pilot: PilotLong }) {
+export function PilotTimes({ pilot, departure, arrival }: { pilot: PilotLong; departure: StaticAirport | null; arrival: StaticAirport | null }) {
+	const { timeFormat, timeZone } = useSettingsStore();
 	const timeStatus = getTimeStatus(pilot.times);
 
 	return (
 		<div id="panel-pilot-times">
-			<p>{getTime(pilot.times?.sched_off_block)}</p>
+			<p>{convertTime(pilot.times?.sched_off_block, timeFormat, timeZone, false, departure?.timezone)}</p>
 			<p className="panel-pilot-time-desc">SCHED</p>
 			<p className="panel-pilot-time-desc">SCHED</p>
-			<p>{getTime(pilot.times?.sched_on_block)}</p>
-			<p>{getTime(pilot.times?.off_block)}</p>
+			<p>{convertTime(pilot.times?.sched_on_block, timeFormat, timeZone, false, arrival?.timezone)}</p>
+			<p>{convertTime(pilot.times?.off_block, timeFormat, timeZone, false, departure?.timezone)}</p>
 			<p className="panel-pilot-time-desc">{timeStatus.off ? "ACT" : "EST"}</p>
 			<p className="panel-pilot-time-desc">{timeStatus.on ? "ACT" : "EST"}</p>
 			<p className={`panel-pilot-arrival-status ${getDelayColor(pilot.times?.sched_on_block, pilot.times?.on_block) ?? null}`}>
-				{getTime(pilot.times?.on_block)}
+				{convertTime(pilot.times?.on_block, timeFormat, timeZone, false, arrival?.timezone)}
 			</p>
 		</div>
 	);

@@ -9,7 +9,9 @@ import { Fragment, useEffect, useState } from "react";
 import { setHoveredPilot } from "@/components/Map/utils/events";
 import Spinner from "@/components/Spinner/Spinner";
 import { cacheIsInitialized, getCachedAirline, getCachedAirport } from "@/storage/cache";
+import { useSettingsStore } from "@/storage/zustand";
 import { fetchApi } from "@/utils/api";
+import { convertTime } from "@/utils/helpers";
 import { getDelayColor } from "../Pilot/PilotTimes";
 import { queryClient } from "./AirportPanel";
 
@@ -35,6 +37,8 @@ export default function AirportFlights({ icao, direction }: { icao: string; dire
 }
 
 function List({ icao, dir }: { icao: string; dir: "dep" | "arr" }) {
+	const { timeFormat, timeZone } = useSettingsStore();
+
 	const {
 		status,
 		data,
@@ -93,7 +97,7 @@ function List({ icao, dir }: { icao: string; dir: "dep" | "arr" }) {
 						{data?.pages.map((page, i) => (
 							<Fragment key={i}>
 								{page.map((p) => (
-									<ListItem key={p.id} pilot={p} dir={dir} />
+									<ListItem key={p.id} pilot={p} dir={dir} timeFormat={timeFormat} timeZone={timeZone} />
 								))}
 							</Fragment>
 						))}
@@ -110,40 +114,44 @@ function List({ icao, dir }: { icao: string; dir: "dep" | "arr" }) {
 	);
 }
 
-function ListItem({ pilot, dir }: { pilot: PilotLong; dir: "dep" | "arr" }) {
+function ListItem({
+	pilot,
+	dir,
+	timeFormat,
+	timeZone,
+}: {
+	pilot: PilotLong;
+	dir: "dep" | "arr";
+	timeFormat: "24h" | "12h";
+	timeZone: "local" | "utc";
+}) {
 	const router = useRouter();
 
-	const [data, setData] = useState<{ airline: StaticAirline | null; airport: StaticAirport | null }>({
+	const [data, setData] = useState<{ airline: StaticAirline | null; departure: StaticAirport | null; arrival: StaticAirport | null }>({
 		airline: null,
-		airport: null,
+		departure: null,
+		arrival: null,
 	});
 	useEffect(() => {
 		if (!pilot.flight_plan?.departure) console.log(pilot);
 		const airlineCode = pilot.callsign.slice(0, 3).toUpperCase();
-		const icao = dir === "dep" ? pilot.flight_plan?.arrival.icao : pilot.flight_plan?.departure.icao;
 
 		const loadData = async () => {
 			while (!cacheIsInitialized()) {
 				await new Promise((resolve) => setTimeout(resolve, 50));
 			}
 
-			const [airline, airport] = await Promise.all([getCachedAirline(airlineCode || ""), getCachedAirport(icao || "")]);
+			const [airline, departure, arrival] = await Promise.all([
+				getCachedAirline(airlineCode || ""),
+				getCachedAirport(pilot.flight_plan?.departure.icao || ""),
+				getCachedAirport(pilot.flight_plan?.arrival.icao || ""),
+			]);
 
-			setData({ airline, airport });
+			setData({ airline, departure, arrival });
 		};
 
 		loadData();
-	}, [pilot, dir]);
-
-	const getTime = (time: Date | string | undefined): string => {
-		if (!time) return "XX:XX";
-
-		const date = new Date(time);
-		const hours = date ? date.getUTCHours().toString().padStart(2, "0") : "XX";
-		const minutes = date ? date.getUTCMinutes().toString().padStart(2, "0") : "XX";
-
-		return `${hours}:${minutes}`;
-	};
+	}, [pilot]);
 
 	const schedTime = dir === "dep" ? pilot.times?.sched_off_block : pilot.times?.sched_on_block;
 	const estTime = dir === "dep" ? pilot.times?.off_block : pilot.times?.on_block;
@@ -160,8 +168,8 @@ function ListItem({ pilot, dir }: { pilot: PilotLong; dir: "dep" | "arr" }) {
 		>
 			<div className={`panel-airport-flights-delay ${getDelayColor(schedTime, estTime) ?? ""}`}></div>
 			<div className="panel-airport-flights-times">
-				<p>{getTime(schedTime)}</p>
-				<p>{getTime(estTime)}</p>
+				<p>{convertTime(schedTime, timeFormat, timeZone, false, dir === "dep" ? data.departure?.timezone : data.arrival?.timezone)}</p>
+				<p>{convertTime(estTime, timeFormat, timeZone, false, dir === "dep" ? data.departure?.timezone : data.arrival?.timezone)}</p>
 			</div>
 			<div className="panel-airport-flights-icon" style={{ backgroundColor: data.airline?.bg ?? "none" }}>
 				<p
@@ -173,8 +181,8 @@ function ListItem({ pilot, dir }: { pilot: PilotLong; dir: "dep" | "arr" }) {
 				</p>
 			</div>
 			<div className="panel-airport-flights-main">
-				<p>{data.airport?.name || "Unknown Airport"}</p>
-				<p>{`${data.airport?.id ? `${data.airport.id} / ` : ""}${data.airport?.iata || "N/A"}`}</p>
+				<p>{(dir === "dep" ? data.departure : data.arrival)?.name || "Unknown Airport"}</p>
+				<p>{`${(dir === "dep" ? data.departure : data.arrival)?.id ? `${(dir === "dep" ? data.departure : data.arrival)?.id} / ` : ""}${(dir === "dep" ? data.departure : data.arrival)?.iata || "N/A"}`}</p>
 				<p>
 					<span className={pilot.live ? "green" : "grey"}>Live</span>
 					{pilot.callsign}
