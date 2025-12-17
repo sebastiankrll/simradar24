@@ -12,6 +12,7 @@
 		"@sr24/typescript-config": "*",
 		"@types/cors": "^2.8.19",
 		"@types/express": "^5.0.5",
+		"@types/jsonwebtoken": "^9.0.10",
 		"@types/ws": "^8.18.1",
 		"@types/xml2js": "^0.4.14",
 		"tsup": "^8.5.0",
@@ -25,6 +26,7 @@
 		"express": "^5.1.0",
 		"express-rate-limit": "^8.2.1",
 		"helmet": "^8.1.0",
+		"jsonwebtoken": "^9.0.3",
 		"xml2js": "^0.6.2"
 	}
 }

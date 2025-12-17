@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { pgFindAirportFlights, pgHealthCheck, pgShutdown } from "@sr24/db/pg";
+import { pgFindAirportFlights, pgHealthCheck, pgShutdown, prisma } from "@sr24/db/pg";
 import { rdsConnect, rdsGetMultiple, rdsGetRing, rdsGetSingle, rdsGetTimeSeries, rdsHealthCheck, rdsShutdown } from "@sr24/db/redis";
 import cors from "cors";
 import express from "express";
@@ -7,6 +7,8 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { validateCallsign, validateICAO, validateNumber, validateString } from "./validation.js";
 import { getMetar, getTaf } from "./weather.js";
+import { authHandler, AuthRequest } from "./auth.js";
+import { errorHandler } from "./error.js";
 
 rdsConnect();
 
@@ -29,18 +31,10 @@ app.use(cors());
 app.use(express.json());
 app.use(limiter);
 
-// Async error wrapper
-const asyncHandler =
-	(fn: (req: express.Request, res: express.Response, next: express.NextFunction) => Promise<void> | Promise<any>) =>
-	(req: express.Request, res: express.Response, next: express.NextFunction) => {
-		// console.log(`Incoming request: ${req.method} ${req.originalUrl}`);
-		Promise.resolve(fn(req, res, next)).catch(next);
-	};
-
 // Health check endpoints
 app.get(
 	"/health",
-	asyncHandler(async (_req, res) => {
+	errorHandler(async (_req, res) => {
 		const startTime = Date.now();
 		const health = {
 			status: "ok",
@@ -82,7 +76,7 @@ app.get(
 
 app.get(
 	"/health/live",
-	asyncHandler(async (_req, res) => {
+	errorHandler(async (_req, res) => {
 		res.json({
 			status: "alive",
 			timestamp: new Date().toISOString(),
@@ -92,7 +86,7 @@ app.get(
 
 app.get(
 	"/health/ready",
-	asyncHandler(async (_req, res) => {
+	errorHandler(async (_req, res) => {
 		try {
 			const redisHealthy = await rdsHealthCheck();
 			const pgHealthy = await pgHealthCheck();
@@ -126,7 +120,7 @@ app.get(
 
 app.get(
 	"/data/init",
-	asyncHandler(async (_req, res) => {
+	errorHandler(async (_req, res) => {
 		const all = await rdsGetSingle("ws:all");
 		if (!all) {
 			res.status(404).json({ error: "Initial data not found" });
@@ -142,7 +136,7 @@ app.get(
 
 app.get(
 	"/data/pilot/:id",
-	asyncHandler(async (req, res) => {
+	errorHandler(async (req, res) => {
 		const id = validateString(req.params.id, "Pilot ID", 1, 10);
 
 		const pilot = await rdsGetSingle(`pilot:${id}`);
@@ -157,7 +151,7 @@ app.get(
 
 app.get(
 	"/data/airport/:icao",
-	asyncHandler(async (req, res) => {
+	errorHandler(async (req, res) => {
 		const icao = validateICAO(req.params.icao).toUpperCase();
 
 		const airport = await rdsGetSingle(`airport:${icao}`);
@@ -172,7 +166,7 @@ app.get(
 
 app.get(
 	"/data/weather/:icao",
-	asyncHandler(async (req, res) => {
+	errorHandler(async (req, res) => {
 		const icao = validateICAO(req.params.icao).toUpperCase();
 		const metar = getMetar(icao);
 		const taf = getTaf(icao);
@@ -183,7 +177,7 @@ app.get(
 
 app.get(
 	"/data/controllers/:callsigns",
-	asyncHandler(async (req, res) => {
+	errorHandler(async (req, res) => {
 		const callsignArray = req.params.callsigns.split(",").map((cs) => validateCallsign(cs.trim()));
 
 		if (callsignArray.length === 0) {
@@ -204,7 +198,7 @@ app.get(
 
 app.get(
 	"/data/track/:id",
-	asyncHandler(async (req, res) => {
+	errorHandler(async (req, res) => {
 		const id = validateString(req.params.id, "Track ID", 1, 10);
 
 		// const trackPoints = await pgGetTrackPointsByid(id);
@@ -220,7 +214,7 @@ app.get(
 
 app.get(
 	"/data/aircraft/:reg",
-	asyncHandler(async (req, res) => {
+	errorHandler(async (req, res) => {
 		const reg = validateString(req.params.reg, "Aircraft Registration", 1, 10).toUpperCase();
 
 		const aircraft = await rdsGetSingle(`static_fleet:${reg}`);
@@ -235,7 +229,7 @@ app.get(
 
 app.get(
 	"/data/dashboard/",
-	asyncHandler(async (_req, res) => {
+	errorHandler(async (_req, res) => {
 		const stats = await rdsGetSingle(`dashboard:stats`);
 		const history = await rdsGetRing(`dashboard:history`, 24 * 60 * 60 * 1000);
 		const events = await rdsGetSingle(`dashboard:events`);
@@ -251,7 +245,7 @@ app.get(
 
 app.get(
 	"/data/airport/:icao/flights",
-	asyncHandler(async (req, res) => {
+	errorHandler(async (req, res) => {
 		const icao = validateICAO(req.params.icao).toUpperCase();
 		const direction = (String(req.query.direction || "dep").toLowerCase() === "arr" ? "arr" : "dep") as "dep" | "arr";
 		const limit = validateNumber(req.query.limit || 20, "Limit", 1, 30);
@@ -260,6 +254,48 @@ app.get(
 
 		const data = await pgFindAirportFlights(icao, direction, limit, cursor, backwards);
 		res.json(data);
+	}),
+);
+
+app.get(
+	"/user/:cid/settings",
+	authHandler,
+	errorHandler(async (req: AuthRequest, res) => {
+		const cid = BigInt(req.user?.cid || 0);
+
+		const user = await prisma.user.findUnique({
+			where: { cid },
+			select: { settings: true },
+		});
+
+		if (!user) {
+			res.status(404).json({ error: "User not found" });
+			return;
+		}
+
+		res.json({ settings: user.settings || {} });
+	}),
+);
+
+app.post(
+	"/user/:cid/settings",
+	authHandler,
+	errorHandler(async (req: AuthRequest, res) => {
+		const cid = BigInt(req.user?.cid || 0);
+		const settings = req.body;
+
+		if (!settings || typeof settings !== "object") {
+			res.status(400).json({ error: "Invalid settings data" });
+			return;
+		}
+
+		const user = await prisma.user.upsert({
+			where: { cid },
+			update: { settings },
+			create: { cid, settings },
+		});
+
+		res.json({ settings: user.settings });
 	}),
 );
 
