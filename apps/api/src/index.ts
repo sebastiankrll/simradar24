@@ -5,10 +5,10 @@ import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
+import { type AuthRequest, authHandler } from "./auth.js";
+import { errorHandler } from "./error.js";
 import { validateCallsign, validateICAO, validateNumber, validateString } from "./validation.js";
 import { getMetar, getTaf } from "./weather.js";
-import { authHandler, AuthRequest } from "./auth.js";
-import { errorHandler } from "./error.js";
 
 rdsConnect();
 
@@ -258,7 +258,7 @@ app.get(
 );
 
 app.get(
-	"/user/:cid/settings",
+	"/user/settings",
 	authHandler,
 	errorHandler(async (req: AuthRequest, res) => {
 		const cid = BigInt(req.user?.cid || 0);
@@ -278,7 +278,7 @@ app.get(
 );
 
 app.post(
-	"/user/:cid/settings",
+	"/user/settings",
 	authHandler,
 	errorHandler(async (req: AuthRequest, res) => {
 		const cid = BigInt(req.user?.cid || 0);

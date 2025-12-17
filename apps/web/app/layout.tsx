@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import "./globals.css";
 import "@/assets/images/sprites/freakflags.css";
-import { ThemeProvider } from "next-themes";
 import Footer from "@/components/Footer/Footer";
 import Header from "@/components/Header/Header";
 import Loader from "@/components/Loader/Loader";
@@ -28,15 +27,13 @@ export default function RootLayout({
 	return (
 		<html lang="en" className={manrope.className} suppressHydrationWarning>
 			<body>
-				<ThemeProvider>
-					<Providers>
-						<Header />
-						<Loader />
-						<OMap />
-						<BasePanel>{children}</BasePanel>
-						<Footer />
-					</Providers>
-				</ThemeProvider>
+				<Providers>
+					<Header />
+					<Loader />
+					<OMap />
+					<BasePanel>{children}</BasePanel>
+					<Footer />
+				</Providers>
 			</body>
 		</html>
 	);

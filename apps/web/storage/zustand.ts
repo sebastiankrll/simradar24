@@ -1,8 +1,9 @@
-import type { SettingState } from "@sr24/types/db";
+import type { SettingState, SettingValues } from "@sr24/types/db";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-const defaultSettings = {
+const defaultSettings: SettingValues = {
+	theme: "dark" as const,
 	dayNightLayer: true as const,
 	dayNightLayerBrightness: 35 as const,
 	airportMarkers: true as const,
@@ -25,11 +26,38 @@ const defaultSettings = {
 	distanceUnit: "nm" as const,
 };
 
+export function getSettingValues(s: SettingState): SettingValues {
+	return {
+		theme: s.theme,
+		dayNightLayer: s.dayNightLayer,
+		dayNightLayerBrightness: s.dayNightLayerBrightness,
+		airportMarkers: s.airportMarkers,
+		airportMarkerSize: s.airportMarkerSize,
+		planeOverlay: s.planeOverlay,
+		planeMarkerSize: s.planeMarkerSize,
+		animatedPlaneMarkers: s.animatedPlaneMarkers,
+		sectorAreas: s.sectorAreas,
+		traconColor: s.traconColor,
+		traconTransparency: s.traconTransparency,
+		firColor: s.firColor,
+		firTransparency: s.firTransparency,
+		timeZone: s.timeZone,
+		timeFormat: s.timeFormat,
+		temperatureUnit: s.temperatureUnit,
+		speedUnit: s.speedUnit,
+		verticalSpeedUnit: s.verticalSpeedUnit,
+		windSpeedUnit: s.windSpeedUnit,
+		altitudeUnit: s.altitudeUnit,
+		distanceUnit: s.distanceUnit,
+	};
+}
+
 export const useSettingsStore = create<SettingState>()(
 	persist(
 		(set) => ({
 			...defaultSettings,
 
+			setTheme: (value) => set({ theme: value }),
 			setDayNightLayer: (value) => set({ dayNightLayer: value }),
 			setDayNightLayerBrightness: (value) => set({ dayNightLayerBrightness: value }),
 			setAirportMarkers: (value) => set({ airportMarkers: value }),

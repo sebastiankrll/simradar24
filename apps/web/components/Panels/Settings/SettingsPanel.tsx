@@ -2,20 +2,27 @@
 
 import { resetMap } from "@/components/Map/utils/events";
 import "./SettingsPanel.css";
-import { useTheme } from "next-themes";
 import { useEffect, useId, useRef, useState } from "react";
 import { HexColorPicker } from "react-colorful";
-import { useSettingsStore } from "@/storage/zustand";
+import { getSettingValues, useSettingsStore } from "@/storage/zustand";
 
 export default function SettingsPanel() {
 	const settings = useSettingsStore();
-	const { theme, setTheme } = useTheme();
+
+	const onClose = async () => {
+		await fetch("/api/user/settings", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(getSettingValues(settings)),
+		});
+		resetMap();
+	};
 
 	return (
 		<>
 			<div className="panel-header">
 				<div className="panel-id">Settings</div>
-				<button className="panel-close" type="button" onClick={() => resetMap()}>
+				<button className="panel-close" type="button" onClick={onClose}>
 					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
 						<title>Close panel</title>
 						<path
@@ -30,7 +37,7 @@ export default function SettingsPanel() {
 				<div className="panel-data-separator">General</div>
 				<div className="setting-item">
 					<p className="setting-item-title">Dark mode</p>
-					<ToggleSwitch checked={theme === "dark"} onChange={(e) => setTheme(e.target.checked ? "dark" : "light")} />
+					<ToggleSwitch checked={settings.theme === "dark"} onChange={(e) => settings.setTheme(e.target.checked ? "dark" : "light")} />
 				</div>
 				<div className="setting-item">
 					<p className="setting-item-title">Day / night layer</p>

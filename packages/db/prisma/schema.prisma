@@ -52,6 +52,5 @@ model Pilot {
 
 model User {
   cid      BigInt  @id
-  name     String?
   settings Json?
 }

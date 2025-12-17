@@ -92,6 +92,7 @@ export interface StaticAircraft {
 	country: string;
 }
 
+type Theme = "light" | "dark" | "system";
 type PlaneOverlayMode = "callsign" | "telemetry-off" | "full";
 type TimeZone = "local" | "utc";
 type TimeFormat = "24h" | "12h";
@@ -102,6 +103,7 @@ type AltitudeUnit = "feet" | "meters";
 type DistanceUnit = "km" | "miles" | "nm";
 
 export interface SettingValues {
+	theme: Theme;
 	dayNightLayer: boolean;
 	dayNightLayerBrightness: number;
 	airportMarkers: boolean;
@@ -125,6 +127,7 @@ export interface SettingValues {
 }
 
 export interface SettingState extends SettingValues {
+	setTheme: (value: Theme) => void;
 	setDayNightLayer: (value: boolean) => void;
 	setDayNightLayerBrightness: (value: number) => void;
 	setAirportMarkers: (value: boolean) => void;
