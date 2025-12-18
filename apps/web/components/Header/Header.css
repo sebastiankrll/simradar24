@@ -50,17 +50,17 @@ header {
 	color: var(--color-light-text);
 }
 
-#header-vatsim-login {
+#header-user {
 	height: 2rem;
-	background: var(--color-blue);
-	color: white;
-	padding: 0rem 1rem;
-}
-
-#header-vatsim-login:hover {
-	background: var(--color-green);
+	width: 2rem;
+	border-radius: 50%;
+	background: white;
+	color: var(--color-green);
+	font-weight: 700;
+	z-index: 5;
 }
 
 #header-nav {
+	width: 12px;
 	z-index: 5;
 }

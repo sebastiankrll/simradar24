@@ -6,10 +6,12 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import simradar24Logo from "@/assets/images/simradar24_logo.svg";
 import Navigation from "./Navigation";
+import { signIn, signOut, useSession } from "next-auth/react";
 
 export default function Header() {
 	const [open, setOpen] = useState(false);
 	const headerRef = useRef<HTMLElement>(null);
+	const { data: session } = useSession();
 
 	useEffect(() => {
 		function handleClickOutside(event: MouseEvent) {
@@ -33,8 +35,17 @@ export default function Header() {
 				<Image src={simradar24Logo} alt="simradar24 logo" height={40} width={200} priority />
 			</figure>
 			<Search />
+			{session ? (
+				<button type="button" id="header-user" onClick={() => signOut()}>
+					👤
+				</button>
+			) : (
+				<button type="button" id="header-user" onClick={() => signIn("vatsim")}>
+					🔒
+				</button>
+			)}
 			<button type="button" id="header-nav" aria-label="Navigation" onClick={() => setOpen(!open)}>
-				B
+				{open ? "✕" : "☰"}
 			</button>
 			<Navigation open={open} />
 		</header>
