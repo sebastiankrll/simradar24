@@ -64,22 +64,23 @@ footer {
 }
 
 #footer-github,
-#footer-version {
+#footer-version,
+#footer-policy {
 	background: none;
 	border: none;
 	color: white;
 	padding: 0rem;
 }
 
-#footer-github {
+#footer-policy {
 	margin-left: auto;
 }
 
-#footer-github a {
+.footer-item a {
 	font-weight: 700;
 	text-decoration: underline;
 }
 
-#footer-github a:hover {
+.footer-item a:hover {
 	color: var(--color-green);
 }
