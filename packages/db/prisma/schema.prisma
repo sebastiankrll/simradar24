@@ -49,3 +49,8 @@ model Pilot {
   @@index([cid])
   @@index([name])
 }
+
+model User {
+  cid      BigInt  @id
+  settings Json?
+}

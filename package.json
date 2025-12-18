@@ -16,8 +16,5 @@
 	"workspaces": [
 		"apps/*",
 		"packages/*"
-	],
-	"dependencies": {
-		"again": "^0.0.1"
-	}
+	]
 }

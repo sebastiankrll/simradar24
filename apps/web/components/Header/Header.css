@@ -1,11 +1,10 @@
 header {
-	position: absolute;
+	position: fixed;
 	left: 0rem;
 	right: 0rem;
 	top: 0rem;
 	height: 3.5rem;
 	display: flex;
-	justify-content: flex-end;
 	align-items: center;
 	padding: 0 1rem;
 	box-sizing: border-box;
@@ -16,9 +15,6 @@ header {
 }
 
 #header-logo {
-	position: absolute;
-	top: 0rem;
-	left: 1rem;
 	height: 100%;
 	width: 20rem;
 	box-sizing: border-box;
@@ -26,6 +22,7 @@ header {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	z-index: 5;
 }
 
 #header-search-wrapper {
@@ -36,11 +33,12 @@ header {
 	align-items: center;
 	padding: 0rem 1rem;
 	border: 1px solid var(--color-border);
+	margin-left: auto;
 }
 
 #header-search {
 	border: none;
-	width: 20rem;
+	width: 15rem;
 	height: 100%;
 	box-sizing: border-box;
 	background-color: transparent;
@@ -52,13 +50,17 @@ header {
 	color: var(--color-light-text);
 }
 
-#header-vatsim-login {
+#header-user {
 	height: 2rem;
-	background: var(--color-blue);
-	color: white;
-	padding: 0rem 1rem;
+	width: 2rem;
+	border-radius: 50%;
+	background: white;
+	color: var(--color-green);
+	font-weight: 700;
+	z-index: 5;
 }
 
-#header-vatsim-login:hover {
-	background: var(--color-green);
+#header-nav {
+	width: 12px;
+	z-index: 5;
 }

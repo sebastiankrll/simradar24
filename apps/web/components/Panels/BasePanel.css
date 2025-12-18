@@ -11,6 +11,7 @@
 	backdrop-filter: blur(5px);
 	border: 1px solid var(--color-border);
 	gap: 1rem;
+	z-index: 1;
 }
 
 .panel.hide {

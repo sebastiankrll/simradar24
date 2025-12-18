@@ -18,6 +18,8 @@ export default function Search() {
 	}, []);
 
 	return (
-		<input id="header-search" type="text" placeholder="Not implemented yet." value={searchValue} onChange={(e) => setSearchValue(e.target.value)} />
+		<div id="header-search-wrapper">
+			<input id="header-search" type="text" placeholder="Not implemented yet." value={searchValue} onChange={(e) => setSearchValue(e.target.value)} />
+		</div>
 	);
 }

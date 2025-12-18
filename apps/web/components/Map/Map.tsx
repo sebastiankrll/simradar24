@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { ToastContainer } from "react-toastify";
 import { useSettingsStore } from "@/storage/zustand";
+import Loader from "../Loader/Loader";
 import { MessageBoxCloseButton } from "../MessageBox/MessageBox";
+import BasePanel from "../Panels/BasePanel";
 import MapControls from "./components/MapControls";
 import { setDataLayersSettings } from "./utils/dataLayers";
 import { onClick, onMoveEnd, onPointerMove, setNavigator } from "./utils/events";
@@ -14,7 +16,7 @@ import { getMap, initMap, setMapTheme } from "./utils/init";
 import { animatePilotFeatures } from "./utils/pilotFeatures";
 import { setSunLayerSettings } from "./utils/sunLayer";
 
-export default function OMap() {
+export default function OMap({ children }: { children?: React.ReactNode }) {
 	const router = useRouter();
 	const { theme } = useTheme();
 	const {
@@ -97,6 +99,8 @@ export default function OMap() {
 	return (
 		<>
 			<ToastContainer closeButton={MessageBoxCloseButton} icon={false} theme="colored" />
+			<Loader />
+			<BasePanel>{children}</BasePanel>
 			<MapControls />
 			<div id="map" />
 		</>

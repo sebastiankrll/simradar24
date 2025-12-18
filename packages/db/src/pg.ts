@@ -5,7 +5,7 @@ import { PrismaClient } from "./generated/prisma/client.js";
 const adapter = new PrismaPg({
 	connectionString: `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT}/${process.env.POSTGRES_DB}?schema=public`,
 });
-const prisma = new PrismaClient({
+export const prisma = new PrismaClient({
 	adapter,
 });
 

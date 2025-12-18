@@ -1,62 +1,9 @@
+import type { SettingState, SettingValues } from "@sr24/types/db";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-type PlaneOverlayMode = "callsign" | "telemetry-off" | "full";
-type TimeZone = "local" | "utc";
-type TimeFormat = "24h" | "12h";
-type TemperatureUnit = "celsius" | "fahrenheit";
-type SpeedUnit = "knots" | "kmh" | "mph" | "ms";
-type VerticalSpeedUnit = "fpm" | "ms";
-type AltitudeUnit = "feet" | "meters";
-type DistanceUnit = "km" | "miles" | "nm";
-
-interface SettingsState {
-	dayNightLayer: boolean;
-	dayNightLayerBrightness: number;
-	airportMarkers: boolean;
-	airportMarkerSize: number;
-	planeOverlay: PlaneOverlayMode;
-	planeMarkerSize: number;
-	animatedPlaneMarkers: boolean;
-	sectorAreas: boolean;
-	traconColor: string;
-	traconTransparency: number;
-	firColor: string;
-	firTransparency: number;
-	timeZone: TimeZone;
-	timeFormat: TimeFormat;
-	temperatureUnit: TemperatureUnit;
-	speedUnit: SpeedUnit;
-	verticalSpeedUnit: VerticalSpeedUnit;
-	windSpeedUnit: SpeedUnit;
-	altitudeUnit: AltitudeUnit;
-	distanceUnit: DistanceUnit;
-
-	setDayNightLayer: (value: boolean) => void;
-	setDayNightLayerBrightness: (value: number) => void;
-	setAirportMarkers: (value: boolean) => void;
-	setAirportMarkerSize: (value: number) => void;
-	setPlaneOverlay: (value: PlaneOverlayMode) => void;
-	setPlaneMarkerSize: (value: number) => void;
-	setAnimatedPlaneMarkers: (value: boolean) => void;
-	setSectorAreas: (value: boolean) => void;
-	setTraconColor: (value: string) => void;
-	setTraconTransparency: (value: number) => void;
-	setFirColor: (value: string) => void;
-	setFirTransparency: (value: number) => void;
-	setTimeZone: (value: TimeZone) => void;
-	setTimeFormat: (value: TimeFormat) => void;
-	setTemperatureUnit: (value: TemperatureUnit) => void;
-	setSpeedUnit: (value: SpeedUnit) => void;
-	setVerticalSpeedUnit: (value: VerticalSpeedUnit) => void;
-	setWindSpeedUnit: (value: SpeedUnit) => void;
-	setAltitudeUnit: (value: AltitudeUnit) => void;
-	setDistanceUnit: (value: DistanceUnit) => void;
-
-	resetSettings: () => void;
-}
-
-const defaultSettings = {
+const defaultSettings: SettingValues = {
+	theme: "dark" as const,
 	dayNightLayer: true as const,
 	dayNightLayerBrightness: 35 as const,
 	airportMarkers: true as const,
@@ -79,11 +26,38 @@ const defaultSettings = {
 	distanceUnit: "nm" as const,
 };
 
-export const useSettingsStore = create<SettingsState>()(
+export function getSettingValues(s: SettingState): SettingValues {
+	return {
+		theme: s.theme,
+		dayNightLayer: s.dayNightLayer,
+		dayNightLayerBrightness: s.dayNightLayerBrightness,
+		airportMarkers: s.airportMarkers,
+		airportMarkerSize: s.airportMarkerSize,
+		planeOverlay: s.planeOverlay,
+		planeMarkerSize: s.planeMarkerSize,
+		animatedPlaneMarkers: s.animatedPlaneMarkers,
+		sectorAreas: s.sectorAreas,
+		traconColor: s.traconColor,
+		traconTransparency: s.traconTransparency,
+		firColor: s.firColor,
+		firTransparency: s.firTransparency,
+		timeZone: s.timeZone,
+		timeFormat: s.timeFormat,
+		temperatureUnit: s.temperatureUnit,
+		speedUnit: s.speedUnit,
+		verticalSpeedUnit: s.verticalSpeedUnit,
+		windSpeedUnit: s.windSpeedUnit,
+		altitudeUnit: s.altitudeUnit,
+		distanceUnit: s.distanceUnit,
+	};
+}
+
+export const useSettingsStore = create<SettingState>()(
 	persist(
 		(set) => ({
 			...defaultSettings,
 
+			setTheme: (value) => set({ theme: value }),
 			setDayNightLayer: (value) => set({ dayNightLayer: value }),
 			setDayNightLayerBrightness: (value) => set({ dayNightLayerBrightness: value }),
 			setAirportMarkers: (value) => set({ airportMarkers: value }),
@@ -105,10 +79,11 @@ export const useSettingsStore = create<SettingsState>()(
 			setAltitudeUnit: (value) => set({ altitudeUnit: value }),
 			setDistanceUnit: (value) => set({ distanceUnit: value }),
 
+			setSettings: (settings) => set({ ...settings }),
 			resetSettings: () => set({ ...defaultSettings }),
 		}),
 		{
-			name: "simradar21-settings",
+			name: "user-settings",
 		},
 	),
 );
