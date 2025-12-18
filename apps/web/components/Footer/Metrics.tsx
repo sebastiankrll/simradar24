@@ -48,10 +48,10 @@ export default function Metrics() {
 
 	return (
 		<>
-			<div className="footer-item" id="footer-clients">
+			<div id="footer-clients">
 				<span>{isLoading ? "..." : metrics?.connectedClients ? metrics.connectedClients + 1 : 1}</span>visitors online
 			</div>
-			<div className="footer-item" id="footer-timestamp">
+			<div id="footer-timestamp">
 				<span style={{ background: stale ? "var(--color-red)" : "", animationDuration: stale ? "1s" : "" }}></span>
 				{timestamp}
 			</div>

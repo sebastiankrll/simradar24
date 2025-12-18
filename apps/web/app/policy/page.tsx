@@ -1,8 +1,9 @@
 export default function Page() {
 	return (
-		<section>
+		<section id="policy">
 			<h1>Impressum</h1>
-			<p>Sebastian Krüll
+			<p>
+				Sebastian Krüll
 				<br />
 				Rosenbergstr. 14
 				<br />
@@ -10,9 +11,7 @@ export default function Page() {
 				<br />
 				Germany
 			</p>
-			<p>
-				Email: mail@simradar21.com
-			</p>
+			<p>Email: mail@simradar21.com</p>
 		</section>
-	)
+	);
 }

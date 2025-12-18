@@ -5,10 +5,9 @@ import Metrics from "./Metrics";
 export default function Footer() {
 	return (
 		<footer>
-			<Metrics />
-			<Clock />
-			<div className="footer-item" id="footer-policy">
-				<a href="/policy">Privacy Policy & Legal</a>
+			<div className="footer-item" id="footer-main">
+				<Metrics />
+				<Clock />
 			</div>
 			<div className="footer-item" id="footer-github">
 				Report a bug, request a feature, or send ❤️ on&nbsp;

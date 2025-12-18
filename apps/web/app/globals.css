@@ -10,6 +10,14 @@ html {
 	font-family: inherit;
 }
 
+body,
+html {
+	height: 100%;
+	display: flex;
+	flex-flow: column;
+	background-color: var(--color-bg);
+}
+
 :root {
 	--color-bg: white;
 	--color-main-text: rgb(77, 95, 131);
@@ -55,4 +63,9 @@ fieldset {
 	border: none;
 	padding: 0;
 	margin: 0;
+}
+
+section {
+	padding: 5.5rem 2rem 2rem 2rem;
+	flex: 1;
 }

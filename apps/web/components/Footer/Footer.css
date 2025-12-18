@@ -1,5 +1,5 @@
 footer {
-	position: absolute;
+	position: fixed;
 	left: 0rem;
 	right: 0rem;
 	bottom: 0rem;
@@ -8,28 +8,40 @@ footer {
 	align-items: center;
 	padding: 0 1rem;
 	box-sizing: border-box;
-	gap: 1rem;
 	background: linear-gradient(0deg, rgba(77, 95, 131, 0.3) 0%, rgba(77, 95, 131, 0) 120%);
 	border-top: 1px solid var(--color-border);
 	z-index: 1;
 }
 
 .footer-item {
-	background: var(--color-bg);
 	height: 100%;
-	border-left: 1px solid var(--color-border);
-	border-right: 1px solid var(--color-border);
 	box-sizing: border-box;
 	display: flex;
-	justify-content: center;
 	align-items: center;
 	padding: 0rem 10px;
 	font-size: 12px;
+	color: white;
+}
+
+.footer-item * {
+	color: white;
+}
+
+#footer-main {
+	background: var(--color-blue);
+	width: 20rem;
+	display: flex;
+	justify-content: space-around;
 }
 
 #footer-clients span {
 	font-weight: 700;
 	margin-right: 5px;
+}
+
+#footer-timestamp {
+	display: flex;
+	align-items: center;
 }
 
 #footer-timestamp span {
@@ -53,26 +65,12 @@ footer {
 	}
 }
 
-#footer-clock {
-	color: var(--color-main-text);
-}
-
 #footer-clock span {
 	font-size: 0.625rem;
 	margin-left: 0.25rem;
-	color: var(--color-light-text);
 }
 
-#footer-github,
-#footer-version,
-#footer-policy {
-	background: none;
-	border: none;
-	color: white;
-	padding: 0rem;
-}
-
-#footer-policy {
+#footer-github {
 	margin-left: auto;
 }
 

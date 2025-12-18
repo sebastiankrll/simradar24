@@ -4,9 +4,6 @@ import "./globals.css";
 import "@/assets/images/sprites/freakflags.css";
 import Footer from "@/components/Footer/Footer";
 import Header from "@/components/Header/Header";
-import Loader from "@/components/Loader/Loader";
-import OMap from "@/components/Map/Map";
-import BasePanel from "@/components/Panels/BasePanel";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
@@ -29,9 +26,7 @@ export default function RootLayout({
 			<body>
 				<Providers>
 					<Header />
-					<Loader />
-					<OMap />
-					<BasePanel>{children}</BasePanel>
+					{children}
 					<Footer />
 				</Providers>
 			</body>

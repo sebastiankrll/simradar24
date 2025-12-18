@@ -26,11 +26,9 @@ export default function Clock() {
 	}, []);
 
 	return (
-		<div className="footer-item" id="footer-clock">
-			<div id="footer-clock" suppressHydrationWarning>
-				{getTime(time)}
-				<span>UTC</span>
-			</div>
+		<div id="footer-clock" suppressHydrationWarning>
+			{getTime(time)}
+			<span>UTC</span>
 		</div>
 	);
 }
