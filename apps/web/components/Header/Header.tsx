@@ -3,10 +3,10 @@
 import Search from "./Search";
 import "./Header.css";
 import Image from "next/image";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import simradar24Logo from "@/assets/images/simradar24_logo.svg";
 import Navigation from "./Navigation";
-import { signIn, signOut, useSession } from "next-auth/react";
 
 export default function Header() {
 	const [open, setOpen] = useState(false);

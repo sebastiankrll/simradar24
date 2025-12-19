@@ -31,7 +31,7 @@ export default function Loader() {
 
 		const fetchUserSettings = async () => {
 			try {
-				const res = await fetch("/api/user/settings", { cache: "no-store" });
+				const res = await fetch("/user/settings", { cache: "no-store" });
 				if (!res.ok) {
 					setStatus((prev) => ({ ...prev, initUserSettings: true }));
 					return;

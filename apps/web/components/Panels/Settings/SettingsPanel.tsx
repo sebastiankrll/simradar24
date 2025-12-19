@@ -2,19 +2,23 @@
 
 import { resetMap } from "@/components/Map/utils/events";
 import "./SettingsPanel.css";
+import { useSession } from "next-auth/react";
 import { useEffect, useId, useRef, useState } from "react";
 import { HexColorPicker } from "react-colorful";
 import { getSettingValues, useSettingsStore } from "@/storage/zustand";
 
 export default function SettingsPanel() {
 	const settings = useSettingsStore();
+	const { data: session } = useSession();
 
 	const onClose = async () => {
-		await fetch("/api/user/settings", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(getSettingValues(settings)),
-		});
+		if (session) {
+			await fetch("/user/settings", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(getSettingValues(settings)),
+			});
+		}
 		resetMap();
 	};
 

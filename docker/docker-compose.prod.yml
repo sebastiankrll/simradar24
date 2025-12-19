@@ -61,18 +61,18 @@ services:
         NEXT_PUBLIC_API_URL: "https://${DOMAIN}/api"
         NEXT_PUBLIC_WEBSOCKET_URL: "wss://${DOMAIN}/ws"
         NEXT_PUBLIC_R2_BUCKET_URL: ${NEXT_PUBLIC_R2_BUCKET_URL}
-        API_URL: http://api:${API_PORT}
-        NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
-        NEXTAUTH_URL: "https://${DOMAIN}"
-        VATSIM_CLIENT_ID: ${VATSIM_CLIENT_ID}
-        VATSIM_CLIENT_SECRET: ${VATSIM_CLIENT_SECRET}
-        VATSIM_AUTH_URL: ${VATSIM_AUTH_URL}
     container_name: sr24_web
     restart: always
     environment:
       NODE_ENV: production
       HOST: ${HOST}
       PORT: ${WEB_PORT}
+      API_URL: http://api:${API_PORT}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: https://${DOMAIN}/auth
+      VATSIM_CLIENT_ID: ${VATSIM_CLIENT_ID}
+      VATSIM_CLIENT_SECRET: ${VATSIM_CLIENT_SECRET}
+      VATSIM_AUTH_URL: ${VATSIM_AUTH_URL}
     networks:
       - traefik_proxy
     labels:
