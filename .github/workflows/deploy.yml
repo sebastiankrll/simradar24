@@ -25,12 +25,12 @@ jobs:
 
       - name: Copy files to VM
         run: |
-          rsync -avz -e "ssh -o StrictHostKeyChecking=no" . ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/simradar24
+          rsync -avz -e "ssh -o StrictHostKeyChecking=no" . ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/simradar21
 
       - name: Deploy on VM
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
-            cd /opt/simradar24
+            cd /opt/simradar21
             
             docker compose -f docker/docker-compose.prod.yml down
             docker compose -f docker/docker-compose.prod.yml pull || true
