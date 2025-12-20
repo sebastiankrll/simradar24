@@ -8,7 +8,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
-import simradar24Logo from "@/assets/images/simradar24_logo.svg";
+import simradar24Logo from "@/assets/images/logos/Simradar21_Logo.svg";
 import { useSettingsStore } from "@/storage/zustand";
 
 export default function Loader() {

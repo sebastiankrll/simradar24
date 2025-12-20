@@ -51,6 +51,7 @@ header {
 }
 
 #header-user {
+	position: relative;
 	height: 2rem;
 	width: 2rem;
 	border-radius: 50%;
@@ -58,6 +59,20 @@ header {
 	color: var(--color-green);
 	font-weight: 700;
 	z-index: 5;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+#header-user span {
+	position: absolute;
+	right: 0rem;
+	bottom: 0rem;
+	height: 10px;
+	width: 10px;
+	border-radius: 50%;
+	background-color: rgb(150, 150, 150);
+	border: 1px solid white;
 }
 
 #header-nav {

@@ -302,6 +302,28 @@ export default function Page() {
 					und &sect; 25 Abs. 1 TDDDG, soweit die Einwilligung die Speicherung von Cookies oder den Zugriff auf Informationen im Endger&auml;t des
 					Nutzers (z.&nbsp;B. Device-Fingerprinting) im Sinne des TDDDG umfasst. Die Einwilligung ist jederzeit widerrufbar.
 				</p>
+				<h3>VATSIM</h3>
+				<p>
+					Wir nutzen VATSIM International für die Authentifizierung und Benutzerverwaltung. Dies ermöglicht Ihnen, sich mit Ihrem VATSIM-Konto
+					anzumelden.
+				</p>
+				<p>
+					Beim Login über VATSIM erhalten wir ausschließlich Ihre VATSIM-Benutzer-ID (CID). Diese nutzen wir, um Ihr Benutzerkonto eindeutig zu
+					identifizieren und Ihre Einstellungen auf unserem Server unter Ihrem VATSIM-Benutzer zu speichern. Weitere personenbezogene Daten von VATSIM
+					werden von uns nicht verarbeitet.
+				</p>
+				<p>
+					Die Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. a DSGVO aufgrund Ihrer Einwilligung zur Anmeldung über VATSIM. Sie können
+					diese Einwilligung jederzeit durch eine schriftliche Mitteilung an
+					<a href="mailto:mail@simradar21.com">mail@simradar21.com</a> widerrufen.
+				</p>
+				<p>
+					VATSIM verfügt über geeignete Datenschutzmaßnahmen und bietet ein angemessenes Datenschutzniveau. Weitere Informationen finden Sie in der{" "}
+					<a href="https://vatsim.net/docs/policy/overview" target="_blank" rel="noopener noreferrer">
+						Datenschutzerklärung von VATSIM
+					</a>
+					.
+				</p>
 				<h3>Cloudflare</h3>
 				<p>
 					Wir nutzen Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, USA, als Content Delivery Network (CDN) und f&uuml;r
@@ -322,7 +344,7 @@ export default function Page() {
 				<p>
 					Cloudflare verf&uuml;gt &uuml;ber eine Zertifizierung nach dem &bdquo;EU-US Data Privacy Framework&ldquo; (DPF) und bietet somit ein
 					angemessenes Datenschutzniveau. Weitere Informationen finden Sie in der{" "}
-					<a href="https://www.cloudflare.com/de-de/privacy/" target="_blank" rel="noopener noreferrer">
+					<a href="https://www.cloudflare.com/de-de/privacypolicy/" target="_blank" rel="noopener noreferrer">
 						Datenschutzerkl&auml;rung von Cloudflare
 					</a>
 					.

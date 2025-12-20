@@ -71,6 +71,11 @@ export const authOptions: NextAuthOptions = {
 
 	callbacks: {
 		async jwt({ token, account, profile }) {
+			// Block Navigraph if no VATSIM identity exists yet
+			if (account?.provider === "navigraph" && !token.vatsim) {
+				return token;
+			}
+
 			if (account?.provider === "vatsim" && profile?.data) {
 				token.vatsim = {
 					cid: profile.data.cid,
