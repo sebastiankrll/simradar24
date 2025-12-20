@@ -35,6 +35,7 @@ html {
 	--color-magenta: rgb(222, 89, 234);
 	--color-glass-bg: rgba(255, 255, 255, 0.5);
 	--color-hover: rgb(77, 95, 131);
+	--box-shadow: 1px 1px 5px 1px var(--color-box-shadow);
 }
 
 [data-theme="dark"] {

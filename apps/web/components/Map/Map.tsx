@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { ToastContainer } from "react-toastify";
 import { useSettingsStore } from "@/storage/zustand";
-import Loader from "../Loader/Loader";
+import Initializer from "../Initializer/Initializer";
 import { MessageBoxCloseButton } from "../MessageBox/MessageBox";
 import BasePanel from "../Panels/BasePanel";
 import MapControls from "./components/MapControls";
@@ -18,6 +18,7 @@ import { setSunLayerSettings } from "./utils/sunLayer";
 
 export default function OMap({ children }: { children?: React.ReactNode }) {
 	const router = useRouter();
+
 	const { theme } = useTheme();
 	const {
 		dayNightLayer,
@@ -99,7 +100,7 @@ export default function OMap({ children }: { children?: React.ReactNode }) {
 	return (
 		<>
 			<ToastContainer closeButton={MessageBoxCloseButton} icon={false} theme="colored" />
-			<Loader />
+			<Initializer />
 			<BasePanel>{children}</BasePanel>
 			<MapControls />
 			<div id="map" />

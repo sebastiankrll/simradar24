@@ -1,0 +1,45 @@
+#initializer {
+	position: absolute;
+	top: -5rem;
+	left: 50%;
+	transform: translateX(-50%);
+	background-color: var(--color-blue);
+	width: 20rem;
+	z-index: 1000;
+	box-shadow: var(--box-shadow);
+	padding: 0.5rem 1rem;
+	transition: all 0.5s ease;
+	opacity: 0;
+}
+
+#initializer.open {
+	top: 4.5rem;
+	opacity: 1;
+}
+
+#initializer p {
+	color: white;
+}
+
+#initializer-title {
+	font-weight: 700;
+}
+
+#initializer-disclaimer {
+	font-size: 14px;
+}
+
+#initializer-text {
+	margin-top: 10px;
+	font-size: 12px;
+}
+
+#initializer-progress {
+	position: absolute;
+	left: 0;
+	top: 0;
+	background: var(--color-green);
+	width: 0%;
+	height: 100%;
+	z-index: -1;
+}

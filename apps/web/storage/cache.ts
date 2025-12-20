@@ -7,28 +7,25 @@ import { setClickedFeature, updateOverlays } from "@/components/Map/utils/events
 import { getMapView } from "@/components/Map/utils/init";
 import { initPilotFeatures, updatePilotFeatures } from "@/components/Map/utils/pilotFeatures";
 import { updateTrackFeatures } from "@/components/Map/utils/trackFeatures";
-import type { StatusMap } from "@/types/data";
+import type { StatusSetter } from "@/types/initializer";
 import { fetchApi } from "@/utils/api";
 import { wsClient } from "@/utils/ws";
 import { dxGetAirline, dxGetAirport, dxGetFirs, dxGetTracons, dxInitDatabases } from "./dexie";
-
-type StatusSetter = (status: Partial<StatusMap> | ((prev: Partial<StatusMap>) => Partial<StatusMap>)) => void;
 
 let airportsShort: Required<AirportShort>[] = [];
 let controllersMerged: ControllerMerged[] = [];
 let initialized = false;
 
-export async function initData(setStatus: StatusSetter, pathname: string): Promise<void> {
+export async function initCache(setStatus: StatusSetter, pathname: string): Promise<void> {
 	if (initialized) {
 		setClickedFeature(pathname);
 		return;
 	}
 
-	await dxInitDatabases();
-	setStatus?.((prev) => ({ ...prev, indexedDB: true }));
+	await dxInitDatabases(setStatus);
 
 	const data = await fetchApi<WsAll>("/data/init");
-	setStatus?.((prev) => ({ ...prev, initData: true }));
+	setStatus?.((prev) => ({ ...prev, cache: true }));
 
 	await initAirportFeatures();
 	await initControllerFeatures(data);
@@ -41,7 +38,7 @@ export async function initData(setStatus: StatusSetter, pathname: string): Promi
 	if (view) {
 		setFeatures(view.calculateExtent(), view.getZoom() || 5);
 	}
-	setStatus?.((prev) => ({ ...prev, initMap: true }));
+	setStatus?.((prev) => ({ ...prev, map: true }));
 
 	const handleMessage = (delta: WsDelta) => {
 		updateCache(delta);
