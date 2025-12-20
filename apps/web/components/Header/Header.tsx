@@ -7,12 +7,16 @@ import { signIn, useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import simradar24Logo from "@/assets/images/logos/Simradar21_Logo.svg";
 import VatsimLogo from "@/assets/images/logos/VATSIM_Logo_Only.png";
+import useSettings from "@/hooks/useSettings";
 import Navigation from "./Navigation";
 
 export default function Header() {
 	const [open, setOpen] = useState(false);
 	const headerRef = useRef<HTMLElement>(null);
+
 	const { data: session } = useSession();
+
+	useSettings();
 
 	useEffect(() => {
 		function handleClickOutside(event: MouseEvent) {

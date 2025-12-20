@@ -1,5 +1,6 @@
 import type { FIRFeature, SimAwareTraconFeature, StaticAirline, StaticAirport } from "@sr24/types/db";
 import Dexie, { type EntityTable } from "dexie";
+import type { StatusSetter } from "@/types/initializer";
 import { fetchApi } from "@/utils/api";
 
 interface StaticVersions {
@@ -32,7 +33,7 @@ db.version(1).stores({
 	manifest: "key",
 });
 
-export async function dxInitDatabases(): Promise<void> {
+export async function dxInitDatabases(setStatus: StatusSetter): Promise<void> {
 	const latestManifest = await fetchApi<StaticVersions>(`${R2_BUCKET_URL}/manifest.json`, {
 		cache: "no-store",
 	});
@@ -44,6 +45,7 @@ export async function dxInitDatabases(): Promise<void> {
 		})) as StaticAirport[];
 		storeData(entries, db.airports as EntityTable<any, "id">);
 	}
+	setStatus?.((prev) => ({ ...prev, airports: true }));
 
 	if (latestManifest.firsVersion !== storedManifest?.versions.firsVersion) {
 		const features = (await fetchApi<FIRFeature[]>(`${R2_BUCKET_URL}/firs_${latestManifest.firsVersion}.json`, {
@@ -56,6 +58,7 @@ export async function dxInitDatabases(): Promise<void> {
 
 		storeData(entries, db.firs as EntityTable<any, "id">);
 	}
+	setStatus?.((prev) => ({ ...prev, firs: true }));
 
 	if (latestManifest.traconsVersion !== storedManifest?.versions.traconsVersion) {
 		const features = (await fetchApi<SimAwareTraconFeature[]>(`${R2_BUCKET_URL}/tracons_${latestManifest.traconsVersion}.json`, {
@@ -68,6 +71,7 @@ export async function dxInitDatabases(): Promise<void> {
 
 		storeData(entries, db.tracons as EntityTable<any, "id">);
 	}
+	setStatus?.((prev) => ({ ...prev, tracons: true }));
 
 	if (latestManifest.airlinesVersion !== storedManifest?.versions.airlinesVersion) {
 		const entries = (await fetchApi<StaticAirline[]>(`${R2_BUCKET_URL}/airlines_${latestManifest.airlinesVersion}.json`, {
@@ -75,6 +79,7 @@ export async function dxInitDatabases(): Promise<void> {
 		})) as StaticAirline[];
 		storeData(entries, db.airlines as EntityTable<any, "id">);
 	}
+	setStatus?.((prev) => ({ ...prev, airlines: true }));
 
 	await db.manifest.put({ key: "databaseVersions", versions: latestManifest });
 }

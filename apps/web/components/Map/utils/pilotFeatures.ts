@@ -220,7 +220,7 @@ export function animatePilotFeatures(map: OlMap) {
 			feature.set("latitude", newLat, true);
 			feature.set("longitude", newLon, true);
 		});
-		map.render();
+		
 		animateOverlays();
 		animateTrackFeatures();
 
