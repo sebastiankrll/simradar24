@@ -99,16 +99,3 @@ select option:checked {
 select option:hover {
 	background: var(--color-hover);
 }
-
-input {
-	font-family: inherit;
-	font-size: var(--font-size-normal);
-	color: inherit;
-	background-color: var(--color-dark-grey);
-	border: 1px solid var(--color-border);
-	padding: 2px 4px;
-}
-
-input:focus {
-	outline: none;
-}

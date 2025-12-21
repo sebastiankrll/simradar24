@@ -29,9 +29,7 @@ export default function OMap({ children }: { children?: React.ReactNode }) {
 		animatedPlaneMarkers,
 		sectorAreas,
 		traconColor,
-		traconTransparency,
 		firColor,
-		firTransparency,
 	} = useSettingsStore();
 
 	useEffect(() => {
@@ -74,28 +72,8 @@ export default function OMap({ children }: { children?: React.ReactNode }) {
 
 	useEffect(() => {
 		setSunLayerSettings(dayNightLayer, dayNightLayerBrightness);
-		setDataLayersSettings(
-			airportMarkers,
-			airportMarkerSize,
-			planeMarkerSize,
-			sectorAreas,
-			traconColor,
-			traconTransparency,
-			firColor,
-			firTransparency,
-		);
-	}, [
-		dayNightLayer,
-		dayNightLayerBrightness,
-		airportMarkers,
-		airportMarkerSize,
-		planeMarkerSize,
-		sectorAreas,
-		traconColor,
-		traconTransparency,
-		firColor,
-		firTransparency,
-	]);
+		setDataLayersSettings(airportMarkers, airportMarkerSize, planeMarkerSize, sectorAreas, traconColor, firColor);
+	}, [dayNightLayer, dayNightLayerBrightness, airportMarkers, airportMarkerSize, planeMarkerSize, sectorAreas, traconColor, firColor]);
 
 	return (
 		<>

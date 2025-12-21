@@ -1,3 +1,5 @@
+import type { RgbaColor } from "react-colorful";
+
 type Theme = "light" | "dark" | "system";
 type PlaneOverlayMode = "callsign" | "telemetry-off" | "full";
 type TimeZone = "local" | "utc";
@@ -18,10 +20,8 @@ export interface SettingValues {
 	planeMarkerSize: number;
 	animatedPlaneMarkers: boolean;
 	sectorAreas: boolean;
-	traconColor: string;
-	traconTransparency: number;
-	firColor: string;
-	firTransparency: number;
+	traconColor: RgbaColor;
+	firColor: RgbaColor;
 	timeZone: TimeZone;
 	timeFormat: TimeFormat;
 	temperatureUnit: TemperatureUnit;
@@ -42,10 +42,8 @@ export interface SettingState extends SettingValues {
 	setPlaneMarkerSize: (value: number) => void;
 	setAnimatedPlaneMarkers: (value: boolean) => void;
 	setSectorAreas: (value: boolean) => void;
-	setTraconColor: (value: string) => void;
-	setTraconTransparency: (value: number) => void;
-	setFirColor: (value: string) => void;
-	setFirTransparency: (value: number) => void;
+	setTraconColor: (value: RgbaColor) => void;
+	setFirColor: (value: RgbaColor) => void;
 	setTimeZone: (value: TimeZone) => void;
 	setTimeFormat: (value: TimeFormat) => void;
 	setTemperatureUnit: (value: TemperatureUnit) => void;

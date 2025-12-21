@@ -3,7 +3,7 @@
 import { resetMap } from "@/components/Map/utils/events";
 import "./SettingsPanel.css";
 import { useEffect, useId, useRef, useState } from "react";
-import { HexColorPicker } from "react-colorful";
+import { type RgbaColor, RgbaColorPicker } from "react-colorful";
 import Icon from "@/components/shared/Icon/Icon";
 import { storeUserSettings, useSettingsStore } from "@/storage/zustand";
 
@@ -66,20 +66,12 @@ export default function SettingsPanel() {
 					<ToggleSwitch checked={settings.sectorAreas} onChange={(e) => settings.setSectorAreas(e.target.checked)} />
 				</div>
 				<div className="setting-item">
-					<p className="setting-item-title">TRACON color</p>
+					<p className="setting-item-title">TRACON color / transparency</p>
 					<ColorPicker color={settings.traconColor} onChange={settings.setTraconColor} />
 				</div>
 				<div className="setting-item">
-					<p className="setting-item-title">TRACON transparency</p>
-					<SliderSwitch value={settings.traconTransparency} onChange={settings.setTraconTransparency} />
-				</div>
-				<div className="setting-item">
-					<p className="setting-item-title">FIR color</p>
+					<p className="setting-item-title">FIR color / transparency</p>
 					<ColorPicker color={settings.firColor} onChange={settings.setFirColor} />
-				</div>
-				<div className="setting-item">
-					<p className="setting-item-title">FIR transparency</p>
-					<SliderSwitch value={settings.firTransparency} onChange={settings.setFirTransparency} />
 				</div>
 
 				<div className="panel-data-separator">Units</div>
@@ -185,7 +177,7 @@ function ChooseSwitch<const T extends readonly string[]>({
 	);
 }
 
-function ColorPicker({ color, onChange }: { color: string; onChange: (color: string) => void }) {
+function ColorPicker({ color, onChange }: { color: RgbaColor; onChange: (color: RgbaColor) => void }) {
 	const [isOpen, setIsOpen] = useState(false);
 	const ref = useRef<HTMLDivElement>(null);
 
@@ -207,13 +199,13 @@ function ColorPicker({ color, onChange }: { color: string; onChange: (color: str
 			<button
 				type="button"
 				className="color-picker-swatch"
-				style={{ backgroundColor: color, borderColor: isOpen ? "white" : "" }}
+				style={{ backgroundColor: `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`, borderColor: isOpen ? "white" : "" }}
 				onClick={() => setIsOpen(!isOpen)}
 				aria-label="Open color picker"
 			/>
 			{isOpen && (
 				<div className="color-picker-popover">
-					<HexColorPicker color={color} onChange={onChange} />
+					<RgbaColorPicker color={color} onChange={onChange} />
 				</div>
 			)}
 		</div>

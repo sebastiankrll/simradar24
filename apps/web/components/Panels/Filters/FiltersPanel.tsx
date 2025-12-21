@@ -4,6 +4,7 @@ import { resetMap } from "@/components/Map/utils/events";
 import Icon from "@/components/shared/Icon/Icon";
 import "./FiltersPanel.css";
 import { useEffect, useState } from "react";
+import { applyMapFilters } from "@/components/Map/utils/filters";
 import { multiStyles, Select, type SelectOptionType, singleStyles } from "@/components/shared/Select/Select";
 import { getFilterValues } from "@/storage/filter";
 import { useFiltersStore } from "@/storage/zustand";
@@ -87,6 +88,7 @@ export default function FiltersPanel() {
 	const handleSaveAndApply = () => {
 		filters.setFilters(filterValues);
 		filters.setActive(true);
+		applyMapFilters(filterValues);
 	};
 
 	const handleClearAll = () => {
@@ -131,6 +133,9 @@ export default function FiltersPanel() {
 		const activeInputs = Object.entries(filters)
 			.filter(([_key, value]) => Array.isArray(value) && value.length > 0)
 			.map(([key]) => key);
+
+		if (activeInputs.length === 0) return;
+
 		setInputs(activeInputs);
 
 		const values: Record<string, any> = {};
@@ -138,6 +143,7 @@ export default function FiltersPanel() {
 			values[key] = filters[key as keyof typeof filters];
 		});
 		setFilterValues(values);
+		applyMapFilters(values);
 	}, []);
 
 	return (

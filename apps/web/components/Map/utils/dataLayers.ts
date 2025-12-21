@@ -2,6 +2,7 @@ import type { Extent } from "ol/extent";
 import VectorLayer from "ol/layer/Vector";
 import WebGLVectorLayer from "ol/layer/WebGLVector";
 import VectorSource from "ol/source/Vector";
+import type { RgbaColor } from "react-colorful";
 import { webglConfig } from "../lib/webglConfig";
 import { setAirportFeatures } from "./airportFeatures";
 import { getControllerLabelStyle } from "./controllerFeatures";
@@ -143,10 +144,8 @@ export function setDataLayersSettings(
 	airportMarkerSize: number,
 	planeMarkerSize: number,
 	sectorAreas: boolean,
-	traconColor: string,
-	traconTransparency: number,
-	firColor: string,
-	firTransparency: number,
+	traconColor: RgbaColor,
+	firColor: RgbaColor,
 ): void {
 	airportMainLayer.setVisible(airportMarkers);
 	airportLabelLayer.setVisible(airportMarkers);
@@ -164,11 +163,11 @@ export function setDataLayersSettings(
 	controllerLabelLayer.setVisible(sectorAreas);
 
 	firLayer.updateStyleVariables({
-		fill: firColor.replace("1)", `${firTransparency / 100})`),
-		stroke: firColor.replace("1)", "1)"),
+		fill: `rgba(${firColor.r}, ${firColor.g}, ${firColor.b}, ${firColor.a})`,
+		stroke: `rgba(${firColor.r}, ${firColor.g}, ${firColor.b}, 1)`,
 	});
 	traconLayer.updateStyleVariables({
-		fill: traconColor.replace("1)", `${traconTransparency / 100})`),
-		stroke: traconColor.replace("1)", "1)"),
+		fill: `rgba(${traconColor.r}, ${traconColor.g}, ${traconColor.b}, ${traconColor.a})`,
+		stroke: `rgba(${traconColor.r}, ${traconColor.g}, ${traconColor.b}, 1)`,
 	});
 }
