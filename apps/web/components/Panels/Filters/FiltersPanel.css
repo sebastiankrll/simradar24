@@ -16,6 +16,7 @@
 
 .no-filters-selected {
 	font-size: 12px;
+	text-align: center;
 }
 
 .filter-option {
@@ -51,6 +52,22 @@
 	color: white;
 }
 
+#filter-actions {
+	display: flex;
+	gap: 10px;
+	padding: 0px 10px;
+}
+
+.filter-action {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--color-blue);
+	color: white;
+	flex: 1;
+	height: 24px;
+}
+
 .filter-input-wrapper {
 	display: flex;
 	flex-flow: column;
@@ -69,6 +86,14 @@
 	gap: 2px;
 }
 
-.filter-input input {
-	flex: 1;
+#filter-input-route {
+	display: flex;
+	width: 100%;
+}
+
+#filter-input-route span {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0px 4px;
 }

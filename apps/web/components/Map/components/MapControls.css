@@ -35,3 +35,11 @@
 .map-control-item:hover use {
 	color: white;
 }
+
+.map-control-item.active {
+	background: var(--color-green);
+}
+
+.map-control-item.active use {
+	color: white;
+}

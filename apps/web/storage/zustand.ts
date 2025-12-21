@@ -1,6 +1,6 @@
-import type { SettingState, SettingValues } from "@sr24/types/db";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { FilterState, SettingState, SettingValues } from "@/types/zustand";
 
 const defaultSettings: SettingValues = {
 	theme: "dark" as const,
@@ -111,6 +111,55 @@ export const useSettingsStore = create<SettingState>()(
 		}),
 		{
 			name: "user-settings",
+		},
+	),
+);
+
+export const useFiltersStore = create<FilterState>()(
+	persist(
+		(set) => ({
+			active: false,
+			Airline: [],
+			"Aircraft Type": [],
+			"Aircraft Registration": [],
+			Departure: [],
+			Arrival: [],
+			Any: [],
+			"VATSIM ID": [],
+			"Pilot Name": [],
+			"Flight Callsign": [],
+			Status: [],
+			Squawk: [],
+			"Barometric Altitude": [],
+			Groundspeed: [],
+			"Flight Rules": [],
+			"Station Callsign": [],
+			"Station Type": [],
+
+			setFilters: (filters) => set({ ...filters }),
+			setActive: (value) => set({ active: value }),
+			resetAllFilters: () =>
+				set({
+					Airline: [],
+					"Aircraft Type": [],
+					"Aircraft Registration": [],
+					Departure: [],
+					Arrival: [],
+					Any: [],
+					"VATSIM ID": [],
+					"Pilot Name": [],
+					"Flight Callsign": [],
+					Status: [],
+					Squawk: [],
+					"Barometric Altitude": [],
+					Groundspeed: [],
+					"Flight Rules": [],
+					"Station Callsign": [],
+					"Station Type": [],
+				}),
+		}),
+		{
+			name: "user-filters",
 		},
 	),
 );

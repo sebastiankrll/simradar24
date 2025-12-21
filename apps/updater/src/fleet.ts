@@ -10,6 +10,7 @@ const RELEASE_URL = "https://api.github.com/repos/sebastiankrll/simradar21-data/
 const BASE_DATA_URL = "https://github.com/sebastiankrll/simradar21-data/releases/download/";
 
 let version: string | null = null;
+let release: string | null = null;
 
 export async function updateFleets(): Promise<void> {
 	if (!version) {
@@ -18,7 +19,7 @@ export async function updateFleets(): Promise<void> {
 	if (!(await isNewRelease())) return;
 
 	try {
-		const fleetsJsonUrl = `${BASE_DATA_URL}${version}/fleets.json`;
+		const fleetsJsonUrl = `${BASE_DATA_URL}${release}/fleets.json`;
 		const response = await fetch(fleetsJsonUrl);
 
 		if (!response.body) {
@@ -61,11 +62,16 @@ async function initVersion(): Promise<void> {
 
 async function isNewRelease(): Promise<boolean> {
 	try {
-		const response = await axios.get(RELEASE_URL);
-		const release = response.data.tag_name;
+		const releaseResponse = await axios.get(RELEASE_URL);
+		release = releaseResponse.data.tag_name;
 
-		if (release !== version) {
-			version = release;
+		const versionsResponse = await axios.get(`${BASE_DATA_URL}${release}/versions.json`, {
+			responseType: "json",
+		});
+		const latestVersion = versionsResponse.data.fleets;
+
+		if (latestVersion !== version) {
+			version = latestVersion;
 			return true;
 		}
 	} catch (error) {

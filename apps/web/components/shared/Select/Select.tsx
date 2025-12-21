@@ -43,6 +43,7 @@ const optionStyles = (provided: CSSObjectWithLabel, state: { isFocused: boolean;
 	padding: "4px 6px",
 	backgroundColor: state.isFocused ? "var(--color-hover)" : state.isSelected ? "var(--color-hover)" : "var(--color-dark-grey)",
 	fontSize: "var(--font-size-normal)",
+	color: state.isFocused || state.isSelected ? "white" : "inherit",
 });
 
 export const singleStyles: StylesConfig<SelectOptionType, false> = {

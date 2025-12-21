@@ -7,31 +7,31 @@ const BASE_DATA_URL = "https://github.com/sebastiankrll/simradar21-data/releases
 let version: string | null = null;
 let release: string | null = null;
 
-export async function updateAirlines(): Promise<void> {
+export async function updateAircrafts(): Promise<void> {
 	if (!version) {
 		await initVersion();
 	}
 	if (!(await isNewRelease())) return;
 
 	try {
-		const airlinesJsonUrl = `${BASE_DATA_URL}${release}/airlines.json`;
+		const aircraftsJsonUrl = `${BASE_DATA_URL}${release}/aircrafts.json`;
 
-		const response = await axios.get(airlinesJsonUrl, {
+		const response = await axios.get(aircraftsJsonUrl, {
 			responseType: "json",
 		});
 
-		await rdsSetSingle("static_airlines:all", response.data);
-		await rdsSetSingle("static_airlines:version", version || "1.0.0");
+		await rdsSetSingle("static_aircrafts:all", response.data);
+		await rdsSetSingle("static_aircrafts:version", version || "1.0.0");
 
-		console.log(`✅ Airlines data updated to version ${version}`);
+		console.log(`✅ Aircrafts data updated to version ${version}`);
 	} catch (error) {
-		console.error(`Error checking for new airlines data: ${error}`);
+		console.error(`Error checking for new aircrafts data: ${error}`);
 	}
 }
 
 async function initVersion(): Promise<void> {
 	if (!version) {
-		const redisVersion = await rdsGetSingle("static_airlines:version");
+		const redisVersion = await rdsGetSingle("static_aircrafts:version");
 		version = redisVersion || "0.0.0";
 	}
 }
@@ -44,7 +44,7 @@ async function isNewRelease(): Promise<boolean> {
 		const versionsResponse = await axios.get(`${BASE_DATA_URL}${release}/versions.json`, {
 			responseType: "json",
 		});
-		const latestVersion = versionsResponse.data.airlines;
+		const latestVersion = versionsResponse.data.aircrafts;
 
 		if (latestVersion !== version) {
 			version = latestVersion;
