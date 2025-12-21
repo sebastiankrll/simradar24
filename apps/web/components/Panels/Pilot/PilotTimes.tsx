@@ -50,7 +50,8 @@ export function PilotTimes({ pilot, departure, arrival }: { pilot: PilotLong; de
 			<p>{convertTime(pilot.times?.off_block, timeFormat, timeZone, false, departure?.timezone)}</p>
 			<p className="panel-pilot-time-desc">{timeStatus.off ? "ACT" : "EST"}</p>
 			<p className="panel-pilot-time-desc">{timeStatus.on ? "ACT" : "EST"}</p>
-			<p className={`panel-pilot-arrival-status ${getDelayColor(pilot.times?.sched_on_block, pilot.times?.on_block) ?? null}`}>
+			<p className="panel-pilot-arrival-status">
+				<span className={`delay-indicator ${getDelayColor(pilot.times?.sched_on_block, pilot.times?.on_block) ?? ""}`}></span>
 				{convertTime(pilot.times?.on_block, timeFormat, timeZone, false, arrival?.timezone)}
 			</p>
 		</div>

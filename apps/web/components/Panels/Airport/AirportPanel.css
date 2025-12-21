@@ -25,26 +25,16 @@
 	font-size: 12px;
 }
 
+.panel-airport-status-item p {
+	position: relative;
+}
+
 .panel-airport-status-item p:first-child {
 	font-weight: 700;
 }
 
 .panel-airport-status-item p:last-child {
 	padding: 0px 2px;
-}
-
-.panel-airport-status-item p.green {
-	background: var(--color-green);
-	color: white;
-}
-
-.panel-airport-status-item p.yellow {
-	background: var(--color-yellow);
-}
-
-.panel-airport-status-item p.red {
-	background: var(--color-red);
-	color: white;
 }
 
 #panel-airport-weather {

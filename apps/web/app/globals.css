@@ -4,7 +4,7 @@ html {
 	margin: 0;
 	padding: 0;
 	font-optical-sizing: auto;
-	font-weight: 500;
+	font-weight: var(--font-weight-normal);
 	font-style: normal;
 	color: var(--color-main-text);
 	font-family: inherit;
@@ -23,7 +23,7 @@ html {
 	--color-main-text: rgb(77, 95, 131);
 	--color-light-text: rgb(183, 190, 206);
 	--color-light-grey: rgb(246, 248, 253);
-	--color-dark-grey: rgb(223, 227, 235);
+	--color-dark-grey: rgb(214, 218, 226);
 	--color-border: rgb(211, 214, 228);
 	--color-box-shadow: rgb(193, 194, 202);
 	--color-blue: rgb(60, 92, 255);
@@ -36,17 +36,22 @@ html {
 	--color-glass-bg: rgba(255, 255, 255, 0.5);
 	--color-hover: rgb(77, 95, 131);
 	--box-shadow: 1px 1px 5px 1px var(--color-box-shadow);
+	--font-weight-bold: 700;
+	--font-weight-normal: 500;
+	--font-weight-light: 300;
 }
 
 [data-theme="dark"] {
 	--color-bg: rgb(21, 27, 39);
 	--color-main-text: rgb(221, 225, 235);
-	--color-dark-grey: rgb(46, 52, 66);
-	--color-light-grey: rgb(46, 52, 66);
+	--color-dark-grey: rgb(56, 64, 82);
+	--color-light-grey: rgb(37, 43, 54);
 	--color-border: rgb(113, 121, 153);
-	--color-box-shadow: rgb(59, 61, 70);
+	--color-box-shadow: rgb(39, 40, 46);
 	--color-glass-bg: rgba(80, 80, 80, 0.3);
 	--color-hover: rgb(105, 124, 165);
+	--font-weight-normal: 400;
+	--font-weight-light: 200;
 }
 
 button {

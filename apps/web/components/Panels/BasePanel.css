@@ -23,7 +23,7 @@
 	background-color: var(--color-bg);
 	padding: 0.5rem;
 	box-sizing: border-box;
-	box-shadow: 1px 1px 5px 1px var(--color-box-shadow);
+	box-shadow: var(--box-shadow);
 }
 
 .panel-header {
@@ -86,9 +86,8 @@
 .panel-title {
 	display: flex;
 	flex-flow: column;
-	justify-content: center;
+	justify-content: space-between;
 	padding: 4px;
-	gap: 4px;
 	margin-left: 4px;
 	overflow: hidden;
 }
@@ -99,11 +98,13 @@
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	margin-top: 2px;
 }
 
 .panel-desc-items {
 	display: flex;
 	gap: 10px;
+	margin-bottom: 4px;
 }
 
 .panel-desc-item {
@@ -165,9 +166,12 @@
 	font-size: 12px;
 }
 
+.panel-container-header use {
+	color: white;
+}
+
 .panel-container-header:hover {
 	background-color: white;
-	border: 1px solid var(--color-blue);
 }
 
 .panel-container-header:hover * {
@@ -233,6 +237,7 @@
 
 .panel-data-item p {
 	font-size: 11px;
+	position: relative;
 }
 
 .panel-data-item p:first-child {
@@ -291,4 +296,28 @@
 .panel-navigation-button:hover p,
 .panel-navigation-button.active p {
 	color: white;
+}
+
+.delay-indicator {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	border: 1px solid var(--color-border);
+	position: absolute;
+	left: -10px;
+	top: 50%;
+	transform: translateY(-50%);
+	background: rgb(141, 141, 141);
+}
+
+.delay-indicator.green {
+	background-color: var(--color-green);
+}
+
+.delay-indicator.yellow {
+	background-color: var(--color-yellow);
+}
+
+.delay-indicator.red {
+	background-color: var(--color-red);
 }

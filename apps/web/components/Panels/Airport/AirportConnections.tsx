@@ -21,7 +21,10 @@ export function AirportConnections({ airport }: { airport: AirportLong | undefin
 					</div>
 					<div className="panel-data-item">
 						<p>Avg. Delay</p>
-						<p className={airport ? getDelayColor(airport.dep_traffic.average_delay) : ""}>{`${airport?.dep_traffic.average_delay || 0} min`}</p>
+						<p>
+							<span className={`delay-indicator ${airport ? getDelayColor(airport.dep_traffic.average_delay) : ""}`}></span>
+							{`${airport?.dep_traffic.average_delay || 0} min`}
+						</p>
 					</div>
 					<div className="panel-data-item">
 						<p>Busiest Route</p>
@@ -44,7 +47,10 @@ export function AirportConnections({ airport }: { airport: AirportLong | undefin
 					</div>
 					<div className="panel-data-item">
 						<p>Avg. Delay</p>
-						<p className={airport ? getDelayColor(airport.arr_traffic.average_delay) : ""}>{`${airport?.arr_traffic.average_delay || 0} min`}</p>
+						<p>
+							<span className={`delay-indicator ${airport ? getDelayColor(airport.arr_traffic.average_delay) : ""}`}></span>
+							{`${airport?.arr_traffic.average_delay || 0} min`}
+						</p>
 					</div>
 					<div className="panel-data-item">
 						<p>Busiest Route</p>

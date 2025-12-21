@@ -98,7 +98,7 @@
 }
 
 .overlay-controller-save use {
-	color: white;
+	color: var(--color-main-text);
 }
 
 .overlay-main-wrapper {
@@ -196,7 +196,7 @@
 }
 
 .overlay-pilot-ac-type {
-	background: rgb(77, 95, 131);
+	background: rgb(21, 27, 39);
 	color: white;
 	font-weight: 700;
 }

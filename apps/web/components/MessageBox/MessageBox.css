@@ -17,7 +17,7 @@
 	--toastify-toast-padding: 0.5rem;
 	--toastify-toast-min-height: inhert;
 	--toastify-toast-bd-radius: 0px;
-	--toastify-toast-shadow: 1px 1px 5px 1px var(--color-box-shadow);
+	--toastify-toast-shadow: var(--box-shadow);
 	--toastify-font-family: inherit;
 	--toastify-text-color-light: var(--color-light-text);
 	--toastify-text-color-dark: var(--color-main-text);

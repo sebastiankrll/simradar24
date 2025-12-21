@@ -16,7 +16,7 @@
 	width: 2rem;
 	height: 2rem;
 	background: var(--color-bg);
-	box-shadow: 1px 1px 5px 1px var(--color-box-shadow);
+	box-shadow: var(--box-shadow);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -24,5 +24,8 @@
 
 .map-control-item:hover {
 	background: var(--color-hover);
+}
+
+.map-control-item:hover use {
 	color: white;
 }

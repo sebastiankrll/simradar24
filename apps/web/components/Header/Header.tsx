@@ -37,7 +37,9 @@ export default function Header() {
 	return (
 		<header ref={headerRef}>
 			<figure id="header-logo">
-				<Image src={simradar24Logo} alt="simradar24 logo" height={40} width={200} priority />
+				<a href="/">
+					<Image src={simradar24Logo} alt="simradar24 logo" height={40} width={200} priority />
+				</a>
 			</figure>
 			<Search />
 			<button type="button" id="header-user" onClick={() => signIn("vatsim")} aria-label="Sign In/Out">
