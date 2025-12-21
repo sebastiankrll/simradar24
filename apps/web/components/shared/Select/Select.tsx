@@ -1,6 +1,17 @@
 "use client";
 
-import type { CSSObjectWithLabel, StylesConfig } from "react-select";
+import dynamic from "next/dynamic";
+import type { JSX } from "react";
+
+const SelectSSR = dynamic(() => import("react-select") as any, { ssr: false }) as <
+	Option = unknown,
+	IsMulti extends boolean = false,
+	Group extends GroupBase<Option> = GroupBase<Option>,
+>(
+	props: Props<Option, IsMulti, Group>,
+) => JSX.Element;
+
+import type { CSSObjectWithLabel, GroupBase, Props, StylesConfig } from "react-select";
 
 export type SelectOptionType = { value: string; label: string };
 
@@ -77,3 +88,7 @@ export const multiStyles: StylesConfig<SelectOptionType, true> = {
 		},
 	}),
 };
+
+export function Select<IsMulti extends boolean = false>(props: Props<SelectOptionType, IsMulti, GroupBase<SelectOptionType>>) {
+	return <SelectSSR {...props} />;
+}

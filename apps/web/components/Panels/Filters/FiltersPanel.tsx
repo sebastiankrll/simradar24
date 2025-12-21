@@ -5,8 +5,7 @@ import Icon from "@/components/shared/Icon/Icon";
 import "./Filters.css";
 import { useState } from "react";
 import type { MultiValue } from "react-select";
-import Select from "react-select";
-import { multiStyles, type SelectOptionType, singleStyles } from "@/components/shared/Select/Select";
+import { multiStyles, Select, type SelectOptionType, singleStyles } from "@/components/shared/Select/Select";
 
 const FILTER_OPTIONS_MAPPING = {
 	airline: ["Airline", "Callsign"],
@@ -95,7 +94,7 @@ export default function FiltersPanel() {
 				<div className="panel-data-separator">Add filters</div>
 				<Select
 					unstyled
-					menuPortalTarget={document.body}
+					menuPortalTarget={typeof window !== "undefined" ? document.body : undefined}
 					styles={singleStyles}
 					onChange={handleCategoryChange}
 					options={categoryOptions}
@@ -131,19 +130,16 @@ export default function FiltersPanel() {
 }
 
 function InputField() {
-	const [selectedOptions, setSelectedOptions] = useState<MultiValue<SelectOptionType>>([]);
-
 	const handleChange = (options: MultiValue<SelectOptionType>) => {
-		setSelectedOptions(options);
+		//
 	};
 
 	return (
 		<Select
 			isMulti
 			unstyled
-			menuPortalTarget={document.body}
+			menuPortalTarget={typeof window !== "undefined" ? document.body : undefined}
 			styles={multiStyles}
-			value={selectedOptions}
 			onChange={handleChange}
 			options={sample}
 			placeholder={"Select filters..."}
