@@ -1,7 +1,14 @@
-#map-controls {
+#map-controls-wrapper {
 	position: absolute;
 	right: 1rem;
 	top: 4.5rem;
+	display: flex;
+	flex-flow: column;
+	gap: 20px;
+	z-index: 1;
+}
+
+.map-controls {
 	display: flex;
 	flex-flow: column;
 	gap: 10px;

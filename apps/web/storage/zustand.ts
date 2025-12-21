@@ -5,7 +5,7 @@ import { persist } from "zustand/middleware";
 const defaultSettings: SettingValues = {
 	theme: "dark" as const,
 	dayNightLayer: true as const,
-	dayNightLayerBrightness: 35 as const,
+	dayNightLayerBrightness: 50 as const,
 	airportMarkers: true as const,
 	airportMarkerSize: 50 as const,
 	planeOverlay: "full" as const,
@@ -62,6 +62,20 @@ export async function storeUserSettings(): Promise<void> {
 		});
 	} catch (err) {
 		console.error("Failed to save settings:", err);
+	}
+}
+
+export async function fetchUserSettings(): Promise<void> {
+	try {
+		const res = await fetch("/user/settings", { cache: "no-store" });
+		if (!res.ok) {
+			return;
+		}
+
+		const data = await res.json();
+		useSettingsStore.getState().setSettings(data.settings);
+	} catch (err) {
+		console.error("Failed to load settings:", err);
 	}
 }
 

@@ -41,25 +41,29 @@ export default function MapControls() {
 	};
 
 	return (
-		<div id="map-controls">
-			<button type="button" className="map-control-item" onClick={onFullscreen}>
-				<Icon name={isFullscreen ? "resize-decrease" : "resize-increase"} size={22} />
-			</button>
-			<button type="button" className="map-control-item" onClick={() => zoomView(true)}>
-				<Icon name="add" />
-			</button>
-			<button type="button" className="map-control-item" onClick={() => zoomView(false)}>
-				<Icon name="remove" />
-			</button>
-			<button type="button" className="map-control-item" onClick={onCenterOnLocation}>
-				<Icon name="poi-contact" size={22} />
-			</button>
-			<button type="button" className="map-control-item">
-				<Icon name="filter" size={22} />
-			</button>
-			<button type="button" className="map-control-item" onClick={() => router.push("/settings")}>
-				<Icon name="settings" size={24} offset={1} />
-			</button>
+		<div id="map-controls-wrapper">
+			<div className="map-controls">
+				<button type="button" className="map-control-item" onClick={onFullscreen}>
+					<Icon name={isFullscreen ? "resize-decrease" : "resize-increase"} size={22} />
+				</button>
+				<button type="button" className="map-control-item" onClick={() => zoomView(true)}>
+					<Icon name="add" />
+				</button>
+				<button type="button" className="map-control-item" onClick={() => zoomView(false)}>
+					<Icon name="remove" />
+				</button>
+				<button type="button" className="map-control-item" onClick={onCenterOnLocation}>
+					<Icon name="poi-contact" size={22} />
+				</button>
+			</div>
+			<div className="map-controls">
+				<button type="button" className="map-control-item">
+					<Icon name="filter" size={22} />
+				</button>
+				<button type="button" className="map-control-item" onClick={() => router.push("/settings")}>
+					<Icon name="settings" size={24} offset={1} />
+				</button>
+			</div>
 		</div>
 	);
 }
