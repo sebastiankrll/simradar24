@@ -124,7 +124,6 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<[PilotLon
 				pilot_rating: PILOT_RATINGS.find((r) => r.id === pilot.pilot_rating)?.short_name || "NEW",
 				military_rating: MILITARY_RATINGS.find((r) => r.id === pilot.military_rating)?.short_name || "M0",
 				flight_plan: await mapPilotFlightPlan(pilot.flight_plan),
-				route: `${pilot.flight_plan?.departure || "N/A"} -- ${pilot.flight_plan?.arrival || "N/A"}`,
 				logon_time: new Date(pilot.logon_time),
 				times: null,
 				live: true,
@@ -191,6 +190,7 @@ export function getPilotShort(p: PilotLong, c?: PilotLong): PilotShort {
 	if (!c) {
 		return {
 			id: p.id,
+			callsign: p.callsign,
 			latitude: p.latitude,
 			longitude: p.longitude,
 			altitude_agl: p.altitude_agl,
@@ -198,12 +198,12 @@ export function getPilotShort(p: PilotLong, c?: PilotLong): PilotShort {
 			groundspeed: p.groundspeed,
 			vertical_speed: p.vertical_speed,
 			heading: p.heading,
-			callsign: p.callsign,
 			aircraft: p.aircraft,
 			transponder: p.transponder,
 			frequency: p.frequency,
-			route: p.route,
-			ghost: p.ghost,
+			route: `${p.flight_plan?.departure.icao || "N/A"} -- ${p.flight_plan?.arrival.icao || "N/A"}`,
+			flight_rules: p.flight_plan?.flight_rules || "IFR",
+			ac_reg: p.flight_plan?.ac_reg || null,
 		};
 	} else {
 		const pilotShort: PilotShort = { id: p.id };
@@ -219,8 +219,11 @@ export function getPilotShort(p: PilotLong, c?: PilotLong): PilotShort {
 		if (p.aircraft !== c.aircraft) pilotShort.aircraft = p.aircraft;
 		if (p.transponder !== c.transponder) pilotShort.transponder = p.transponder;
 		if (p.frequency !== c.frequency) pilotShort.frequency = p.frequency;
-		if (p.route !== c.route) pilotShort.route = p.route;
-		if (p.ghost !== c.ghost) pilotShort.ghost = p.ghost;
+		if (p.flight_plan?.departure.icao !== c.flight_plan?.departure.icao || p.flight_plan?.arrival.icao !== c.flight_plan?.arrival.icao) {
+			pilotShort.route = `${p.flight_plan?.departure.icao || "N/A"} -- ${p.flight_plan?.arrival.icao || "N/A"}`;
+		}
+		if (p.flight_plan?.flight_rules !== c.flight_plan?.flight_rules) pilotShort.flight_rules = p.flight_plan?.flight_rules || "IFR";
+		if (p.flight_plan?.ac_reg !== c.flight_plan?.ac_reg) pilotShort.ac_reg = p.flight_plan?.ac_reg || null;
 
 		return pilotShort;
 	}

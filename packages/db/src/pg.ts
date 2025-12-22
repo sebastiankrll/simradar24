@@ -44,19 +44,19 @@ async function pgUpsertPilotsBatch(pilots: PilotLong[]): Promise<void> {
 	const params: any[] = [];
 
 	pilots.forEach((p, idx) => {
-		const baseIdx = idx * 30;
+		const baseIdx = idx * 28;
 		values.push(`(
 			$${baseIdx + 1}, $${baseIdx + 2}, $${baseIdx + 3}, $${baseIdx + 4}, $${baseIdx + 5},
 			$${baseIdx + 6}, $${baseIdx + 7}, $${baseIdx + 8}, $${baseIdx + 9}, $${baseIdx + 10},
 			$${baseIdx + 11}, $${baseIdx + 12}, $${baseIdx + 13}, $${baseIdx + 14}, $${baseIdx + 15},
 			$${baseIdx + 16}, $${baseIdx + 17}, $${baseIdx + 18}, $${baseIdx + 19}, $${baseIdx + 20},
 			$${baseIdx + 21}, $${baseIdx + 22}, $${baseIdx + 23}, $${baseIdx + 24}, $${baseIdx + 25}, $${baseIdx + 26},
-			$${baseIdx + 27}, $${baseIdx + 28}, $${baseIdx + 29}, $${baseIdx + 30}
+			$${baseIdx + 27}, $${baseIdx + 28}
 		)`);
 
 		params.push(
-			// ---- PilotShort ----
 			p.id,
+			p.cid,
 			p.callsign,
 			p.latitude,
 			p.longitude,
@@ -68,10 +68,6 @@ async function pgUpsertPilotsBatch(pilots: PilotLong[]): Promise<void> {
 			p.aircraft,
 			p.transponder,
 			p.frequency,
-			p.route,
-			p.ghost,
-			// ---- PilotLong ----
-			p.cid,
 			p.name,
 			p.server,
 			p.pilot_rating,
@@ -93,15 +89,16 @@ async function pgUpsertPilotsBatch(pilots: PilotLong[]): Promise<void> {
 
 	const query = `
 		INSERT INTO "Pilot" (
-			pilot_id, callsign, latitude, longitude, altitude_agl,
+			pilot_id, cid, callsign, latitude, longitude, altitude_agl,
 			altitude_ms, groundspeed, vertical_speed, heading, aircraft,
-			transponder, frequency, route, ghost, cid,
+			transponder, frequency,
 			name, server, pilot_rating, military_rating, qnh_i_hg,
 			qnh_mb, flight_plan, times, logon_time, last_update, live,
 			sched_off_block, sched_on_block, dep_icao, arr_icao
 		)
 		VALUES ${values.join(",")}
 		ON CONFLICT (pilot_id) DO UPDATE SET
+			cid = EXCLUDED.cid,
 			callsign = EXCLUDED.callsign,
 			latitude = EXCLUDED.latitude,
 			longitude = EXCLUDED.longitude,
@@ -113,9 +110,6 @@ async function pgUpsertPilotsBatch(pilots: PilotLong[]): Promise<void> {
 			aircraft = EXCLUDED.aircraft,
 			transponder = EXCLUDED.transponder,
 			frequency = EXCLUDED.frequency,
-			route = EXCLUDED.route,
-			ghost = EXCLUDED.ghost,
-			cid = EXCLUDED.cid,
 			name = EXCLUDED.name,
 			server = EXCLUDED.server,
 			pilot_rating = EXCLUDED.pilot_rating,
@@ -175,8 +169,8 @@ export async function pgFindAirportFlights(
 		});
 
 		const pilots: PilotLong[] = results.map((r) => ({
-			// ---- PilotShort ----
 			id: r.pilot_id,
+			cid: r.cid,
 			callsign: r.callsign,
 			latitude: r.latitude,
 			longitude: r.longitude,
@@ -188,11 +182,6 @@ export async function pgFindAirportFlights(
 			aircraft: r.aircraft,
 			transponder: r.transponder,
 			frequency: r.frequency,
-			route: r.route,
-			ghost: r.ghost,
-
-			// ---- PilotLong ----
-			cid: r.cid,
 			name: r.name,
 			server: r.server,
 			pilot_rating: r.pilot_rating,

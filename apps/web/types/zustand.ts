@@ -65,16 +65,11 @@ export interface FilterValues {
 	Departure: string[];
 	Arrival: string[];
 	Any: string[];
-	"VATSIM ID": string[];
-	"Pilot Name": string[];
-	"Flight Callsign": string[];
-	Status: string[];
+	Callsign: string[];
 	Squawk: string[];
-	"Barometric Altitude": string[];
-	Groundspeed: string[];
+	"Barometric Altitude": { min: number; max: number };
+	Groundspeed: { min: number; max: number };
 	"Flight Rules": string[];
-	"Station Callsign": string[];
-	"Station Type": string[];
 }
 
 export interface FilterState extends FilterValues {

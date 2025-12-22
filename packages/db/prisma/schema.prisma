@@ -8,24 +8,19 @@ datasource db {
 }
 
 model Pilot {
-  // PilotShort
-  pilot_id       String  @id @db.Char(10)
-  callsign       String
-  latitude       Float
-  longitude      Float
-  altitude_agl   Int
-  altitude_ms    Int
-  groundspeed    Int
-  vertical_speed Int
-  heading        Int
-  aircraft       String
-  transponder    String  @db.Char(4)
-  frequency      Int
-  route          String
-  ghost          Boolean
-
-  // PilotLong
+  pilot_id        String   @id @db.Char(10)
   cid             Int
+  callsign        String
+  latitude        Float
+  longitude       Float
+  altitude_agl    Int
+  altitude_ms     Int
+  groundspeed     Int
+  vertical_speed  Int
+  heading         Int
+  aircraft        String
+  transponder     String   @db.Char(4)
+  frequency       Int
   name            String
   server          String
   pilot_rating    String
@@ -51,6 +46,6 @@ model Pilot {
 }
 
 model User {
-  cid      BigInt  @id
+  cid      BigInt @id
   settings Json?
 }

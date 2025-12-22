@@ -147,11 +147,24 @@ export interface PilotShort {
 	transponder?: string;
 	frequency?: number;
 	route?: string;
-	ghost?: boolean;
+	flight_rules?: "IFR" | "VFR";
+	ac_reg?: string | null;
 }
 
-export interface PilotLong extends Required<PilotShort> {
+export interface PilotLong {
+	id: string;
 	cid: number;
+	callsign: string;
+	latitude: number;
+	longitude: number;
+	altitude_agl: number;
+	altitude_ms: number;
+	groundspeed: number;
+	vertical_speed: number;
+	heading: number;
+	aircraft: string;
+	transponder: string;
+	frequency: number;
 	name: string;
 	server: string;
 	pilot_rating: string;
@@ -167,7 +180,7 @@ export interface PilotLong extends Required<PilotShort> {
 
 export interface PilotFlightPlan {
 	flight_rules: "IFR" | "VFR";
-	ac_reg: string | null; // Registration will be used to link to aircraft data in database
+	ac_reg: string | null;
 	departure: PilotAirport;
 	arrival: PilotAirport;
 	alternate: PilotAirport;

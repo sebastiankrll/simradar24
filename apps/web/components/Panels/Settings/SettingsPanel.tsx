@@ -2,9 +2,9 @@
 
 import { resetMap } from "@/components/Map/utils/events";
 import "./SettingsPanel.css";
-import { useEffect, useId, useRef, useState } from "react";
-import { type RgbaColor, RgbaColorPicker } from "react-colorful";
+import { useEffect } from "react";
 import Icon from "@/components/shared/Icon/Icon";
+import { ChooseSwitch, ColorPicker, SingleSlider, ToggleSwitch } from "@/components/shared/Input/Input";
 import { storeUserSettings, useSettingsStore } from "@/storage/zustand";
 
 export default function SettingsPanel() {
@@ -32,7 +32,7 @@ export default function SettingsPanel() {
 				</div>
 				<div className="setting-item">
 					<p className="setting-item-title">Day / night brightness</p>
-					<SliderSwitch value={settings.dayNightLayerBrightness} onChange={settings.setDayNightLayerBrightness} />
+					<SingleSlider value={settings.dayNightLayerBrightness} onChange={settings.setDayNightLayerBrightness} />
 				</div>
 
 				<div className="panel-data-separator">Airports</div>
@@ -42,7 +42,7 @@ export default function SettingsPanel() {
 				</div>
 				<div className="setting-item">
 					<p className="setting-item-title">Airport marker size</p>
-					<SliderSwitch value={settings.airportMarkerSize} onChange={settings.setAirportMarkerSize} />
+					<SingleSlider value={settings.airportMarkerSize} onChange={settings.setAirportMarkerSize} />
 				</div>
 
 				<div className="panel-data-separator">Planes</div>
@@ -52,7 +52,7 @@ export default function SettingsPanel() {
 				</div>
 				<div className="setting-item">
 					<p className="setting-item-title">Plane marker size</p>
-					<SliderSwitch value={settings.planeMarkerSize} onChange={settings.setPlaneMarkerSize} />
+					<SingleSlider value={settings.planeMarkerSize} onChange={settings.setPlaneMarkerSize} />
 				</div>
 				<div className="setting-item">
 					<p className="setting-item-title">Animated plane markers</p>
@@ -112,102 +112,5 @@ export default function SettingsPanel() {
 				</button>
 			</div>
 		</>
-	);
-}
-
-function ToggleSwitch({ checked, onChange }: { checked?: boolean; onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void }) {
-	const id = useId();
-
-	return (
-		<label className="tgl-switch" htmlFor={id}>
-			<input type="checkbox" id={id} checked={checked} onChange={onChange} />
-			<span className="tgl-switch-slider"></span>
-		</label>
-	);
-}
-
-function SliderSwitch({ value = 50, onChange, step }: { value?: number; onChange?: (value: number) => void; step?: number }) {
-	const id = useId();
-
-	return (
-		<label
-			className="sld-switch"
-			htmlFor={id}
-			style={
-				{
-					"--value": value,
-					"--max": 100,
-					"--step": step,
-				} as React.CSSProperties
-			}
-		>
-			<input
-				type="range"
-				id={id}
-				min="0"
-				max="100"
-				step={step}
-				value={value}
-				onChange={(e) => (onChange ? onChange(Number(e.target.value)) : undefined)}
-			/>
-		</label>
-	);
-}
-
-function ChooseSwitch<const T extends readonly string[]>({
-	options,
-	value,
-	onChange,
-}: {
-	options: T;
-	value?: T[number];
-	onChange?: (value: T[number]) => void;
-}) {
-	const index = value ? (options as readonly string[]).indexOf(value as string) : 0;
-
-	return (
-		<fieldset className="choose-switch" style={{ "--count": options.length, "--index": index } as React.CSSProperties} aria-label="Options">
-			<span className="choose-switch-thumb" aria-hidden="true" />
-			{options.map((option, idx) => (
-				<button key={option} type="button" className="choose-switch-option" aria-pressed={index === idx} onClick={() => onChange?.(option)}>
-					{option}
-				</button>
-			))}
-		</fieldset>
-	);
-}
-
-function ColorPicker({ color, onChange }: { color: RgbaColor; onChange: (color: RgbaColor) => void }) {
-	const [isOpen, setIsOpen] = useState(false);
-	const ref = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		function handleClickOutside(event: MouseEvent) {
-			if (ref.current && !ref.current.contains(event.target as Node)) {
-				setIsOpen(false);
-			}
-		}
-
-		if (isOpen) {
-			document.addEventListener("mousedown", handleClickOutside);
-			return () => document.removeEventListener("mousedown", handleClickOutside);
-		}
-	}, [isOpen]);
-
-	return (
-		<div className="color-picker-wrapper" ref={ref}>
-			<button
-				type="button"
-				className="color-picker-swatch"
-				style={{ backgroundColor: `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`, borderColor: isOpen ? "white" : "" }}
-				onClick={() => setIsOpen(!isOpen)}
-				aria-label="Open color picker"
-			/>
-			{isOpen && (
-				<div className="color-picker-popover">
-					<RgbaColorPicker color={color} onChange={onChange} />
-				</div>
-			)}
-		</div>
 	);
 }
