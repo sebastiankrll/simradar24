@@ -1,17 +1,17 @@
 services:
-  timescaledb:
-    image: timescale/timescaledb:latest-pg17
-    container_name: sr24_timescaledb
+  postgres:
+    image: postgres:18.1
+    container_name: sr21_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-airportsdb}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PORT: ${POSTGRES_PORT}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_PORT}:5432"
     volumes:
-      - timescaledb_data:/var/lib/postgresql/data
-    command: ["postgres", "-c", "shared_preload_libraries=timescaledb"]
+      - postgres_data:/var/lib/postgresql
 
   pgadmin:
     image: dpage/pgadmin4
@@ -23,17 +23,21 @@ services:
     ports:
       - "8080:80"
     depends_on:
-      - timescaledb
+      - postgres
     volumes:
       - pgadmin_data:/var/lib/pgadmin
 
   redis:
-    image: redis:latest
-    container_name: sr24_redis
+    image: redis:8.4.0
+    container_name: sr21_redis
     restart: unless-stopped
+    environment:
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_DB: ${REDIS_DB}
     ports:
-      - "6379:6379"
-    command: ["redis-server", "--appendonly", "yes"]
+      - "${REDIS_PORT}:6379"
+    command: [ "redis-server", "--appendonly", "yes"]
     volumes:
       - redis_data:/data
 
@@ -47,6 +51,6 @@ services:
       - redis
 
 volumes:
-  timescaledb_data:
+  postgres_data:
   pgadmin_data:
   redis_data:
