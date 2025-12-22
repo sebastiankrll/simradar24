@@ -13,36 +13,22 @@ const FILTER_OPTIONS_MAPPING = {
 	airline: ["Airline"],
 	aircraft: ["Aircraft Type", "Aircraft Registration"],
 	airport: ["Departure", "Arrival", "Any"],
-	user: ["VATSIM ID", "Pilot Name"],
-	flight: ["Flight Callsign", "Status", "Squawk", "Barometric Altitude", "Groundspeed", "Flight Rules"],
-	atc: ["Station Callsign", "Station Type"],
+	flight: ["Callsign", "Squawk", "Barometric Altitude", "Groundspeed", "Flight Rules"],
 };
 const CATEGORY_OPTIONS = [
 	{ value: "airline", label: "Airline" },
 	{ value: "aircraft", label: "Aircraft" },
 	{ value: "airport", label: "Airport" },
-	{ value: "user", label: "User" },
 	{ value: "flight", label: "Flight" },
-	{ value: "atc", label: "ATC" },
 ];
 const FIXED_OPTIONS = {
-	Status: [
-		{ value: "on-ground", label: "On Ground" },
-		{ value: "in-air", label: "In Air" },
-	],
 	"Flight Rules": [
 		{ value: "IFR", label: "IFR" },
 		{ value: "VFR", label: "VFR" },
 	],
-	"Station Type": [
-		{ value: "ATIS", label: "ATIS" },
-		{ value: "Delivery", label: "Delivery" },
-		{ value: "Ground", label: "Ground" },
-		{ value: "Tower", label: "Tower" },
-		{ value: "Approach", label: "Approach" },
-		{ value: "Center", label: "Center" },
-	],
 };
+const SIMPLE_FILTERS = ["Aircraft Registration", "Callsign", "Squawk"];
+const UPPERCASE_FILTERS = ["Aircraft Registration", "Callsign"];
 
 export default function FiltersPanel() {
 	const [options, setOptions] = useState<string[]>([]);
@@ -201,9 +187,6 @@ export default function FiltersPanel() {
 		</>
 	);
 }
-
-const SIMPLE_FILTERS = ["Aircraft Registration", "VATSIM ID", "Pilot Name", "Flight Callsign", "Squawk", "Station Callsign"];
-const UPPERCASE_FILTERS = ["Aircraft Registration", "VATSIM ID", "Flight Callsign", "Station Callsign"];
 
 function InputField({
 	filter,

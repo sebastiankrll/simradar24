@@ -1,6 +1,6 @@
+import Slider from "@mui/material/Slider";
 import { useEffect, useId, useRef, useState } from "react";
 import { type RgbaColor, RgbaColorPicker } from "react-colorful";
-import Slider from "@mui/material/Slider";
 import "./Input.css";
 
 export function ToggleSwitch({ checked, onChange }: { checked?: boolean; onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void }) {
