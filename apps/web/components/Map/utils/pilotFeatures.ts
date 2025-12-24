@@ -140,10 +140,10 @@ export function setPilotFeatures(extent: Extent, zoom: number): void {
 
 	const [minX, minY, maxX, maxY] = transformExtent(extent, "EPSG:3857", "EPSG:4326");
 	const pilotsByExtent = pilotRBush.search({ minX, minY, maxX, maxY });
-	const pilotsByAltitude = pilotsByExtent.sort((a, b) => (b.feature.get("altitude_agl") || 0) - (a.feature.get("altitude_agl") || 0)).slice(0, 300);
+	const pilotsByAltitude = pilotsByExtent.sort((a, b) => (b.feature.get("altitude_agl") || 0) - (a.feature.get("altitude_agl") || 0));
 
 	const features = pilotsByAltitude.map((f) => f.feature);
-	const filteredFeatures = filterPilotFeatures(features);
+	const filteredFeatures = filterPilotFeatures(features).slice(0, 300);
 
 	if (highlightedPilot) {
 		const exists = pilotsByAltitude.find((p) => p.feature.getId() === `pilot_${highlightedPilot}`);

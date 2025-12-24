@@ -1,7 +1,9 @@
 import { Map as OlMap, View } from "ol";
 import { fromLonLat, transformExtent } from "ol/proj";
+import { useFiltersStore } from "@/storage/zustand";
 import { initBaseLayer, setBaseLayerTheme } from "./baseLayer";
 import { initDataLayers, setDataLayersTheme } from "./dataLayers";
+import { applyMapFilters } from "./filters";
 import { initSunLayer, setSunLayerTheme } from "./sunLayer";
 
 let map: OlMap | null = null;
@@ -44,7 +46,23 @@ export function initMap(): OlMap {
 		controls: [],
 	});
 
+	initFilters();
+
 	return map;
+}
+
+function initFilters(): void {
+	const state = useFiltersStore.getState();
+	const activeInputs = Object.entries(state)
+		.filter(([_key, value]) => Array.isArray(value) && value.length > 0)
+		.map(([key]) => key);
+	if (activeInputs.length === 0) return;
+
+	const values: Record<string, any> = {};
+	activeInputs.forEach((key) => {
+		values[key] = state[key as keyof typeof state];
+	});
+	applyMapFilters(values);
 }
 
 export function getMapView(): View | null {

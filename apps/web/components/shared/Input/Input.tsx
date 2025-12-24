@@ -1,7 +1,8 @@
-import Slider from "@mui/material/Slider";
+import Slider, { type SliderProps } from "@mui/material/Slider";
 import { useEffect, useId, useRef, useState } from "react";
 import { type RgbaColor, RgbaColorPicker } from "react-colorful";
 import "./Input.css";
+import { styled } from "@mui/material/styles";
 
 export function ToggleSwitch({ checked, onChange }: { checked?: boolean; onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void }) {
 	const id = useId();
@@ -14,47 +15,26 @@ export function ToggleSwitch({ checked, onChange }: { checked?: boolean; onChang
 	);
 }
 
-export function SingleSlider({ value = 50, onChange, step }: { value?: number; onChange?: (value: number) => void; step?: number }) {
-	const id = useId();
-
-	return (
-		<label
-			className="sld-switch"
-			htmlFor={id}
-			style={
-				{
-					"--value": value,
-					"--max": 100,
-					"--step": step,
-				} as React.CSSProperties
-			}
-		>
-			<input
-				type="range"
-				id={id}
-				min={0}
-				max={100}
-				step={step}
-				value={value}
-				onChange={(e) => (onChange ? onChange(Number(e.target.value)) : undefined)}
-			/>
-		</label>
-	);
-}
-
-export default function DoubleSlider({
-	min = 0,
-	max = 100,
-	value,
-	onChange,
-}: {
-	min?: number;
-	max?: number;
-	value?: number[];
-	onChange?: (_event: Event, newValue: number | number[]) => void;
-}) {
-	return <Slider value={value} onChange={onChange} valueLabelDisplay="auto" min={min} max={max} />;
-}
+export const RangeSwitch = styled(Slider)<SliderProps>(() => ({
+	padding: "7px 0px",
+	margin: "0px 7px",
+	"& .MuiSlider-thumb": {
+		backgroundColor: "var(--color-green)",
+		width: 14,
+		height: 14,
+	},
+	"& .MuiSlider-track": {
+		backgroundColor: "var(--color-green)",
+		border: "none",
+	},
+	"& .MuiSlider-rail": {
+		backgroundColor: "var(--color-light-text)",
+		opacity: 1,
+	},
+	"& .MuiSlider-valueLabel": {
+		backgroundColor: "var(--color-dark-grey)",
+	},
+}));
 
 export function ChooseSwitch<const T extends readonly string[]>({
 	options,
