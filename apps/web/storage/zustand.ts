@@ -13,7 +13,7 @@ const defaultSettings: SettingValues = {
 	animatedPlaneMarkers: true as const,
 	sectorAreas: true as const,
 	traconColor: { r: 222, g: 89, b: 234, a: 0.1 } as const,
-	firColor: { r: 77, g: 95, b: 131, a: 0.1 } as const,
+	firColor: { r: 77, g: 95, b: 131, a: 0.15 } as const,
 	timeZone: "utc" as const,
 	timeFormat: "24h" as const,
 	temperatureUnit: "celsius" as const,

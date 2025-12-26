@@ -37,6 +37,21 @@ db.version(1).stores({
 });
 
 export async function dxInitDatabases(setStatus: StatusSetter): Promise<void> {
+	const lastCheck = localStorage.getItem("dbLastCheck");
+	const now = Date.now();
+	if (lastCheck && now - parseInt(lastCheck, 10) < 12 * 60 * 60 * 1000) {
+		setStatus?.((prev) => ({
+			...prev,
+			airports: true,
+			firs: true,
+			tracons: true,
+			airlines: true,
+			aircrafts: true,
+		}));
+		return;
+	}
+	localStorage.setItem("dbLastCheck", now.toString());
+
 	const latestManifest = await fetchApi<StaticVersions>(`${R2_BUCKET_URL}/manifest.json`, {
 		cache: "no-store",
 	});

@@ -38,7 +38,7 @@ export default function Initializer() {
 	}, [pathname]);
 
 	useEffect(() => {
-		if (status.airports && status.firs && status.tracons && status.airlines && status.cache && status.map) {
+		if (status.airports && status.firs && status.tracons && status.airlines && status.aircrafts && status.cache && status.map) {
 			setOpen(false);
 			setTimeout(() => setVisible(false), 500);
 		}
