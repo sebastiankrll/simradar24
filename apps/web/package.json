@@ -10,7 +10,10 @@
 		"format-and-lint:fix": "biome check . --write"
 	},
 	"dependencies": {
+		"@emotion/react": "^11.14.0",
+		"@emotion/styled": "^11.14.1",
 		"@geoblocks/ol-maplibre-layer": "^1.0.3",
+		"@mui/material": "^7.3.6",
 		"@sr24/types": "*",
 		"@tanstack/react-query": "^5.90.11",
 		"@tanstack/react-query-devtools": "^5.91.1",
@@ -27,6 +30,7 @@
 		"react-colorful": "^5.6.1",
 		"react-dom": "19.2.0",
 		"react-intersection-observer": "^10.0.0",
+		"react-select": "^5.10.2",
 		"react-toastify": "^11.0.5",
 		"recharts": "^3.5.1",
 		"swr": "^2.3.7",

@@ -1,4 +1,4 @@
-import type { FIRFeature, SimAwareTraconFeature, StaticAirline, StaticAirport } from "@sr24/types/db";
+import type { FIRFeature, SimAwareTraconFeature, StaticAircraftType, StaticAirline, StaticAirport } from "@sr24/types/db";
 import Dexie, { type EntityTable } from "dexie";
 import type { StatusSetter } from "@/types/initializer";
 import { fetchApi } from "@/utils/api";
@@ -8,6 +8,7 @@ interface StaticVersions {
 	traconsVersion: string;
 	firsVersion: string;
 	airlinesVersion: string;
+	aircraftsVersion: string;
 }
 interface DexieFeature {
 	id: string;
@@ -22,6 +23,7 @@ const db = new Dexie("StaticDatabase") as Dexie & {
 	firs: EntityTable<DexieFeature, "id">;
 	tracons: EntityTable<DexieFeature, "id">;
 	airlines: EntityTable<StaticAirline, "id">;
+	aircrafts: EntityTable<StaticAircraftType, "icao">;
 	manifest: EntityTable<Manifest, "key">;
 };
 
@@ -30,10 +32,26 @@ db.version(1).stores({
 	firs: "id",
 	tracons: "id",
 	airlines: "id",
+	aircrafts: "icao",
 	manifest: "key",
 });
 
 export async function dxInitDatabases(setStatus: StatusSetter): Promise<void> {
+	const lastCheck = localStorage.getItem("dbLastCheck");
+	const now = Date.now();
+	if (lastCheck && now - parseInt(lastCheck, 10) < 12 * 60 * 60 * 1000) {
+		setStatus?.((prev) => ({
+			...prev,
+			airports: true,
+			firs: true,
+			tracons: true,
+			airlines: true,
+			aircrafts: true,
+		}));
+		return;
+	}
+	localStorage.setItem("dbLastCheck", now.toString());
+
 	const latestManifest = await fetchApi<StaticVersions>(`${R2_BUCKET_URL}/manifest.json`, {
 		cache: "no-store",
 	});
@@ -81,17 +99,25 @@ export async function dxInitDatabases(setStatus: StatusSetter): Promise<void> {
 	}
 	setStatus?.((prev) => ({ ...prev, airlines: true }));
 
+	if (latestManifest.aircraftsVersion !== storedManifest?.versions.aircraftsVersion) {
+		const entries = (await fetchApi<StaticAircraftType[]>(`${R2_BUCKET_URL}/aircrafts_${latestManifest.aircraftsVersion}.json`, {
+			cache: "no-store",
+		})) as StaticAircraftType[];
+		storeData(entries, db.aircrafts as EntityTable<StaticAircraftType, "icao">);
+	}
+	setStatus?.((prev) => ({ ...prev, aircrafts: true }));
+
 	await db.manifest.put({ key: "databaseVersions", versions: latestManifest });
 }
 
-async function storeData(data: any[], db: EntityTable<any, "id">): Promise<void> {
+async function storeData<T, K extends keyof T>(data: T[], db: EntityTable<T, K>): Promise<void> {
 	db.bulkPut(data)
 		.then(() => {
 			console.log("Done adding data");
 		})
 		.catch((e) => {
 			if (e.name === "BulkError") {
-				console.error(`Some airports did not succeed. Completed: ${e.failures.length}`);
+				console.error(`Some items did not succeed. Completed: ${e.failures.length}`);
 			} else {
 				throw e;
 			}
@@ -108,6 +134,27 @@ export async function dxGetAirport(id: string): Promise<StaticAirport | null> {
 
 export async function dxGetAirline(id: string): Promise<StaticAirline | null> {
 	return (await db.airlines.get(id)) || null;
+}
+
+export async function dxFindAirlines(query: string, limit: number): Promise<StaticAirline[]> {
+	return await db.airlines
+		.filter((airline) => airline.name.toLowerCase().includes(query.toLowerCase()) || airline.id.toLowerCase().includes(query.toLowerCase()))
+		.limit(limit)
+		.toArray();
+}
+
+export async function dxFindAircrafts(query: string, limit: number): Promise<StaticAircraftType[]> {
+	return await db.aircrafts
+		.filter((aircraft) => aircraft.name.toLowerCase().includes(query.toLowerCase()) || aircraft.icao.toLowerCase().includes(query.toLowerCase()))
+		.limit(limit)
+		.toArray();
+}
+
+export async function dxFindAirports(query: string, limit: number): Promise<StaticAirport[]> {
+	return await db.airports
+		.filter((airport) => airport.name.toLowerCase().includes(query.toLowerCase()) || airport.id.toLowerCase().includes(query.toLowerCase()))
+		.limit(limit)
+		.toArray();
 }
 
 export async function dxGetTracons(ids: string[]): Promise<(DexieFeature | undefined)[]> {

@@ -401,6 +401,8 @@ function clearMap(): void {
 }
 
 export function resetMap(nav: boolean = true): void {
+	clearMap();
+
 	if (lastExtent) {
 		const view = getMapView();
 		view?.fit(lastExtent, {
@@ -416,8 +418,6 @@ export function resetMap(nav: boolean = true): void {
 	}
 	clickedFeature?.set("clicked", false);
 	clickedFeature = null;
-
-	clearMap();
 
 	if (nav) {
 		navigate?.(`/`);
@@ -476,4 +476,28 @@ export function setClickedFeature(path: string): void {
 			map?.addOverlay(overlay);
 		});
 	}
+}
+
+export function moveViewToCoordinates(lon: number, lat: number): void {
+	const view = getMapView();
+	if (!view) return;
+
+	const coords = fromLonLat([lon, lat]);
+	view.animate({
+		center: coords,
+		zoom: Math.max(view.getZoom() || 2, 8),
+		duration: 500,
+	});
+}
+
+export function zoomView(zoomIn: boolean): void {
+	const view = getMapView();
+	if (!view) return;
+
+	const currentZoom = view.getZoom() || 2;
+	const newZoom = zoomIn ? currentZoom + 1 : currentZoom - 1;
+	view.animate({
+		zoom: newZoom,
+		duration: 300,
+	});
 }

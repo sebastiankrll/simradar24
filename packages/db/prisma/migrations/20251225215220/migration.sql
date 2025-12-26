@@ -1,6 +1,7 @@
 -- CreateTable
 CREATE TABLE "Pilot" (
     "pilot_id" CHAR(10) NOT NULL,
+    "cid" INTEGER NOT NULL,
     "callsign" TEXT NOT NULL,
     "latitude" DOUBLE PRECISION NOT NULL,
     "longitude" DOUBLE PRECISION NOT NULL,
@@ -12,9 +13,6 @@ CREATE TABLE "Pilot" (
     "aircraft" TEXT NOT NULL,
     "transponder" CHAR(4) NOT NULL,
     "frequency" INTEGER NOT NULL,
-    "route" TEXT NOT NULL,
-    "ghost" BOOLEAN NOT NULL,
-    "cid" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
     "server" TEXT NOT NULL,
     "pilot_rating" TEXT NOT NULL,
@@ -32,6 +30,14 @@ CREATE TABLE "Pilot" (
     "arr_icao" TEXT,
 
     CONSTRAINT "Pilot_pkey" PRIMARY KEY ("pilot_id")
+);
+
+-- CreateTable
+CREATE TABLE "User" (
+    "cid" BIGINT NOT NULL,
+    "settings" JSONB,
+
+    CONSTRAINT "User_pkey" PRIMARY KEY ("cid")
 );
 
 -- CreateIndex

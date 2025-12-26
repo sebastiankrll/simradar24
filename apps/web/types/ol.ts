@@ -1,7 +1,9 @@
 import type { PilotShort } from "@sr24/types/vatsim";
+import type { Coordinate } from "ol/coordinate";
 
 export interface PilotProperties extends Required<PilotShort> {
 	type: "pilot";
+	coord3857: Coordinate;
 	clicked: boolean;
 	hovered: boolean;
 }

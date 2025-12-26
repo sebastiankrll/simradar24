@@ -3,6 +3,7 @@ export type StatusMap = {
 	firs?: boolean;
 	tracons?: boolean;
 	airlines?: boolean;
+	aircrafts?: boolean;
 	cache?: boolean;
 	map?: boolean;
 };

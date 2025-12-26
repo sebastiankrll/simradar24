@@ -1,6 +1,6 @@
-import aircraftSprite from "./sprites/aircraftSprite.png";
-import airportLabelSprite from "./sprites/airportLabelSprite.png";
-import airportSprite from "./sprites/airportSprite.png";
+import aircraftSprite from "@/assets/images/sprites/aircraftSprite.png";
+import airportLabelSprite from "@/assets/images/sprites/airportLabelSprite.png";
+import airportSprite from "@/assets/images/sprites/airportSprite.png";
 
 export const webglConfig = {
 	pilot_main: {

@@ -1,0 +1,99 @@
+#filters-panel {
+	gap: 10px;
+	padding-bottom: 10px;
+}
+
+#filter-select {
+	margin: 0px 10px;
+}
+
+.filter-list {
+	display: flex;
+	flex-flow: column;
+	padding: 0px 10px;
+	gap: 2px;
+}
+
+.no-filters-selected {
+	font-size: 12px;
+	text-align: center;
+}
+
+.filter-option {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-size: var(--font-size-normal);
+	gap: 2px;
+}
+
+.filter-option p {
+	display: flex;
+	align-items: center;
+	padding: 0px 4px;
+	background: var(--color-dark-grey);
+	flex: 1;
+	height: 24px;
+}
+
+.filter-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--color-blue);
+	width: 24px;
+}
+
+.filter-button:hover {
+	background: var(--color-green);
+}
+
+.filter-button use {
+	color: white;
+}
+
+#filter-actions {
+	display: flex;
+	gap: 10px;
+	padding: 0px 10px;
+}
+
+.filter-action {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--color-blue);
+	color: white;
+	flex: 1;
+	height: 24px;
+}
+
+.filter-input-wrapper {
+	display: flex;
+	flex-flow: column;
+	gap: 2px;
+}
+
+.filter-input-wrapper p {
+	padding-left: 1px;
+	font-size: 12px;
+	text-transform: uppercase;
+	font-weight: var(--font-weight-bold);
+}
+
+.filter-input {
+	display: flex;
+	gap: 2px;
+}
+
+#filter-input-route {
+	display: flex;
+	width: 100%;
+}
+
+#filter-input-route span {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0px 4px;
+}

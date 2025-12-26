@@ -8,7 +8,8 @@ import { DashboardHistory } from "./DashboardHistory";
 import { DashboardStats } from "./DashboardStats";
 import "./DashboardPanel.css";
 import useSWR from "swr";
-import Spinner from "@/components/Spinner/Spinner";
+import Icon from "@/components/shared/Icon/Icon";
+import Spinner from "@/components/shared/Spinner/Spinner";
 import { fetchApi } from "@/utils/api";
 
 function storeOpenSections(sections: string[]) {
@@ -67,14 +68,7 @@ export default function DashboardPanel() {
 					onClick={() => toggleSection("history")}
 				>
 					<p>Last 24 hours</p>
-					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-						<title>Last 24 hours</title>
-						<path
-							fillRule="evenodd"
-							d="M11.842 18 .237 7.26a.686.686 0 0 1 0-1.038.8.8 0 0 1 1.105 0L11.842 16l10.816-9.704a.8.8 0 0 1 1.105 0 .686.686 0 0 1 0 1.037z"
-							clipRule="evenodd"
-						></path>
-					</svg>
+					<Icon name="arrow-down" />
 				</button>
 				<div ref={historyRef} className={`panel-sub-container accordion${openSection.includes("history") ? " open" : ""}`}>
 					<DashboardHistory history={data.history} />
@@ -87,14 +81,7 @@ export default function DashboardPanel() {
 					onClick={() => toggleSection("stats")}
 				>
 					<p>General statistics</p>
-					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-						<title>General statistics</title>
-						<path
-							fillRule="evenodd"
-							d="M11.842 18 .237 7.26a.686.686 0 0 1 0-1.038.8.8 0 0 1 1.105 0L11.842 16l10.816-9.704a.8.8 0 0 1 1.105 0 .686.686 0 0 1 0 1.037z"
-							clipRule="evenodd"
-						></path>
-					</svg>
+					<Icon name="arrow-down" />
 				</button>
 				<div ref={statsRef} className={`panel-sub-container accordion${openSection.includes("stats") ? " open" : ""}`}>
 					<DashboardStats stats={data.stats} />
@@ -107,14 +94,7 @@ export default function DashboardPanel() {
 					onClick={() => toggleSection("events")}
 				>
 					<p>VATSIM events</p>
-					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-						<title>VATSIM events</title>
-						<path
-							fillRule="evenodd"
-							d="M11.842 18 .237 7.26a.686.686 0 0 1 0-1.038.8.8 0 0 1 1.105 0L11.842 16l10.816-9.704a.8.8 0 0 1 1.105 0 .686.686 0 0 1 0 1.037z"
-							clipRule="evenodd"
-						></path>
-					</svg>
+					<Icon name="arrow-down" />
 				</button>
 				<div className={`panel-sub-container scrollable`}>
 					<DashboardEvents events={data.events} ref={eventsRef} openSection={openSection} />

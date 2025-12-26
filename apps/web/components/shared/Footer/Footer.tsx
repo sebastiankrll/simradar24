@@ -1,3 +1,4 @@
+import Icon from "../Icon/Icon";
 import Clock from "./Clock";
 import "./Footer.css";
 import Metrics from "./Metrics";
@@ -6,6 +7,7 @@ export default function Footer() {
 	return (
 		<footer>
 			<div className="footer-item" id="footer-main">
+				<Icon name="signal" size={16} />
 				<Metrics />
 				<Clock />
 			</div>

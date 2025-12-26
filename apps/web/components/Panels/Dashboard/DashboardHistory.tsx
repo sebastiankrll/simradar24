@@ -14,7 +14,7 @@ export function DashboardHistory({ history }: { history: DashboardData["history"
 
 	return (
 		<ResponsiveContainer width="100%" height={150} maxHeight={500}>
-			<LineChart data={data} margin={{ top: 5, right: 5, bottom: 10, left: 5 }}>
+			<LineChart data={data} margin={{ top: 10, right: 5, bottom: 10, left: 5 }}>
 				<YAxis
 					yAxisId="all"
 					orientation="left"

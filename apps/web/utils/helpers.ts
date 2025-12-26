@@ -58,53 +58,53 @@ export function convertTime(
 	}
 }
 
-export function convertDistance(km: number, unit: "km" | "miles" | "nm", withUnit: boolean = true): string {
+export function convertDistance(km: number, unit: "km" | "miles" | "nm", withUnit: boolean = true): string | number {
 	switch (unit) {
 		case "km":
-			return `${Math.round(km).toLocaleString()}${withUnit ? " km" : ""}`;
+			return withUnit ? `${Math.round(km).toLocaleString()} km` : Math.round(km);
 		case "miles":
-			return `${Math.round(km * 0.621371).toLocaleString()}${withUnit ? " mi" : ""}`;
+			return withUnit ? `${Math.round(km * 0.621371).toLocaleString()} mi` : Math.round(km * 0.621371);
 		case "nm":
-			return `${Math.round(km * 0.539957).toLocaleString()}${withUnit ? " nm" : ""}`;
+			return withUnit ? `${Math.round(km * 0.539957).toLocaleString()} nm` : Math.round(km * 0.539957);
 		default:
-			return `${Math.round(km).toLocaleString()}${withUnit ? " km" : ""}`;
+			return withUnit ? `${Math.round(km).toLocaleString()} km` : Math.round(km);
 	}
 }
 
-export function convertSpeed(knots: number, unit: "knots" | "kmh" | "mph" | "ms", withUnit: boolean = true): string {
+export function convertSpeed(knots: number, unit: "knots" | "kmh" | "mph" | "ms", withUnit: boolean = true): string | number {
 	switch (unit) {
 		case "knots":
-			return `${Math.round(knots)}${withUnit ? " kt" : ""}`;
+			return withUnit ? `${Math.round(knots)} kt` : Math.round(knots);
 		case "kmh":
-			return `${Math.round(knots * 1.852)}${withUnit ? " km/h" : ""}`;
+			return withUnit ? `${Math.round(knots * 1.852)} km/h` : Math.round(knots * 1.852);
 		case "mph":
-			return `${Math.round(knots * 1.15078)}${withUnit ? " mph" : ""}`;
+			return withUnit ? `${Math.round(knots * 1.15078)} mph` : Math.round(knots * 1.15078);
 		case "ms":
-			return `${Math.round((knots * 1.852) / 3.6)}${withUnit ? " m/s" : ""}`;
+			return withUnit ? `${Math.round((knots * 1.852) / 3.6)} m/s` : Math.round((knots * 1.852) / 3.6);
 		default:
-			return `${Math.round(knots)}${withUnit ? " kt" : ""}`;
+			return withUnit ? `${Math.round(knots)} kt` : Math.round(knots);
 	}
 }
 
-export function convertAltitude(feet: number, unit: "feet" | "meters", withUnit: boolean = true): string {
+export function convertAltitude(feet: number, unit: "feet" | "meters", withUnit: boolean = true): string | number {
 	switch (unit) {
 		case "feet":
-			return `${Math.round(feet).toLocaleString()}${withUnit ? " ft" : ""}`;
+			return withUnit ? `${Math.round(feet).toLocaleString()} ft` : Math.round(feet);
 		case "meters":
-			return `${Math.round(feet * 0.3048).toLocaleString()}${withUnit ? " m" : ""}`;
+			return withUnit ? `${Math.round(feet * 0.3048).toLocaleString()} m` : Math.round(feet * 0.3048);
 		default:
-			return `${Math.round(feet).toLocaleString()}${withUnit ? " ft" : ""}`;
+			return withUnit ? `${Math.round(feet).toLocaleString()} ft` : Math.round(feet);
 	}
 }
 
-export function convertVerticalSpeed(fpm: number, unit: "fpm" | "ms", withUnit: boolean = true): string {
+export function convertVerticalSpeed(fpm: number, unit: "fpm" | "ms", withUnit: boolean = true): string | number {
 	switch (unit) {
 		case "fpm":
-			return `${fpm > 0 ? "+" : ""}${Math.round(fpm).toLocaleString()}${withUnit ? " fpm" : ""}`;
+			return withUnit ? `${fpm > 0 ? "+" : ""}${Math.round(fpm).toLocaleString()} fpm` : Math.round(fpm);
 		case "ms":
-			return `${fpm > 0 ? "+" : ""}${Math.round(fpm * 0.00508).toLocaleString()}${withUnit ? " m/s" : ""}`;
+			return withUnit ? `${fpm > 0 ? "+" : ""}${Math.round(fpm * 0.00508).toLocaleString()} m/s` : Math.round(fpm * 0.00508);
 		default:
-			return `${fpm > 0 ? "+" : ""}${Math.round(fpm).toLocaleString()}${withUnit ? " fpm" : ""}`;
+			return withUnit ? `${fpm > 0 ? "+" : ""}${Math.round(fpm).toLocaleString()} fpm` : Math.round(fpm);
 	}
 }
 

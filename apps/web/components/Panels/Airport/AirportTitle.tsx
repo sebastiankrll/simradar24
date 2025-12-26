@@ -57,7 +57,7 @@ export function AirportTitle({ staticAirport }: { staticAirport: StaticAirport |
 				<p>{staticAirport?.name || "Unknown Airport"}</p>
 				<div className="panel-desc-items">
 					<div className="panel-desc-item r">{staticAirport?.iata || "N/A"}</div>
-					<div className="panel-desc-item">{time}</div>
+					<div className="panel-desc-item g">{time}</div>
 				</div>
 			</div>
 		</div>

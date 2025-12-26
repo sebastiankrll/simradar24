@@ -19,15 +19,15 @@
 	display: grid;
 	grid-template-columns: 1fr auto;
 	background: var(--color-light-grey);
-	padding: 2px 5px;
+	padding: 4px;
 }
 
 .panel-controller-title p {
-	font-size: 12px;
+	font-size: var(--font-size-small);
 }
 
 .panel-controller-title p:nth-child(-n + 2) {
-	font-weight: 700;
+	font-weight: var(--font-weight-bold);
 }
 
 .panel-controller-content {

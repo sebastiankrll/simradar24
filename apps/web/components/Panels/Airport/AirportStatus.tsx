@@ -157,7 +157,10 @@ export function AirportStatus({ airport, parsedMetar }: { airport: AirportLong |
 				</div>
 				<div className="panel-airport-status-item">
 					<p>Avg. Delay</p>
-					<p className={getDelayColor(avgDelay)}>{`${avgDelay} min`}</p>
+					<p>
+						<span className={`delay-indicator ${getDelayColor(avgDelay) ?? ""}`}></span>
+						{`${avgDelay} min`}
+					</p>
 				</div>
 			</div>
 		</div>

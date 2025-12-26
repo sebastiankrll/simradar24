@@ -1,14 +1,20 @@
-#map-controls {
+#map-controls-wrapper {
 	position: absolute;
 	right: 1rem;
 	top: 4.5rem;
 	display: flex;
 	flex-flow: column;
-	gap: 1rem;
+	gap: 20px;
+	z-index: 1;
+}
+
+.map-controls {
+	display: flex;
+	flex-flow: column;
+	gap: 10px;
 	background: var(--color-glass-bg);
 	backdrop-filter: blur(5px);
 	border: 1px solid var(--color-border);
-	padding: 0.5rem;
 	z-index: 1;
 }
 
@@ -16,7 +22,7 @@
 	width: 2rem;
 	height: 2rem;
 	background: var(--color-bg);
-	box-shadow: 1px 1px 5px 1px var(--color-box-shadow);
+	box-shadow: var(--box-shadow);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -24,5 +30,16 @@
 
 .map-control-item:hover {
 	background: var(--color-hover);
+}
+
+.map-control-item:hover use {
+	color: white;
+}
+
+.map-control-item.active {
+	background: var(--color-green);
+}
+
+.map-control-item.active use {
 	color: white;
 }

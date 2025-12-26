@@ -3,34 +3,22 @@
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { useEffect } from "react";
-import { useSettingsStore } from "@/storage/zustand";
+import { fetchUserSettings, useSettingsStore } from "@/storage/zustand";
+
+let initialized = false;
 
 export default function useSettings() {
 	const { setTheme } = useTheme();
-	const { theme: settingsTheme, setSettings } = useSettingsStore();
+	const settings = useSettingsStore();
 	const { data: session } = useSession();
 
 	useEffect(() => {
-		setTheme(settingsTheme);
-	}, [settingsTheme, setTheme]);
+		setTheme(settings.theme);
+	}, [settings.theme, setTheme]);
 
 	useEffect(() => {
-		if (!session) return;
-
-		const fetchUserSettings = async () => {
-			try {
-				const res = await fetch("/user/settings", { cache: "no-store" });
-				if (!res.ok) {
-					return;
-				}
-
-				const data = await res.json();
-				setSettings(data.settings);
-			} catch (err) {
-				console.error("Failed to load settings:", err);
-			}
-		};
-
+		if (!session || initialized) return;
+		initialized = true;
 		fetchUserSettings();
-	}, [setSettings, session]);
+	}, [session]);
 }

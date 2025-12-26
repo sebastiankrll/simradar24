@@ -18,22 +18,30 @@ export async function updateR2Storage(): Promise<void> {
 		"static_firs:version",
 		"static_tracons:version",
 		"static_airlines:version",
+		"static_aircrafts:version",
 	]);
 	const manifest = {
 		airportsVersion: versions[0],
 		firsVersion: versions[1],
 		traconsVersion: versions[2],
 		airlinesVersion: versions[3],
+		aircraftsVersion: versions[4],
 	};
 
 	await uploadManifestToR2(manifest);
 
-	const datas = await rdsGetMultiple("", ["static_airports:all", "static_firs:all", "static_tracons:all", "static_airlines:all"]);
+	const datas = await rdsGetMultiple("", [
+		"static_airports:all",
+		"static_firs:all",
+		"static_tracons:all",
+		"static_airlines:all",
+		"static_aircrafts:all",
+	]);
 	await uploadDataToR2(`airports_${manifest.airportsVersion}.json`, JSON.stringify(datas[0]));
 	await uploadDataToR2(`firs_${manifest.firsVersion}.json`, JSON.stringify(datas[1]));
 	await uploadDataToR2(`tracons_${manifest.traconsVersion}.json`, JSON.stringify(datas[2]));
 	await uploadDataToR2(`airlines_${manifest.airlinesVersion}.json`, JSON.stringify(datas[3]));
-
+	await uploadDataToR2(`aircrafts_${manifest.aircraftsVersion}.json`, JSON.stringify(datas[4]));
 	console.log("✅ R2 storage update completed!");
 }
 

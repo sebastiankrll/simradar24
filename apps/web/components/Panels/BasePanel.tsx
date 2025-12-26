@@ -3,7 +3,7 @@
 import "./BasePanel.css";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import Spinner from "../Spinner/Spinner";
+import Spinner from "../shared/Spinner/Spinner";
 
 export default function BasePanel({ children }: { children: React.ReactNode }) {
 	const pathname = usePathname();
@@ -12,11 +12,10 @@ export default function BasePanel({ children }: { children: React.ReactNode }) {
 
 	useEffect(() => {
 		const type = pathname.split("/")[1] || "";
-		if (prevPath.current === null) {
+		if (prevPath.current === null || prevPath.current === type) {
 			prevPath.current = type;
 			return;
 		}
-		if (prevPath.current === type) return;
 
 		setOpen(false);
 		const openTimeout = setTimeout(() => {

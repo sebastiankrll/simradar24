@@ -7,8 +7,8 @@ import { useTheme } from "next-themes";
 import { ToastContainer } from "react-toastify";
 import { useSettingsStore } from "@/storage/zustand";
 import Initializer from "../Initializer/Initializer";
-import { MessageBoxCloseButton } from "../MessageBox/MessageBox";
 import BasePanel from "../Panels/BasePanel";
+import { MessageBoxCloseButton } from "../shared/MessageBox/MessageBox";
 import MapControls from "./components/MapControls";
 import { setDataLayersSettings } from "./utils/dataLayers";
 import { onClick, onMoveEnd, onPointerMove, setNavigator } from "./utils/events";
@@ -29,9 +29,7 @@ export default function OMap({ children }: { children?: React.ReactNode }) {
 		animatedPlaneMarkers,
 		sectorAreas,
 		traconColor,
-		traconTransparency,
 		firColor,
-		firTransparency,
 	} = useSettingsStore();
 
 	useEffect(() => {
@@ -74,28 +72,8 @@ export default function OMap({ children }: { children?: React.ReactNode }) {
 
 	useEffect(() => {
 		setSunLayerSettings(dayNightLayer, dayNightLayerBrightness);
-		setDataLayersSettings(
-			airportMarkers,
-			airportMarkerSize,
-			planeMarkerSize,
-			sectorAreas,
-			traconColor,
-			traconTransparency,
-			firColor,
-			firTransparency,
-		);
-	}, [
-		dayNightLayer,
-		dayNightLayerBrightness,
-		airportMarkers,
-		airportMarkerSize,
-		planeMarkerSize,
-		sectorAreas,
-		traconColor,
-		traconTransparency,
-		firColor,
-		firTransparency,
-	]);
+		setDataLayersSettings(airportMarkers, airportMarkerSize, planeMarkerSize, sectorAreas, traconColor, firColor);
+	}, [dayNightLayer, dayNightLayerBrightness, airportMarkers, airportMarkerSize, planeMarkerSize, sectorAreas, traconColor, firColor]);
 
 	return (
 		<>

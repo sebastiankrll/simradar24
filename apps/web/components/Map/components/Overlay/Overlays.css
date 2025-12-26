@@ -11,14 +11,14 @@
 	background: var(--color-red);
 	padding: 2px;
 	box-sizing: border-box;
-	box-shadow: 0px 2px 6px var(--color-box-shadow);
+	box-shadow: var(--box-shadow);
 }
 
 .overlay-atis-item {
 	background: var(--color-bg);
 	padding: 4px;
 	box-sizing: border-box;
-	font-size: 10px;
+	font-size: var(--font-size-small);
 }
 
 .overlay-live {
@@ -26,7 +26,7 @@
 	gap: 2px;
 	padding: 2px;
 	background: var(--color-red);
-	box-shadow: 0px 2px 6px var(--color-box-shadow);
+	box-shadow: var(--box-shadow);
 }
 
 .overlay-live.pilot {
@@ -37,7 +37,7 @@
 .overlay-live-item {
 	display: flex;
 	background-color: var(--color-bg);
-	font-size: 12px;
+	font-size: var(--font-size-small);
 	justify-content: space-between;
 	align-items: center;
 	padding: 0px 4px;
@@ -62,7 +62,7 @@
 }
 
 .overlay-live-item span {
-	font-weight: 700;
+	font-weight: var(--font-weight-bold);
 }
 
 .overlay-controller-color {
@@ -73,22 +73,32 @@
 }
 
 .overlay-controller-callsign {
-	font-weight: 700;
+	font-weight: var(--font-weight-bold);
 	margin-right: auto;
 }
 
 .overlay-controller-frequency {
 	margin-left: 2rem;
-	font-weight: 700;
+	font-weight: var(--font-weight-bold);
+	margin-right: 10px;
 }
 
 .overlay-controller-connections {
-	width: 25px;
+	margin-left: 3px;
 	text-align: end;
 }
 
 .overlay-controller-save {
-	margin-left: 4px;
+	margin-left: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+}
+
+.overlay-controller-save use {
+	color: var(--color-main-text);
 }
 
 .overlay-main-wrapper {
@@ -97,16 +107,16 @@
 	height: 2.5rem;
 	padding: 2px;
 	box-sizing: border-box;
-	box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.3);
+	box-shadow: var(--box-shadow);
 }
 
 .overlay-main-wrapper.minimal {
 	height: fit-content;
 	color: white;
 	padding: 0px 5px;
-	font-weight: 700;
+	font-weight: var(--font-weight-bold);
 	line-height: 18px;
-	font-size: 14px;
+	font-size: var(--font-size-normal);
 }
 
 .overlay-main-wrapper::after {
@@ -136,7 +146,8 @@
 	box-sizing: border-box;
 }
 
-.overlay-icon p {
+.overlay-icon p,
+.overlay-icon span {
 	font-weight: 800;
 	font-size: 18px;
 	line-height: 18px;
@@ -145,26 +156,25 @@
 .overlay-title {
 	display: flex;
 	flex-flow: column;
-	gap: 5px;
+	gap: 2px;
 	margin-left: 5px;
 	margin-right: auto;
 	min-width: 0;
+	justify-content: center;
 }
 
 .overlay-title p {
 	color: white;
-	font-weight: 700;
-	line-height: 18px;
-	font-size: 14px;
+	font-weight: var(--font-weight-bold);
+	font-size: var(--font-size-normal);
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
 }
 
 .overlay-title p:last-child {
-	font-size: 10px;
-	line-height: 10px;
-	font-weight: 500;
+	font-size: var(--font-size-small);
+	font-weight: var(--font-weight-normal);
 }
 
 .overlay-misc {
@@ -186,7 +196,7 @@
 }
 
 .overlay-pilot-ac-type {
-	background: rgb(77, 95, 131);
+	background: rgb(21, 27, 39);
 	color: white;
 	font-weight: 700;
 }
@@ -209,9 +219,8 @@
 	text-align: end;
 }
 
-.overlay-airport-traffic svg {
-	fill: white;
-	width: 18px;
+.overlay-airport-traffic use {
+	color: white;
 }
 
 .overlay-anchor {

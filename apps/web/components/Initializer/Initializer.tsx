@@ -15,6 +15,8 @@ function getInitializerText(status: StatusMap): string {
 		return "Downloading SimAware data ...";
 	} else if (!status.airlines) {
 		return "Downloading airline data ...";
+	} else if (!status.aircrafts) {
+		return "Downloading aircraft data ...";
 	} else if (!status.cache) {
 		return "Initializing local cache ...";
 	} else if (!status.map) {
@@ -36,7 +38,7 @@ export default function Initializer() {
 	}, [pathname]);
 
 	useEffect(() => {
-		if (status.airports && status.firs && status.tracons && status.airlines && status.cache && status.map) {
+		if (status.airports && status.firs && status.tracons && status.airlines && status.aircrafts && status.cache && status.map) {
 			setOpen(false);
 			setTimeout(() => setVisible(false), 500);
 		}
@@ -48,7 +50,7 @@ export default function Initializer() {
 
 	return (
 		<div id="initializer" className={open ? "open" : ""}>
-			<span id="initializer-progress" style={{ width: `${(Object.keys(status).length / 6) * 100}%` }}></span>
+			<span id="initializer-progress" style={{ width: `${(Object.keys(status).length / 7) * 100}%` }}></span>
 			<p id="initializer-title">Initializing data ...</p>
 			<p id="initializer-disclaimer">This can take up to a minute during the first load.</p>
 			<p id="initializer-text">{getInitializerText(status)}</p>

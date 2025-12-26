@@ -23,7 +23,9 @@
 	background-color: var(--color-bg);
 	padding: 0.5rem;
 	box-sizing: border-box;
-	box-shadow: 1px 1px 5px 1px var(--color-box-shadow);
+	box-shadow: var(--box-shadow);
+	overflow-x: hidden;
+	flex-shrink: 0;
 }
 
 .panel-header {
@@ -38,32 +40,35 @@
 	height: 1.5rem;
 	line-height: 1.5rem;
 	padding: 0rem 0.5rem;
-	font-weight: 800;
+	font-weight: var(--font-weight-bold);
 }
 
 .panel-close {
 	background-color: var(--color-red);
 	width: 1.5rem;
 	height: 1.5rem;
-	padding: 0.25rem;
 	margin-left: auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
-.panel-close svg {
-	fill: white;
+.panel-close use {
+	color: white;
 }
 
 .panel-close:hover {
 	background-color: white;
 }
 
-.panel-close:hover svg {
-	fill: var(--color-red);
+.panel-close:hover use {
+	color: var(--color-red);
 }
 
 .panel-container.title-section {
 	display: flex;
 	padding: 0rem;
+	min-height: 58px;
 }
 
 .panel-icon {
@@ -79,8 +84,9 @@
 	box-sizing: border-box;
 }
 
-.panel-icon p {
-	font-weight: 800;
+.panel-icon p,
+.panel-icon span {
+	font-weight: var(--font-weight-bold);
 	font-size: 1.5rem;
 	line-height: 1.5rem;
 }
@@ -88,15 +94,14 @@
 .panel-title {
 	display: flex;
 	flex-flow: column;
-	justify-content: center;
-	padding: 4px;
-	gap: 4px;
+	justify-content: space-between;
+	padding: 8px 4px;
 	margin-left: 4px;
 	overflow: hidden;
 }
 
 .panel-title p {
-	font-weight: 700;
+	font-weight: var(--font-weight-bold);
 	font-size: 1rem;
 	white-space: nowrap;
 	overflow: hidden;
@@ -109,8 +114,8 @@
 }
 
 .panel-desc-item {
-	font-size: 12px;
-	font-weight: 600;
+	font-size: var(--font-size-small);
+	font-weight: var(--font-weight-bold);
 }
 
 .panel-desc-item.r {
@@ -163,13 +168,14 @@
 
 .panel-container-header p {
 	color: white;
-	font-weight: 600;
-	font-size: 12px;
+}
+
+.panel-container-header use {
+	color: white;
 }
 
 .panel-container-header:hover {
 	background-color: white;
-	border: 1px solid var(--color-blue);
 }
 
 .panel-container-header:hover * {
@@ -178,11 +184,8 @@
 }
 
 .panel-container-header svg {
-	width: 1rem;
-	height: 1rem;
 	margin-left: auto;
 	transition: transform 0.2s ease;
-	fill: white;
 }
 
 .panel-container-header.open svg {
@@ -205,6 +208,10 @@
 	min-height: 0px;
 }
 
+.panel-section-title use {
+	color: var(--color-main-text);
+}
+
 .panel-section-title {
 	display: flex;
 	justify-content: center;
@@ -214,11 +221,6 @@
 	min-width: 2rem;
 }
 
-.panel-section-title svg {
-	width: 1rem;
-	fill: var(--color-main-text);
-}
-
 .panel-section-content {
 	display: grid;
 	width: 100%;
@@ -226,23 +228,25 @@
 
 .panel-data-separator {
 	background-color: var(--color-dark-grey);
-	padding: 2px 5px;
-	font-size: 12px;
+	padding: 4px;
+	font-size: var(--font-size-small);
+	line-height: var(--font-size-small);
 	text-transform: uppercase;
 }
 
 .panel-data-item {
-	padding: 2px 5px;
+	padding: 4px;
 	display: flex;
 	flex-flow: column;
 }
 
 .panel-data-item p {
-	font-size: 11px;
+	font-size: var(--font-size-small);
+	position: relative;
 }
 
 .panel-data-item p:first-child {
-	font-weight: 700;
+	font-weight: 500;
 	text-transform: uppercase;
 }
 
@@ -277,9 +281,8 @@
 	opacity: 1;
 }
 
-.panel-navigation-button svg {
-	fill: var(--color-main-text);
-	height: 1rem;
+.panel-navigation-button use {
+	color: var(--color-main-text);
 }
 
 .panel-navigation-button:hover {
@@ -290,12 +293,36 @@
 	background-color: var(--color-green);
 }
 
-.panel-navigation-button:hover svg,
-.panel-navigation-button.active svg {
-	fill: white;
+.panel-navigation-button:hover use,
+.panel-navigation-button.active use {
+	color: white;
 }
 
 .panel-navigation-button:hover p,
 .panel-navigation-button.active p {
 	color: white;
+}
+
+.delay-indicator {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	border: 1px solid var(--color-border);
+	position: absolute;
+	left: -10px;
+	top: 50%;
+	transform: translateY(-50%);
+	background: rgb(141, 141, 141);
+}
+
+.delay-indicator.green {
+	background-color: var(--color-green);
+}
+
+.delay-indicator.yellow {
+	background-color: var(--color-yellow);
+}
+
+.delay-indicator.red {
+	background-color: var(--color-red);
 }

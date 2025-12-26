@@ -6,8 +6,9 @@ import Image from "next/image";
 import { signIn, useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import simradar24Logo from "@/assets/images/logos/Simradar21_Logo.svg";
-import VatsimLogo from "@/assets/images/logos/VATSIM_Logo_Only.png";
 import useSettings from "@/hooks/useSettings";
+import { storeUserSettings, useSettingsStore } from "@/storage/zustand";
+import Icon from "../Icon/Icon";
 import Navigation from "./Navigation";
 
 export default function Header() {
@@ -16,7 +17,16 @@ export default function Header() {
 
 	const { data: session } = useSession();
 
+	const settings = useSettingsStore();
 	useSettings();
+
+	const onThemeChange = async () => {
+		settings.setTheme(settings.theme === "dark" ? "light" : "dark");
+
+		if (session) {
+			storeUserSettings();
+		}
+	};
 
 	useEffect(() => {
 		function handleClickOutside(event: MouseEvent) {
@@ -37,15 +47,26 @@ export default function Header() {
 	return (
 		<header ref={headerRef}>
 			<figure id="header-logo">
-				<Image src={simradar24Logo} alt="simradar24 logo" height={40} width={200} priority />
+				<a href="/">
+					<Image src={simradar24Logo} alt="simradar24 logo" height={40} width={200} priority />
+				</a>
 			</figure>
 			<Search />
+			<button
+				type="button"
+				id="header-theme"
+				onClick={() => onThemeChange()}
+				aria-label="Toggle Theme"
+				className={settings.theme === "dark" ? "light" : "dark"}
+			>
+				{<Icon name={settings.theme === "dark" ? "light-theme" : "dark-theme"} size={24} />}
+			</button>
 			<button type="button" id="header-user" onClick={() => signIn("vatsim")} aria-label="Sign In/Out">
-				<Image src={VatsimLogo} alt="VATSIM logo" height={30} width={30} />
+				<Icon name="user" size={18} offset={-1} />
 				<span style={{ backgroundColor: session ? "var(--color-green)" : "var(--color-red)" }}></span>
 			</button>
 			<button type="button" id="header-nav" aria-label="Navigation" onClick={() => setOpen(!open)}>
-				{open ? "✕" : "☰"}
+				<Icon name={open ? "cancel" : "off-canvas"} size={24} />
 			</button>
 			<Navigation open={open} />
 		</header>

@@ -13,11 +13,12 @@ interface RBushAirportFeature {
 	minY: number;
 	maxX: number;
 	maxY: number;
-	feature: Feature<Point>;
 	size: string;
+	feature: Feature<Point>;
 }
 
 const airportRBush = new RBush<RBushAirportFeature>();
+const airportMap = new Map<string, Feature<Point>>();
 
 export async function initAirportFeatures(): Promise<void> {
 	const airports = await dxGetAllAirports();
@@ -34,6 +35,8 @@ export async function initAirportFeatures(): Promise<void> {
 		};
 		feature.setProperties(props);
 		feature.setId(`airport_${a.id}`);
+
+		airportMap.set(a.id, feature);
 
 		return {
 			minX: a.longitude,
@@ -77,9 +80,9 @@ export function setAirportFeatures(extent: Extent, zoom: number): void {
 		airportMainSource.clear();
 
 		highlightedAirports.forEach((id) => {
-			const feature = airportRBush.all().find((a) => a.feature.getId() === `airport_${id}`);
+			const feature = airportMap.get(id);
 			if (feature) {
-				airportMainSource.addFeature(feature.feature);
+				airportMainSource.addFeature(feature);
 			}
 		});
 
@@ -90,20 +93,20 @@ export function setAirportFeatures(extent: Extent, zoom: number): void {
 	const airportsByExtent = airportRBush.search({ minX, minY, maxX, maxY });
 	const airportsBySize = airportsByExtent.filter((f) => visibleSizes.includes(f.size));
 
-	if (visibleSizes.length === 0 && highlightedAirports.size > 0) {
+	airportMainSource.clear();
+	airportMainSource.addFeatures(airportsBySize.map((f) => f.feature));
+
+	if (highlightedAirports.size > 0) {
 		highlightedAirports.forEach((id) => {
 			const exists = airportsBySize.find((a) => a.feature.getId() === `airport_${id}`);
 			if (!exists) {
-				const feature = airportRBush.all().find((a) => a.feature.getId() === `airport_${id}`);
+				const feature = airportMap.get(id);
 				if (feature) {
-					airportsBySize.push(feature);
+					airportMainSource.addFeature(feature);
 				}
 			}
 		});
 	}
-
-	airportMainSource.clear();
-	airportMainSource.addFeatures(airportsBySize.map((f) => f.feature));
 }
 
 function getVisibleSizes(zoom: number): string[] {
@@ -114,9 +117,9 @@ function getVisibleSizes(zoom: number): string[] {
 }
 
 export function moveToAirportFeature(id: string): Feature<Point> | null {
-	let feature = airportMainSource.getFeatureById(`airport_${id}`) as Feature<Point> | null;
+	let feature = airportMainSource.getFeatureById(`airport_${id}`) as Feature<Point> | undefined;
 	if (!feature) {
-		feature = airportRBush.all().find((a) => a.feature.getId() === `airport_${id}`)?.feature || null;
+		feature = airportMap.get(id);
 	}
 
 	const view = getMapView();
@@ -132,5 +135,5 @@ export function moveToAirportFeature(id: string): Feature<Point> | null {
 
 	addHighlightedAirport(id);
 
-	return feature;
+	return feature || null;
 }

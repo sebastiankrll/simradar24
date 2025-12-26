@@ -35,13 +35,13 @@
 
 .panel-pilot-airport-iata {
 	font-size: 1.75rem;
-	font-weight: 600;
+	font-weight: var(--font-weight-normal);
 	line-height: 1.75rem;
 }
 
 .panel-pilot-airport-name {
 	text-align: center;
-	font-size: 12px;
+	font-size: var(--font-size-small);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -73,10 +73,12 @@
 	border: 1px solid var(--color-border);
 	padding: 4px 0rem;
 	width: 100%;
+	gap: 4px 0px;
 }
 
 #panel-pilot-times p {
 	width: fit-content;
+	position: relative;
 }
 
 .panel-pilot-time-desc {
@@ -141,7 +143,7 @@
 #panel-pilot-progress-data {
 	display: flex;
 	justify-content: space-between;
-	font-size: 11px;
+	font-size: var(--font-size-small);
 	color: var(--color-main-text);
 	margin-top: 10px;
 }

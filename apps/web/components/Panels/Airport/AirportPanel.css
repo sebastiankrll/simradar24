@@ -22,29 +22,20 @@
 	align-items: center;
 	justify-content: center;
 	width: 100%;
-	font-size: 12px;
+	gap: 4px;
+	font-size: var(--font-size-small);
+}
+
+.panel-airport-status-item p {
+	position: relative;
 }
 
 .panel-airport-status-item p:first-child {
-	font-weight: 700;
+	font-weight: var(--font-weight-bold);
 }
 
 .panel-airport-status-item p:last-child {
 	padding: 0px 2px;
-}
-
-.panel-airport-status-item p.green {
-	background: var(--color-green);
-	color: white;
-}
-
-.panel-airport-status-item p.yellow {
-	background: var(--color-yellow);
-}
-
-.panel-airport-status-item p.red {
-	background: var(--color-red);
-	color: white;
 }
 
 #panel-airport-weather {
@@ -161,6 +152,7 @@
 	flex-flow: column;
 	justify-content: center;
 	width: 60px;
+	gap: 2px;
 }
 
 .panel-airport-flights-times p {
@@ -179,8 +171,9 @@
 	margin: 2px 0px;
 }
 
-.panel-airport-flights-icon p {
-	font-weight: 800;
+.panel-airport-flights-icon p,
+.panel-airport-flights-icon span {
+	font-weight: var(--font-weight-bold);
 	font-size: 1.2rem;
 }
 
@@ -190,8 +183,7 @@
 	grid-template-rows: repeat(2, 1fr);
 	width: 100%;
 	gap: 0px 20px;
-	padding: 2px 0px;
-	padding-right: 4px;
+	padding: 4px;
 }
 
 .panel-airport-flights-main p {
@@ -205,12 +197,12 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font-weight: 700;
+	font-weight: var(--font-weight-bold);
 }
 
 .panel-airport-flights-main p:nth-child(2n) {
 	justify-content: end;
-	font-size: 12px;
+	font-size: var(--font-size-small);
 }
 
 .panel-airport-flights-main span {

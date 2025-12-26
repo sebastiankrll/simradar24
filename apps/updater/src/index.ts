@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { rdsConnect } from "@sr24/db/redis";
 import { CronJob } from "cron";
+import { updateAircrafts } from "./aircrafts.js";
 import { updateAirlines } from "./airlines.js";
 import { updateAirports } from "./airports.js";
 import { updateFirs } from "./fir.js";
@@ -19,6 +20,7 @@ CronJob.from({
 		}
 
 		await updateAirlines();
+		await updateAircrafts();
 		await updateAirports();
 		await updateFirs();
 		await updateTracons();

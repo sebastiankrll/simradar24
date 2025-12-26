@@ -4,7 +4,7 @@ html {
 	margin: 0;
 	padding: 0;
 	font-optical-sizing: auto;
-	font-weight: 500;
+	font-weight: var(--font-weight-normal);
 	font-style: normal;
 	color: var(--color-main-text);
 	font-family: inherit;
@@ -23,28 +23,33 @@ html {
 	--color-main-text: rgb(77, 95, 131);
 	--color-light-text: rgb(183, 190, 206);
 	--color-light-grey: rgb(246, 248, 253);
-	--color-dark-grey: rgb(223, 227, 235);
-	--color-border: rgb(211, 214, 228);
+	--color-dark-grey: rgb(214, 218, 226);
+	--color-border: rgb(189, 193, 206);
 	--color-box-shadow: rgb(193, 194, 202);
-	--color-blue: rgb(60, 92, 255);
-	--color-light-blue: #3cb1ff;
-	--color-green: #0bd3a7;
+	--color-blue: #2f4de4;
+	--color-green: #11b18f;
 	--color-red: #ea5979;
 	--color-yellow: rgb(255, 244, 43);
 	--color-orange: #ff8a2b;
 	--color-magenta: rgb(222, 89, 234);
 	--color-glass-bg: rgba(255, 255, 255, 0.5);
 	--color-hover: rgb(77, 95, 131);
+
 	--box-shadow: 1px 1px 5px 1px var(--color-box-shadow);
+
+	--font-weight-bold: 700;
+	--font-weight-normal: 400;
+	--font-size-normal: 14px;
+	--font-size-small: 12px;
 }
 
 [data-theme="dark"] {
 	--color-bg: rgb(21, 27, 39);
 	--color-main-text: rgb(221, 225, 235);
-	--color-dark-grey: rgb(46, 52, 66);
-	--color-light-grey: rgb(46, 52, 66);
+	--color-dark-grey: rgb(56, 64, 82);
+	--color-light-grey: rgb(37, 43, 54);
 	--color-border: rgb(113, 121, 153);
-	--color-box-shadow: rgb(59, 61, 70);
+	--color-box-shadow: rgb(39, 40, 46);
 	--color-glass-bg: rgba(80, 80, 80, 0.3);
 	--color-hover: rgb(105, 124, 165);
 }
@@ -69,4 +74,26 @@ fieldset {
 section {
 	padding: 5.5rem 2rem 3.5rem 2rem;
 	flex: 1;
+}
+
+select {
+	font-family: inherit;
+	font-size: var(--font-size-normal);
+	color: inherit;
+	background-color: var(--color-dark-grey);
+	border: 1px solid transparent;
+}
+
+select:focus {
+	outline: none;
+	border-color: var(--color-border);
+}
+
+select option:checked {
+	background: var(--color-hover);
+	color: white;
+}
+
+select option:hover {
+	background: var(--color-hover);
 }

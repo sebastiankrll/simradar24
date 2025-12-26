@@ -7,12 +7,13 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import { setHoveredPilot } from "@/components/Map/utils/events";
-import Spinner from "@/components/Spinner/Spinner";
+import Spinner from "@/components/shared/Spinner/Spinner";
 import { cacheIsInitialized, getCachedAirline, getCachedAirport } from "@/storage/cache";
 import { useSettingsStore } from "@/storage/zustand";
 import { fetchApi } from "@/utils/api";
 import { convertTime } from "@/utils/helpers";
 import { getDelayColor } from "../Pilot/PilotTimes";
+import { getIcon } from "../Pilot/PilotTitle";
 import { queryClient } from "./AirportPanel";
 
 const LIMIT = 20;
@@ -171,18 +172,12 @@ function ListItem({
 				<p>{convertTime(schedTime, timeFormat, timeZone, false, dir === "dep" ? data.departure?.timezone : data.arrival?.timezone)}</p>
 				<p>{convertTime(estTime, timeFormat, timeZone, false, dir === "dep" ? data.departure?.timezone : data.arrival?.timezone)}</p>
 			</div>
-			<div className="panel-airport-flights-icon" style={{ backgroundColor: data.airline?.bg ?? "none" }}>
-				<p
-					style={{
-						color: data.airline?.font ?? "var(--color-green)",
-					}}
-				>
-					{data.airline?.iata || "?"}
-				</p>
+			<div className="panel-airport-flights-icon" style={{ backgroundColor: data.airline?.color?.[0] ?? "" }}>
+				{getIcon(data.airline)}
 			</div>
 			<div className="panel-airport-flights-main">
-				<p>{(dir === "dep" ? data.departure : data.arrival)?.name || "Unknown Airport"}</p>
-				<p>{`${(dir === "dep" ? data.departure : data.arrival)?.id ? `${(dir === "dep" ? data.departure : data.arrival)?.id} / ` : ""}${(dir === "dep" ? data.departure : data.arrival)?.iata || "N/A"}`}</p>
+				<p>{(dir === "dep" ? data.arrival : data.departure)?.name || "Unknown Airport"}</p>
+				<p>{`${(dir === "dep" ? data.arrival : data.departure)?.id ? `${(dir === "dep" ? data.arrival : data.departure)?.id} / ` : ""}${(dir === "dep" ? data.arrival : data.departure)?.iata || "N/A"}`}</p>
 				<p>
 					<span className={pilot.live ? "green" : "grey"}>Live</span>
 					{pilot.callsign}
