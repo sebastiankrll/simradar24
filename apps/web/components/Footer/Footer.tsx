@@ -16,7 +16,7 @@ export default function Footer() {
 				</a>
 			</div>
 			<div className="footer-item" id="footer-version">
-				v0.0.1
+				{process.env.NEXT_PUBLIC_APP_VERSION || "dev"}
 			</div>
 		</footer>
 	);

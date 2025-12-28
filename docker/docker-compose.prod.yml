@@ -61,6 +61,7 @@ services:
         NEXT_PUBLIC_API_URL: "https://${DOMAIN}/api"
         NEXT_PUBLIC_WEBSOCKET_URL: "wss://${DOMAIN}/ws"
         NEXT_PUBLIC_R2_BUCKET_URL: ${NEXT_PUBLIC_R2_BUCKET_URL}
+        NEXT_PUBLIC_APP_VERSION: ${APP_VERSION}
     container_name: sr21_web
     restart: always
     environment:
