@@ -1,4 +1,4 @@
-import SectorPanel from "@/components/Panels/Sector/SectorPanel";
+import SectorPanel from "../../components/Panels/Sector/SectorPanel";
 
 export default async function Page(props: { params: Promise<{ callsign: string }> }) {
 	const params = await props.params;

@@ -1,10 +1,12 @@
 import "dotenv/config";
 import { pgFindAirportFlights, pgHealthCheck, pgShutdown, prisma } from "@sr24/db/pg";
 import { rdsConnect, rdsGetMultiple, rdsGetRing, rdsGetSingle, rdsGetTimeSeries, rdsHealthCheck, rdsShutdown } from "@sr24/db/redis";
+import type { PilotLong } from "@sr24/types/vatsim";
 import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
+import type { Prisma } from "../../../packages/db/src/generated/prisma/index.js";
 import { type AuthRequest, authHandler } from "./auth.js";
 import { errorHandler } from "./error.js";
 import { validateCallsign, validateICAO, validateNumber, validateString } from "./validation.js";
@@ -254,6 +256,125 @@ app.get(
 
 		const data = await pgFindAirportFlights(icao, direction, limit, cursor, backwards);
 		res.json(data);
+	}),
+);
+
+app.get(
+	"/search/flights",
+	errorHandler(async (req, res) => {
+		const query = req.query.q as string;
+
+		if (!query || query.length < 1) {
+			res.status(400).json({ error: "Query parameter 'q' is required" });
+			return;
+		}
+
+		const whereClause: Prisma.PilotWhereInput = {
+			OR: [
+				{ callsign: { contains: query.toUpperCase() } },
+				{ dep_icao: { contains: query.toUpperCase() } },
+				{ arr_icao: { contains: query.toUpperCase() } },
+				{ cid: { contains: query } },
+				{ name: { contains: query, mode: "insensitive" } },
+			],
+		};
+
+		const [livePilots, offlinePilots] = await Promise.all([
+			prisma.pilot.findMany({
+				where: {
+					...whereClause,
+					live: true,
+				},
+				select: {
+					pilot_id: true,
+					callsign: true,
+					dep_icao: true,
+					arr_icao: true,
+					aircraft: true,
+					live: true,
+				},
+				take: 10,
+			}),
+
+			prisma.pilot.findMany({
+				where: {
+					...whereClause,
+					live: false,
+				},
+				orderBy: {
+					last_update: "desc",
+				},
+				distinct: ["callsign"],
+				select: {
+					pilot_id: true,
+					callsign: true,
+					dep_icao: true,
+					arr_icao: true,
+					aircraft: true,
+					live: true,
+				},
+				take: 10,
+			}),
+		]);
+
+		res.json({
+			live: livePilots,
+			offline: offlinePilots,
+		});
+	}),
+);
+
+app.get(
+	"/data/flights/:callsign",
+	errorHandler(async (req, res) => {
+		const callsign = req.params.callsign.toUpperCase();
+		const limit = Number(req.query.limit ?? 20);
+		const cursor = req.query.cursor as string | undefined;
+
+		const results = await prisma.pilot.findMany({
+			where: {
+				callsign,
+			},
+			orderBy: {
+				last_update: "desc",
+			},
+			take: limit,
+			...(cursor && {
+				skip: 1,
+				cursor: {
+					pilot_id: cursor,
+				},
+			}),
+		});
+
+		const pilots: PilotLong[] = results.map((r) => ({
+			id: r.pilot_id,
+			cid: r.cid,
+			callsign: r.callsign,
+			latitude: r.latitude,
+			longitude: r.longitude,
+			altitude_agl: r.altitude_agl,
+			altitude_ms: r.altitude_ms,
+			groundspeed: r.groundspeed,
+			vertical_speed: r.vertical_speed,
+			heading: r.heading,
+			aircraft: r.aircraft,
+			transponder: r.transponder,
+			frequency: r.frequency,
+			name: r.name,
+			server: r.server,
+			pilot_rating: r.pilot_rating,
+			military_rating: r.military_rating,
+			qnh_i_hg: r.qnh_i_hg,
+			qnh_mb: r.qnh_mb,
+			flight_plan: r.flight_plan as any,
+			times: r.times as any,
+			logon_time: r.logon_time,
+			timestamp: r.last_update,
+			live: r.live,
+		}));
+
+		res.json(pilots);
 	}),
 );
 

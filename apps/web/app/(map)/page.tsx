@@ -1,4 +1,4 @@
-import DashboardPanel from "@/components/Panels/Dashboard/DashboardPanel";
+import DashboardPanel from "./components/Panels/Dashboard/DashboardPanel";
 
 export default async function Page() {
 	return <DashboardPanel />;

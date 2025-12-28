@@ -1,0 +1,30 @@
+#breadcrumb {
+	display: flex;
+	list-style: none;
+	font-size: var(--font-size-small);
+	gap: 8px;
+	margin-bottom: 1rem;
+	align-items: center;
+	height: 24px;
+}
+
+.breadcrumb-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.breadcrumb-item a {
+	background: var(--color-light-grey);
+	padding: 4px 8px;
+}
+
+.breadcrumb-item a:hover {
+	background: var(--color-hover);
+	color: white;
+}
+
+.breadcrumb-item a.active {
+	background: var(--color-green);
+	color: white;
+}

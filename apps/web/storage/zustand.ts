@@ -10,7 +10,7 @@ const defaultSettings: SettingValues = {
 	airportMarkerSize: 50 as const,
 	planeOverlay: "full" as const,
 	planeMarkerSize: 50 as const,
-	animatedPlaneMarkers: true as const,
+	animatedPlaneMarkers: false as const,
 	sectorAreas: true as const,
 	traconColor: { r: 222, g: 89, b: 234, a: 0.1 } as const,
 	firColor: { r: 77, g: 95, b: 131, a: 0.15 } as const,

@@ -1,4 +1,4 @@
-import { AirportGeneral } from "@/components/Panels/Airport/AirportGeneral";
+import { AirportGeneral } from "../../components/Panels/Airport/AirportGeneral";
 
 export default async function Page(props: { params: Promise<{ icao: string }> }) {
 	const params = await props.params;

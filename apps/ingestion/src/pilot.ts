@@ -116,7 +116,7 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<[PilotLon
 			// cache missed, re-create
 			pilotLong = {
 				id: id,
-				cid: pilot.cid,
+				cid: String(pilot.cid),
 				callsign: pilot.callsign,
 				aircraft: pilot.flight_plan?.aircraft_short || "A320",
 				name: pilot.name,
@@ -201,7 +201,7 @@ export function getPilotShort(p: PilotLong, c?: PilotLong): PilotShort {
 			aircraft: p.aircraft,
 			transponder: p.transponder,
 			frequency: p.frequency,
-			route: `${p.flight_plan?.departure.icao || "N/A"} -- ${p.flight_plan?.arrival.icao || "N/A"}`,
+			route: `${p.flight_plan?.departure.icao || "N/A"} ${p.flight_plan?.arrival.icao || "N/A"}`,
 			flight_rules: p.flight_plan?.flight_rules || "IFR",
 			ac_reg: p.flight_plan?.ac_reg || null,
 		};
@@ -220,7 +220,7 @@ export function getPilotShort(p: PilotLong, c?: PilotLong): PilotShort {
 		if (p.transponder !== c.transponder) pilotShort.transponder = p.transponder;
 		if (p.frequency !== c.frequency) pilotShort.frequency = p.frequency;
 		if (p.flight_plan?.departure.icao !== c.flight_plan?.departure.icao || p.flight_plan?.arrival.icao !== c.flight_plan?.arrival.icao) {
-			pilotShort.route = `${p.flight_plan?.departure.icao || "N/A"} -- ${p.flight_plan?.arrival.icao || "N/A"}`;
+			pilotShort.route = `${p.flight_plan?.departure.icao || "N/A"} ${p.flight_plan?.arrival.icao || "N/A"}`;
 		}
 		if (p.flight_plan?.flight_rules !== c.flight_plan?.flight_rules) pilotShort.flight_rules = p.flight_plan?.flight_rules || "IFR";
 		if (p.flight_plan?.ac_reg !== c.flight_plan?.ac_reg) pilotShort.ac_reg = p.flight_plan?.ac_reg || null;

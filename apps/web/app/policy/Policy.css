@@ -27,34 +27,6 @@
 	color: var(--color-green);
 }
 
-#policy h1 {
-	font-size: 24px;
-	line-height: 24px;
-	border-left: 3px solid var(--color-green);
-	padding-left: 10px;
-}
-
-#policy h2 {
-	font-size: 20px;
-	margin-top: 14px;
-}
-
-#policy h2 span {
-	color: var(--color-green);
-	margin-right: 10px;
-	font-weight: 700;
-}
-
-#policy h3 {
-	font-size: 16px;
-	margin-top: 10px;
-}
-
-#policy h4 {
-	font-size: 14px;
-	margin-top: 8px;
-}
-
 #policy ul {
 	padding-left: 20px;
 	list-style-type: disc;

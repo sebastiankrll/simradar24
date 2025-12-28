@@ -1,4 +1,4 @@
-import AirportPanel from "@/components/Panels/Airport/AirportPanel";
+import AirportPanel from "../../components/Panels/Airport/AirportPanel";
 
 export default async function Layout(
 	props: Readonly<{

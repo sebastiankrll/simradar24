@@ -1,4 +1,4 @@
-import AirportFlights from "@/components/Panels/Airport/AirportFlights";
+import AirportFlights from "@/app/(map)/components/Panels/Airport/AirportFlights";
 
 export default async function Page(props: { params: Promise<{ icao: string; slug: string[] }> }) {
 	const params = await props.params;

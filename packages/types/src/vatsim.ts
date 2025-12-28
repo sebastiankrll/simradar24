@@ -153,7 +153,7 @@ export interface PilotShort {
 
 export interface PilotLong {
 	id: string;
-	cid: number;
+	cid: string;
 	callsign: string;
 	latitude: number;
 	longitude: number;

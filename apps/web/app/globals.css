@@ -22,7 +22,7 @@ html {
 	--color-bg: white;
 	--color-main-text: rgb(77, 95, 131);
 	--color-light-text: rgb(183, 190, 206);
-	--color-light-grey: rgb(246, 248, 253);
+	--color-light-grey: rgb(237, 240, 247);
 	--color-dark-grey: rgb(214, 218, 226);
 	--color-border: rgb(189, 193, 206);
 	--color-box-shadow: rgb(193, 194, 202);
@@ -74,6 +74,9 @@ fieldset {
 section {
 	padding: 5.5rem 2rem 3.5rem 2rem;
 	flex: 1;
+	display: flex;
+	flex-flow: column;
+	position: relative;
 }
 
 select {
@@ -96,4 +99,74 @@ select option:checked {
 
 select option:hover {
 	background: var(--color-hover);
+}
+
+.scrollable {
+	overflow-y: auto;
+}
+
+.scrollable::-webkit-scrollbar {
+	width: 5px;
+}
+
+.scrollable::-webkit-scrollbar-track {
+	background: var(--color-light-grey);
+	border: 1px solid var(--color-border);
+	box-sizing: border-box;
+}
+
+.scrollable::-webkit-scrollbar-thumb {
+	background-color: var(--color-green);
+}
+
+h1 {
+	font-size: 24px;
+	line-height: 24px;
+	border-left: 3px solid var(--color-green);
+	padding-left: 10px;
+}
+
+h2 {
+	font-size: 20px;
+	margin-top: 14px;
+}
+
+h2 span {
+	color: var(--color-green);
+	margin-right: 10px;
+	font-weight: 700;
+}
+
+h3 {
+	font-size: 16px;
+	margin-top: 10px;
+}
+
+h4 {
+	font-size: 14px;
+	margin-top: 8px;
+}
+
+table {
+	background: var(--color-light-grey);
+}
+
+thead {
+	background-color: var(--color-dark-grey);
+	height: 2rem;
+}
+
+th {
+	text-align: left;
+	padding: 0 4px;
+}
+
+tr:hover {
+	background-color: var(--color-dark-grey);
+}
+
+td {
+	padding: 2px 4px;
+	align-items: center;
+	gap: 2px;
 }

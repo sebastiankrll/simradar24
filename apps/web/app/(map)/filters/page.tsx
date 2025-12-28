@@ -1,4 +1,4 @@
-import FiltersPanel from "@/components/Panels/Filters/FiltersPanel";
+import FiltersPanel from "../components/Panels/Filters/FiltersPanel";
 
 export default function Page() {
 	return <FiltersPanel />;

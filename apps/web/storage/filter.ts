@@ -1,4 +1,4 @@
-import type { SelectOptionType } from "@/components/shared/Select/Select";
+import type { SelectOptionType } from "@/components/Select/Select";
 import { dxFindAircrafts, dxFindAirlines, dxFindAirports } from "./dexie";
 
 export async function getFilterValues(filter: string, value: string): Promise<SelectOptionType[]> {

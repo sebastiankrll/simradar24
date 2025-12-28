@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { Ubuntu } from "next/font/google";
 import "./globals.css";
 import "@/assets/images/sprites/freakflags.css";
-import Footer from "@/components/shared/Footer/Footer";
-import Header from "@/components/shared/Header/Header";
+import Footer from "@/components/Footer/Footer";
+import Header from "@/components/Header/Header";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {

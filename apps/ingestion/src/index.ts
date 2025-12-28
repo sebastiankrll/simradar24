@@ -71,7 +71,7 @@ async function fetchVatsimData(): Promise<void> {
 
 			await pgUpsertPilots([...pilotsLong, ...deletedPilotsLong]);
 			const now = Date.now();
-			if (now > lastPgCleanUp + 60 * 60 * 1000) {
+			if (now > lastPgCleanUp + 7 * 24 * 60 * 60 * 1000) {
 				lastPgCleanUp = now;
 				await pgDeleteStalePilots();
 			}
