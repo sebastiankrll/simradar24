@@ -1,0 +1,33 @@
+#flights-page {
+	display: flex;
+	flex-flow: column;
+	flex: 1;
+	width: 100%;
+	gap: 1rem;
+}
+
+#map {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 50%;
+	background: red;
+}
+
+.flights-page-buttons {
+	display: flex;
+	gap: 2px;
+	align-items: center;
+	justify-content: space-around;
+}
+
+.flights-page-buttons button {
+	height: 24px;
+	width: 24px;
+	background-color: var(--color-green);
+}
+
+.flights-page-buttons use {
+	color: white;
+}

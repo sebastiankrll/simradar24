@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { pgFindAirportFlights, pgHealthCheck, pgShutdown, prisma } from "@sr24/db/pg";
 import { rdsConnect, rdsGetMultiple, rdsGetRing, rdsGetSingle, rdsGetTimeSeries, rdsHealthCheck, rdsShutdown } from "@sr24/db/redis";
+import type { PilotLong } from "@sr24/types/vatsim";
 import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
@@ -327,28 +328,53 @@ app.get(
 	"/data/flights/:callsign",
 	errorHandler(async (req, res) => {
 		const callsign = req.params.callsign.toUpperCase();
+		const limit = Number(req.query.limit ?? 20);
+		const cursor = req.query.cursor as string | undefined;
 
-		const flights = await prisma.pilot.findMany({
+		const results = await prisma.pilot.findMany({
 			where: {
 				callsign,
 			},
 			orderBy: {
 				last_update: "desc",
 			},
-			select: {
-				pilot_id: true,
-				callsign: true,
-				dep_icao: true,
-				arr_icao: true,
-				aircraft: true,
-				live: true,
-				last_update: true,
-				logon_time: true,
-			},
-			take: 20,
+			take: limit,
+			...(cursor && {
+				skip: 1,
+				cursor: {
+					pilot_id: cursor,
+				},
+			}),
 		});
 
-		res.json(flights);
+		const pilots: PilotLong[] = results.map((r) => ({
+			id: r.pilot_id,
+			cid: r.cid,
+			callsign: r.callsign,
+			latitude: r.latitude,
+			longitude: r.longitude,
+			altitude_agl: r.altitude_agl,
+			altitude_ms: r.altitude_ms,
+			groundspeed: r.groundspeed,
+			vertical_speed: r.vertical_speed,
+			heading: r.heading,
+			aircraft: r.aircraft,
+			transponder: r.transponder,
+			frequency: r.frequency,
+			name: r.name,
+			server: r.server,
+			pilot_rating: r.pilot_rating,
+			military_rating: r.military_rating,
+			qnh_i_hg: r.qnh_i_hg,
+			qnh_mb: r.qnh_mb,
+			flight_plan: r.flight_plan as any,
+			times: r.times as any,
+			logon_time: r.logon_time,
+			timestamp: r.last_update,
+			live: r.live,
+		}));
+
+		res.json(pilots);
 	}),
 );
 
