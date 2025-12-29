@@ -1,7 +1,6 @@
 // lib/wsClient.ts
 
 import type { WsDelta } from "@sr24/types/vatsim";
-import Pako from "pako";
 
 const WS_URL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || "ws://localhost:3002";
 const RECONNECT_DELAY = 1000;
@@ -136,9 +135,7 @@ class WsClient {
 
 	private handleMessage(event: MessageEvent): void {
 		try {
-			const compressed = new Uint8Array(event.data);
-			const decompressed = Pako.ungzip(compressed, { to: "string" });
-			const data = JSON.parse(decompressed);
+			const data: WsDelta = JSON.parse(typeof event.data === "string" ? event.data : new TextDecoder().decode(event.data));
 
 			this.listeners.forEach((listener) => {
 				try {
@@ -305,5 +302,5 @@ export const wsClient = new WsClient({
 	autoReconnect: true,
 	reconnectDelay: RECONNECT_DELAY,
 	maxReconnectAttempts: MAX_RECONNECT_ATTEMPTS,
-	pauseWhenHidden: true,
+	pauseWhenHidden: false,
 });

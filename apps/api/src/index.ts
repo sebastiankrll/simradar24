@@ -122,17 +122,36 @@ app.get(
 
 app.get(
 	"/data/init",
-	errorHandler(async (_req, res) => {
-		const all = await rdsGetSingle("ws:all");
-		if (!all) {
-			res.status(404).json({ error: "Initial data not found" });
+	errorHandler(async (req, res) => {
+		const ae = req.headers["accept-encoding"] || "";
+
+		let key: string;
+		let encoding: string;
+
+		if (ae.includes("br")) {
+			key = "ws:all:br";
+			encoding = "br";
+		} else if (ae.includes("gzip")) {
+			key = "ws:all:gzip";
+			encoding = "gzip";
+		} else {
+			res.status(406).end();
 			return;
 		}
 
-		const buffer = Buffer.from(all, "base64");
+		const cached = await rdsGetSingle(key);
+		if (!cached) {
+			res.status(404).end();
+			return;
+		}
+
+		const buffer = Buffer.from(cached, "base64");
+
 		res.setHeader("Content-Type", "application/octet-stream");
-		res.setHeader("Content-Encoding", "gzip");
-		res.send(buffer);
+		res.setHeader("Content-Encoding", encoding);
+		res.setHeader("Content-Length", buffer.length);
+
+		res.end(buffer);
 	}),
 );
 

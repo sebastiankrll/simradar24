@@ -22,9 +22,10 @@ export async function initCache(setStatus: StatusSetter, pathname: string): Prom
 		return;
 	}
 
-	await dxInitDatabases(setStatus);
-
-	const data = await fetchApi<WsAll>("/data/init");
+	// Init databases and fetch initial data simultaneously
+	const dbInitPromise = dxInitDatabases(setStatus);
+	const dataFetchPromise = fetchApi<WsAll>("/data/init");
+	const [_, data] = await Promise.all([dbInitPromise, dataFetchPromise]);
 	setStatus?.((prev) => ({ ...prev, cache: true }));
 
 	await initAirportFeatures();

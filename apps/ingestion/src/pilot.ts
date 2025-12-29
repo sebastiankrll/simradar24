@@ -104,7 +104,6 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<[PilotLon
 			frequency: Number(transceiver?.frequency.toString().slice(0, 6)) || 122_800,
 			qnh_i_hg: pilot.qnh_i_hg,
 			qnh_mb: pilot.qnh_mb,
-			ghost: false,
 		};
 
 		let pilotLong: PilotLong;
