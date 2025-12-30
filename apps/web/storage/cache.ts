@@ -149,19 +149,37 @@ export async function getCachedFir(id: string): Promise<FIRFeature | null> {
 	return feature || null;
 }
 
-let trackPointsCache: TrackPoint[] = [];
-let trackPointsPending: Promise<TrackPoint[]> | null = null;
+const cachedTrackPoints = new Map<string, TrackPoint[]>();
+const pendingTrackPoints = new Map<string, Promise<TrackPoint[]>>();
 
 export async function fetchTrackPoints(id: string): Promise<TrackPoint[]> {
-	if (trackPointsPending) {
-		return trackPointsPending;
+	const cached = cachedTrackPoints.get(id);
+	if (cached) {
+		return cached;
 	}
 
-	trackPointsPending = fetchApi<TrackPoint[]>(`/data/track/${id}`);
-	trackPointsCache = await trackPointsPending;
-	trackPointsPending = null;
+	const inFlight = pendingTrackPoints.get(id);
+	if (inFlight) {
+		return inFlight;
+	}
 
-	return trackPointsCache;
+	const promise = fetchApi<TrackPoint[]>(`/data/track/${id}`)
+		.then((data) => {
+			cachedTrackPoints.set(id, data);
+			pendingTrackPoints.delete(id);
+			return data;
+		})
+		.catch((err) => {
+			pendingTrackPoints.delete(id);
+			throw err;
+		});
+
+	pendingTrackPoints.set(id, promise);
+	return promise;
+}
+
+export function clearCachedTrackPoints(): void {
+	cachedTrackPoints.clear();
 }
 
 export function getControllersApiRequest(id: string, type: "airport" | "sector"): string | null {

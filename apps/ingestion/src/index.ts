@@ -38,7 +38,7 @@ async function fetchVatsimData(): Promise<void> {
 		lastVatsimUpdate = timestmap;
 		vatsimData.transceivers = await axios.get<VatsimTransceivers[]>(VATSIM_TRANSCEIVERS_URL).then((res) => res.data);
 
-		const [pilotsLong, deletedPilotsLong] = await mapPilots(vatsimData);
+		const pilotsLong = await mapPilots(vatsimData);
 		const [controllersLong, controllersMerged] = await mapControllers(vatsimData, pilotsLong);
 		const airportsLong = await mapAirports(pilotsLong);
 
@@ -68,9 +68,9 @@ async function fetchVatsimData(): Promise<void> {
 		rdsSetMultiple(controllersLong, "controller", (c) => c.callsign, "controllers:live", 120);
 		rdsSetMultiple(airportsLong, "airport", (a) => a.icao, "airports:live", 120);
 
-		await pgUpsertPilots([...pilotsLong, ...deletedPilotsLong]);
+		await pgUpsertPilots(pilotsLong);
 		const now = Date.now();
-		if (now > lastPgCleanUp + 7 * 24 * 60 * 60 * 1000) {
+		if (now > lastPgCleanUp + 60 * 60 * 1000) {
 			lastPgCleanUp = now;
 			await pgDeleteStalePilots();
 		}

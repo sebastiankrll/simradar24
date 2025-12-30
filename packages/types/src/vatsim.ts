@@ -252,8 +252,8 @@ export interface AirportTraffic {
 }
 
 export interface PilotDelta {
-	updated: PilotShort[];
 	added: Required<PilotShort>[];
+	updated: PilotShort[];
 }
 
 export interface ControllerDelta {

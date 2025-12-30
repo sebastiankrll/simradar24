@@ -10,6 +10,7 @@
 	},
 	"devDependencies": {
 		"@sr24/typescript-config": "*",
+		"@types/compression": "^1.8.1",
 		"@types/cors": "^2.8.19",
 		"@types/express": "^5.0.5",
 		"@types/jsonwebtoken": "^9.0.10",
@@ -21,6 +22,7 @@
 	"dependencies": {
 		"@sr24/db": "*",
 		"axios": "^1.13.2",
+		"compression": "^1.8.1",
 		"cors": "^2.8.5",
 		"dotenv": "^17.2.3",
 		"express": "^5.1.0",

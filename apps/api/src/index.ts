@@ -7,10 +7,11 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import type { Prisma } from "../../../packages/db/src/generated/prisma/index.js";
-import { type AuthRequest, authHandler } from "./auth.js";
-import { errorHandler } from "./error.js";
+import { authHandler, type CustomRequest, compressionHandler, errorHandler } from "./middleware.js";
 import { validateCallsign, validateICAO, validateNumber, validateString } from "./validation.js";
 import { getMetar, getTaf } from "./weather.js";
+import compression from "compression";
+import { constants } from "node:zlib";
 
 rdsConnect();
 
@@ -21,7 +22,9 @@ const limiter = rateLimit({
 	standardHeaders: true,
 	legacyHeaders: false,
 });
-
+const brotliCompression = compression({
+	brotli: { [constants.BROTLI_PARAM_QUALITY]: 4 },
+});
 const app = express();
 
 if (process.env.TRUST_PROXY === "true") {
@@ -122,24 +125,17 @@ app.get(
 
 app.get(
 	"/data/init",
-	errorHandler(async (req, res) => {
-		const ae = req.headers["accept-encoding"] || "";
-
-		let key: string;
-		let encoding: string;
-
-		if (ae.includes("br")) {
-			key = "ws:all:br";
-			encoding = "br";
-		} else if (ae.includes("gzip")) {
-			key = "ws:all:gzip";
-			encoding = "gzip";
-		} else {
-			res.status(406).end();
+	compressionHandler,
+	errorHandler(async (req: CustomRequest, res) => {
+		if (!req.compression) {
+			res.status(400).json({ error: "Compression information not found" });
 			return;
 		}
+		const { encoding, cacheKeySuffix } = req.compression;
 
+		const key = `ws:all:${cacheKeySuffix}`;
 		const cached = await rdsGetSingle(key);
+
 		if (!cached) {
 			res.status(404).end();
 			return;
@@ -150,6 +146,7 @@ app.get(
 		res.setHeader("Content-Type", "application/octet-stream");
 		res.setHeader("Content-Encoding", encoding);
 		res.setHeader("Content-Length", buffer.length);
+		res.setHeader("Vary", "Accept-Encoding");
 
 		res.end(buffer);
 	}),
@@ -219,10 +216,10 @@ app.get(
 
 app.get(
 	"/data/track/:id",
+    brotliCompression,
 	errorHandler(async (req, res) => {
 		const id = validateString(req.params.id, "Track ID", 1, 10);
 
-		// const trackPoints = await pgGetTrackPointsByid(id);
 		const trackPoints = await rdsGetTimeSeries(`pilot:tp:${id}`);
 		if (!trackPoints || trackPoints.length === 0) {
 			res.status(404).json({ error: "Track not found" });
@@ -250,6 +247,7 @@ app.get(
 
 app.get(
 	"/data/dashboard/",
+    brotliCompression,
 	errorHandler(async (_req, res) => {
 		const stats = await rdsGetSingle(`dashboard:stats`);
 		const history = await rdsGetRing(`dashboard:history`, 24 * 60 * 60 * 1000);
@@ -400,7 +398,7 @@ app.get(
 app.get(
 	"/user/settings",
 	authHandler,
-	errorHandler(async (req: AuthRequest, res) => {
+	errorHandler(async (req: CustomRequest, res) => {
 		const cid = BigInt(req.user?.cid || 0);
 
 		const user = await prisma.user.findUnique({
@@ -420,7 +418,7 @@ app.get(
 app.post(
 	"/user/settings",
 	authHandler,
-	errorHandler(async (req: AuthRequest, res) => {
+	errorHandler(async (req: CustomRequest, res) => {
 		const cid = BigInt(req.user?.cid || 0);
 		const settings = req.body;
 

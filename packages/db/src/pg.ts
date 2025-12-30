@@ -38,12 +38,17 @@ export async function pgUpsertPilots(pilots: PilotLong[]): Promise<void> {
 }
 
 async function pgUpsertPilotsBatch(pilots: PilotLong[]): Promise<void> {
-	if (!pilots.length) return;
+	if (pilots.length === 0) return;
 
 	const values: string[] = [];
 	const params: any[] = [];
+	let idx = 0;
 
-	pilots.forEach((p, idx) => {
+	for (const p of pilots) {
+		if (!p.flight_plan || !p.times) {
+			continue;
+		}
+
 		const baseIdx = idx * 28;
 		values.push(`(
 			$${baseIdx + 1}, $${baseIdx + 2}, $${baseIdx + 3}, $${baseIdx + 4}, $${baseIdx + 5},
@@ -85,7 +90,9 @@ async function pgUpsertPilotsBatch(pilots: PilotLong[]): Promise<void> {
 			p.flight_plan?.departure.icao || null,
 			p.flight_plan?.arrival.icao || null,
 		);
-	});
+
+		idx++;
+	}
 
 	const query = `
 		INSERT INTO "Pilot" (
@@ -206,14 +213,26 @@ export async function pgDeleteStalePilots(): Promise<void> {
 	try {
 		const deleted = await prisma.pilot.deleteMany({
 			where: {
-				last_update: {
-					lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-				},
+				last_update: { lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
 			},
 		});
 
-		if (deleted.count === 0) return;
-		console.log(`🗑️  Cleaned up ${deleted.count} stale pilots`);
+		const updated = await prisma.pilot.updateMany({
+			where: {
+				live: true,
+				last_update: { lt: new Date(Date.now() - 120 * 1000) },
+			},
+			data: {
+				live: false,
+			},
+		});
+
+		if (deleted.count > 0) {
+			console.log(`🗑️  Deleted ${deleted.count} stale pilots`);
+		}
+		if (updated.count > 0) {
+			console.log(`♻️  Marked ${updated.count} pilots as not live`);
+		}
 	} catch (err) {
 		console.error("Error cleaning up stale pilots:", err);
 		throw err;
