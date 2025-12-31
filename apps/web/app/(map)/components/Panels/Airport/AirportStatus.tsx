@@ -1,4 +1,4 @@
-import type { AirportLong } from "@sr24/types/vatsim";
+import type { AirportLong } from "@sr24/types/interface";
 import { CloudQuantity, Descriptive, type IMetar, Intensity, type IWind, Phenomenon } from "metar-taf-parser";
 import { useSettingsStore } from "@/storage/zustand";
 import { convertSpeed, convertTemperature } from "@/utils/helpers";

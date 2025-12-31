@@ -1,4 +1,4 @@
-import type { PilotLong } from "@sr24/types/vatsim";
+import type { PilotLong } from "@sr24/types/interface";
 import Icon from "@/components/Icon/Icon";
 
 export function PilotUser({ pilot, openSection, ref }: { pilot: PilotLong; openSection: string | null; ref: React.Ref<HTMLDivElement> }) {

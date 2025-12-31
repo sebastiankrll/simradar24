@@ -1,272 +1,299 @@
 import "dotenv/config";
+import fastifyCors from "@fastify/cors";
+import fastifyHelmet from "@fastify/helmet";
+import fastifyRateLimit from "@fastify/rate-limit";
+import fastifySensible from "@fastify/sensible";
 import { pgFindAirportFlights, pgHealthCheck, pgShutdown, prisma } from "@sr24/db/pg";
-import { rdsConnect, rdsGetMultiple, rdsGetRing, rdsGetSingle, rdsGetTimeSeries, rdsHealthCheck, rdsShutdown } from "@sr24/db/redis";
-import type { PilotLong } from "@sr24/types/vatsim";
-import cors from "cors";
-import express from "express";
-import rateLimit from "express-rate-limit";
-import helmet from "helmet";
-import type { Prisma } from "../../../packages/db/src/generated/prisma/index.js";
-import { type AuthRequest, authHandler } from "./auth.js";
-import { errorHandler } from "./error.js";
-import { validateCallsign, validateICAO, validateNumber, validateString } from "./validation.js";
-import { getMetar, getTaf } from "./weather.js";
+import { rdsConnect, rdsGetSingle, rdsGetTimeSeries, rdsHealthCheck, rdsShutdown, rdsSub } from "@sr24/db/redis";
+import type { AirportLong, ControllerLong, DashboardData, InitialData, PilotLong, RedisAll } from "@sr24/types/interface";
+import Fastify from "fastify";
+import type { Prisma } from "../../../packages/db/src/generated/prisma";
+import { authPlugin } from "./plugins";
+import { getMetar, getTaf } from "./weather";
 
-rdsConnect();
+let initialData: InitialData | null = null;
+let dashboardData: DashboardData | null = null;
+const pilotsLong: Map<string, PilotLong> = new Map();
+const controllersLong: Map<string, ControllerLong> = new Map();
+const airportsLong: Map<string, AirportLong> = new Map();
 
-const limiter = rateLimit({
-	windowMs: 60_000,
-	max: 60,
-	message: "Too many requests from this endpoint, please try again later.",
-	standardHeaders: true,
-	legacyHeaders: false,
+async function connectDBs(): Promise<void> {
+	await rdsConnect();
+	rdsSub("data:all", async (data: string) => {
+		try {
+			const parsed: RedisAll = JSON.parse(data);
+			initialData = parsed.init;
+			dashboardData = parsed.dashboard;
+			pilotsLong.clear();
+			parsed.pilots.forEach((p) => {
+				pilotsLong.set(p.id, p);
+			});
+			controllersLong.clear();
+			parsed.controllers.forEach((c) => {
+				controllersLong.set(c.callsign, c);
+			});
+			airportsLong.clear();
+			parsed.airports.forEach((a) => {
+				airportsLong.set(a.icao, a);
+			});
+		} catch (err) {
+			console.error("Error parsing RedisAll data from subscription:", err);
+		}
+	});
+}
+connectDBs().catch((err) => {
+	console.error("Error connecting to databases:", err);
+	process.exit(1);
 });
 
-const app = express();
+const app = Fastify({
+	logger: true,
+});
 
-if (process.env.TRUST_PROXY === "true") {
-	app.set("trust proxy", 1);
-}
+// Compression in traefik
+app.register(fastifyHelmet);
+app.register(fastifyCors);
+app.register(fastifyRateLimit);
+app.register(fastifySensible);
+app.register(authPlugin);
 
-app.use(helmet());
-app.use(cors());
-app.use(express.json());
-app.use(limiter);
+app.setErrorHandler((_error, _request, reply) => {
+	reply.status(500).send({ ok: false });
+});
 
-// Health check endpoints
-app.get(
-	"/health",
-	errorHandler(async (_req, res) => {
-		const startTime = Date.now();
-		const health = {
-			status: "ok",
-			timestamp: new Date().toISOString(),
-			uptime: process.uptime(),
-			services: {
-				redis: "unknown",
-				postgres: "unknown",
-			},
-		};
+app.get("/health", async (_request, reply) => {
+	const startTime = Date.now();
+	const health = {
+		status: "ok",
+		timestamp: new Date().toISOString(),
+		uptime: process.uptime(),
+		services: {
+			redis: "unknown",
+			postgres: "unknown",
+		},
+	};
 
-		try {
-			const redisHealthy = await rdsHealthCheck();
-			health.services.redis = redisHealthy ? "ok" : "error";
-			if (!redisHealthy) health.status = "degraded";
-		} catch (_err) {
-			health.services.redis = "error";
-			health.status = "degraded";
-		}
+	try {
+		const redisHealthy = await rdsHealthCheck();
+		health.services.redis = redisHealthy ? "ok" : "error";
+		if (!redisHealthy) health.status = "degraded";
+	} catch (_err) {
+		health.services.redis = "error";
+		health.status = "degraded";
+	}
 
-		try {
-			const pgHealthy = await pgHealthCheck();
-			health.services.postgres = pgHealthy ? "ok" : "error";
-			if (!pgHealthy) health.status = "degraded";
-		} catch (_err) {
-			health.services.postgres = "error";
-			health.status = "degraded";
-		}
+	try {
+		const pgHealthy = await pgHealthCheck();
+		health.services.postgres = pgHealthy ? "ok" : "error";
+		if (!pgHealthy) health.status = "degraded";
+	} catch (_err) {
+		health.services.postgres = "error";
+		health.status = "degraded";
+	}
 
-		const responseTime = Date.now() - startTime;
-		const statusCode = health.status === "ok" ? 200 : 503;
+	const responseTime = Date.now() - startTime;
+	const statusCode = health.status === "ok" ? 200 : 503;
 
-		res.status(statusCode).json({
-			...health,
-			responseTime: `${responseTime}ms`,
-		});
-	}),
-);
+	return reply.status(statusCode).send({
+		...health,
+		responseTime: `${responseTime}ms`,
+	});
+});
 
-app.get(
-	"/health/live",
-	errorHandler(async (_req, res) => {
-		res.json({
-			status: "alive",
-			timestamp: new Date().toISOString(),
-		});
-	}),
-);
-
-app.get(
-	"/health/ready",
-	errorHandler(async (_req, res) => {
-		try {
-			const redisHealthy = await rdsHealthCheck();
-			const pgHealthy = await pgHealthCheck();
-
-			if (!redisHealthy || !pgHealthy) {
-				const reasons: string[] = [];
-				if (!redisHealthy) reasons.push("Redis connection failed");
-				if (!pgHealthy) reasons.push("PostgreSQL connection failed");
-
-				res.status(503).json({
-					status: "not-ready",
-					reasons,
-					timestamp: new Date().toISOString(),
-				});
-				return;
-			}
-
-			res.json({
-				status: "ready",
-				timestamp: new Date().toISOString(),
-			});
-		} catch (_err) {
-			res.status(503).json({
-				status: "not-ready",
-				reasons: ["Health check failed"],
-				timestamp: new Date().toISOString(),
-			});
-		}
-	}),
-);
-
-app.get(
-	"/data/init",
-	errorHandler(async (_req, res) => {
-		const all = await rdsGetSingle("ws:all");
-		if (!all) {
-			res.status(404).json({ error: "Initial data not found" });
-			return;
-		}
-
-		const buffer = Buffer.from(all, "base64");
-		res.setHeader("Content-Type", "application/octet-stream");
-		res.setHeader("Content-Encoding", "gzip");
-		res.send(buffer);
-	}),
-);
+app.get("/data/init", async () => {
+	if (!initialData) {
+		throw app.httpErrors.serviceUnavailable({ error: "Initial data not available" });
+	}
+	return initialData;
+});
 
 app.get(
 	"/data/pilot/:id",
-	errorHandler(async (req, res) => {
-		const id = validateString(req.params.id, "Pilot ID", 1, 10);
-
-		const pilot = await rdsGetSingle(`pilot:${id}`);
+	{
+		schema: {
+			params: {
+				type: "object",
+				properties: { id: { type: "string", minLength: 10, maxLength: 10 } },
+				required: ["id"],
+			},
+		},
+	},
+	async (request) => {
+		const { id } = request.params as { id: string };
+		const pilot = pilotsLong.get(id);
 		if (!pilot) {
-			res.status(404).json({ error: "Pilot not found" });
-			return;
+			throw app.httpErrors.notFound({ error: "Pilot not found" });
 		}
-
-		res.json(pilot);
-	}),
+		return pilot;
+	},
 );
 
 app.get(
 	"/data/airport/:icao",
-	errorHandler(async (req, res) => {
-		const icao = validateICAO(req.params.icao).toUpperCase();
-
-		const airport = await rdsGetSingle(`airport:${icao}`);
+	{
+		schema: {
+			params: {
+				type: "object",
+				properties: { icao: { type: "string", minLength: 4, maxLength: 4 } },
+				required: ["icao"],
+			},
+		},
+	},
+	async (request) => {
+		const { icao } = request.params as { icao: string };
+		const airport = airportsLong.get(icao.toUpperCase());
 		if (!airport) {
-			res.status(404).json({ error: "Airport not found" });
-			return;
+			throw app.httpErrors.notFound({ error: "Airport not found" });
 		}
-
-		res.json(airport);
-	}),
+		return airport;
+	},
 );
 
 app.get(
 	"/data/weather/:icao",
-	errorHandler(async (req, res) => {
-		const icao = validateICAO(req.params.icao).toUpperCase();
-		const metar = getMetar(icao);
-		const taf = getTaf(icao);
-
-		res.json({ metar, taf });
-	}),
+	{
+		schema: {
+			params: {
+				type: "object",
+				properties: { icao: { type: "string", minLength: 4, maxLength: 4 } },
+				required: ["icao"],
+			},
+		},
+	},
+	async (request) => {
+		const { icao } = request.params as { icao: string };
+		const metar = getMetar(icao.toUpperCase());
+		const taf = getTaf(icao.toUpperCase());
+		return { metar, taf };
+	},
 );
 
 app.get(
 	"/data/controllers/:callsigns",
-	errorHandler(async (req, res) => {
-		const callsignArray = req.params.callsigns.split(",").map((cs) => validateCallsign(cs.trim()));
+	{
+		schema: {
+			params: {
+				type: "object",
+				properties: { callsigns: { type: "string", minLength: 4 } },
+				required: ["callsigns"],
+			},
+		},
+	},
+	async (request) => {
+		const { callsigns } = request.params as { callsigns: string };
+		const callsignArray = callsigns.split(",");
 
 		if (callsignArray.length === 0) {
-			res.status(400).json({ error: "At least one callsign is required" });
-			return;
+			throw app.httpErrors.badRequest({ error: "At least one callsign is required" });
 		}
 
-		const controllers = await rdsGetMultiple("controller", callsignArray);
+		const controllers = callsignArray.map((callsign) => controllersLong.get(callsign) || null);
 		const validControllers = controllers.filter((controller) => controller !== null);
 		if (validControllers.length === 0) {
-			res.status(404).json({ error: "Controller not found" });
-			return;
+			throw app.httpErrors.notFound({ error: "Controllers not found" });
 		}
-
-		res.json(validControllers);
-	}),
+		return validControllers;
+	},
 );
 
 app.get(
 	"/data/track/:id",
-	errorHandler(async (req, res) => {
-		const id = validateString(req.params.id, "Track ID", 1, 10);
-
-		// const trackPoints = await pgGetTrackPointsByid(id);
+	{
+		schema: {
+			params: {
+				type: "object",
+				properties: { id: { type: "string", minLength: 10, maxLength: 10 } },
+				required: ["id"],
+			},
+		},
+	},
+	async (request) => {
+		const { id } = request.params as { id: string };
 		const trackPoints = await rdsGetTimeSeries(`pilot:tp:${id}`);
 		if (!trackPoints || trackPoints.length === 0) {
-			res.status(404).json({ error: "Track not found" });
-			return;
+			throw app.httpErrors.notFound({ error: "Track not found" });
 		}
-
-		res.json(trackPoints);
-	}),
+		return trackPoints;
+	},
 );
 
 app.get(
 	"/data/aircraft/:reg",
-	errorHandler(async (req, res) => {
-		const reg = validateString(req.params.reg, "Aircraft Registration", 1, 10).toUpperCase();
-
-		const aircraft = await rdsGetSingle(`static_fleet:${reg}`);
+	{
+		schema: {
+			params: {
+				type: "object",
+				properties: { reg: { type: "string", minLength: 4, maxLength: 8 } },
+				required: ["reg"],
+			},
+		},
+	},
+	async (request) => {
+		const { reg } = request.params as { reg: string };
+		const aircraft = await rdsGetSingle(`static_fleet:${reg.toUpperCase()}`);
 		if (!aircraft) {
-			res.status(404).json({ error: "Aircraft not found" });
-			return;
+			throw app.httpErrors.notFound({ error: "Aircraft not found" });
 		}
-
-		res.json(aircraft);
-	}),
+		return aircraft;
+	},
 );
 
-app.get(
-	"/data/dashboard/",
-	errorHandler(async (_req, res) => {
-		const stats = await rdsGetSingle(`dashboard:stats`);
-		const history = await rdsGetRing(`dashboard:history`, 24 * 60 * 60 * 1000);
-		const events = await rdsGetSingle(`dashboard:events`);
-
-		if (!stats || !history || !events) {
-			res.status(404).json({ error: "Dashboard data not found" });
-			return;
-		}
-
-		res.json({ stats, history, events });
-	}),
-);
+app.get("/data/dashboard", async () => {
+	if (!dashboardData) {
+		throw app.httpErrors.notFound({ error: "Dashboard data not available" });
+	}
+	return dashboardData;
+});
 
 app.get(
 	"/data/airport/:icao/flights",
-	errorHandler(async (req, res) => {
-		const icao = validateICAO(req.params.icao).toUpperCase();
-		const direction = (String(req.query.direction || "dep").toLowerCase() === "arr" ? "arr" : "dep") as "dep" | "arr";
-		const limit = validateNumber(req.query.limit || 20, "Limit", 1, 30);
-		const cursor = req.query.cursor as string | undefined;
-		const backwards = req.query.backwards === "true";
-
-		const data = await pgFindAirportFlights(icao, direction, limit, cursor, backwards);
-		res.json(data);
-	}),
+	{
+		schema: {
+			params: {
+				type: "object",
+				properties: { icao: { type: "string", minLength: 4, maxLength: 4 } },
+				required: ["icao"],
+			},
+			querystring: {
+				type: "object",
+				properties: {
+					direction: { type: "string", enum: ["arr", "dep"] },
+					limit: { type: "string", pattern: "^[0-9]+$" },
+					cursor: { type: "string" },
+					backwards: { type: "string", enum: ["true", "false"] },
+				},
+			},
+		},
+	},
+	async (request) => {
+		const { icao } = request.params as { icao: string };
+		const { direction, limit, cursor, backwards } = request.query as { direction?: string; limit?: string; cursor?: string; backwards?: string };
+		const flights = await pgFindAirportFlights(
+			icao.toUpperCase(),
+			(direction || "dep").toLowerCase() === "arr" ? "arr" : "dep",
+			Number(limit || 20),
+			cursor,
+			backwards === "true",
+		);
+		return flights;
+	},
 );
 
 app.get(
 	"/search/flights",
-	errorHandler(async (req, res) => {
-		const query = req.query.q as string;
-
+	{
+		schema: {
+			querystring: {
+				type: "object",
+				properties: { q: { type: "string", minLength: 3 } },
+				required: ["q"],
+			},
+		},
+	},
+	async (request) => {
+		const { q: query } = request.query as { q?: string };
 		if (!query || query.length < 1) {
-			res.status(400).json({ error: "Query parameter 'q' is required" });
-			return;
+			throw app.httpErrors.badRequest({ error: "Query parameter 'q' is required" });
 		}
 
 		const whereClause: Prisma.PilotWhereInput = {
@@ -285,6 +312,9 @@ app.get(
 					...whereClause,
 					live: true,
 				},
+				orderBy: {
+					callsign: "asc",
+				},
 				select: {
 					pilot_id: true,
 					callsign: true,
@@ -302,7 +332,7 @@ app.get(
 					live: false,
 				},
 				orderBy: {
-					last_update: "desc",
+					callsign: "asc",
 				},
 				distinct: ["callsign"],
 				select: {
@@ -317,19 +347,34 @@ app.get(
 			}),
 		]);
 
-		res.json({
+		return {
 			live: livePilots,
 			offline: offlinePilots,
-		});
-	}),
+		};
+	},
 );
 
 app.get(
 	"/data/flights/:callsign",
-	errorHandler(async (req, res) => {
-		const callsign = req.params.callsign.toUpperCase();
-		const limit = Number(req.query.limit ?? 20);
-		const cursor = req.query.cursor as string | undefined;
+	{
+		schema: {
+			params: {
+				type: "object",
+				properties: { callsign: { type: "string", minLength: 3 } },
+				required: ["callsign"],
+			},
+			querystring: {
+				type: "object",
+				properties: {
+					limit: { type: "string", pattern: "^[0-9]+$" },
+					cursor: { type: "string" },
+				},
+			},
+		},
+	},
+	async (request) => {
+		const { callsign } = request.params as { callsign: string };
+		const { limit, cursor } = request.query as { limit?: string; cursor?: string };
 
 		const results = await prisma.pilot.findMany({
 			where: {
@@ -338,7 +383,7 @@ app.get(
 			orderBy: {
 				last_update: "desc",
 			},
-			take: limit,
+			take: Number(limit || 20),
 			...(cursor && {
 				skip: 1,
 				cursor: {
@@ -374,40 +419,39 @@ app.get(
 			live: r.live,
 		}));
 
-		res.json(pilots);
-	}),
+		return pilots;
+	},
 );
 
 app.get(
 	"/user/settings",
-	authHandler,
-	errorHandler(async (req: AuthRequest, res) => {
-		const cid = BigInt(req.user?.cid || 0);
-
+	{
+		preHandler: app.authenticate,
+	},
+	async (request) => {
+		const cid = BigInt(request.user?.cid || 0);
 		const user = await prisma.user.findUnique({
 			where: { cid },
 			select: { settings: true },
 		});
-
 		if (!user) {
-			res.status(404).json({ error: "User not found" });
-			return;
+			throw app.httpErrors.notFound("User not found");
 		}
-
-		res.json({ settings: user.settings || {} });
-	}),
+		return { settings: user.settings || {} };
+	},
 );
 
 app.post(
 	"/user/settings",
-	authHandler,
-	errorHandler(async (req: AuthRequest, res) => {
-		const cid = BigInt(req.user?.cid || 0);
-		const settings = req.body;
+	{
+		preHandler: app.authenticate,
+	},
+	async (request) => {
+		const cid = BigInt(request.user?.cid || 0);
+		const settings = request.body;
 
 		if (!settings || typeof settings !== "object") {
-			res.status(400).json({ error: "Invalid settings data" });
-			return;
+			throw app.httpErrors.badRequest({ error: "Invalid settings data." });
 		}
 
 		const user = await prisma.user.upsert({
@@ -415,54 +459,29 @@ app.post(
 			update: { settings },
 			create: { cid, settings },
 		});
-
-		res.json({ settings: user.settings });
-	}),
+		return { settings: user.settings };
+	},
 );
 
-app.use((_req, res) => {
-	res.status(404).json({ error: "Endpoint not found" });
-});
-
-app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-	console.error("Error:", err);
-
-	const status = err.status || err.statusCode || 500;
-	const message = err.message || "Internal server error";
-
-	res.status(status).json({
-		error: message,
-		...(process.env.NODE_ENV === "development" && { stack: err.stack }),
-	});
-});
-
 const PORT = process.env.API_PORT || 3001;
-const server = app.listen(PORT, () => {
-	console.log(`Express API listening on port ${PORT}`);
-});
+app
+	.listen({ port: Number(PORT), host: "0.0.0.0" })
+	.then(() => console.log(`Fastify API listening on port ${PORT}`))
+	.catch((err) => {
+		console.error(err);
+		process.exit(1);
+	});
 
 const gracefulShutdown = async (signal: string) => {
 	console.log(`\n${signal} signal received: closing HTTP server`);
-	server.close(async () => {
-		console.log("HTTP server closed");
-		try {
-			await rdsShutdown();
-		} catch (err) {
-			console.error("Error shutting down Redis:", err);
-		}
-		try {
-			await pgShutdown();
-		} catch (err) {
-			console.error("Error shutting down PostgreSQL:", err);
-		}
-		process.exit(0);
-	});
-
-	// Force shutdown after 10 seconds
-	setTimeout(() => {
-		console.error("Forced shutdown after timeout");
-		process.exit(1);
-	}, 10000);
+	await app.close();
+	try {
+		await rdsShutdown();
+	} catch {}
+	try {
+		await pgShutdown();
+	} catch {}
+	process.exit(0);
 };
 
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));

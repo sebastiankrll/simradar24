@@ -1,4 +1,4 @@
-import type { PilotDelta, WsAll } from "@sr24/types/vatsim";
+import type { PilotDelta, WsAll } from "@sr24/types/interface";
 import { Feature, type Map as OlMap } from "ol";
 import type { Extent } from "ol/extent";
 import { Point } from "ol/geom";

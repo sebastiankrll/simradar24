@@ -5,7 +5,8 @@
 	"types": "dist/index.d.ts",
 	"exports": {
 		"./db": "./src/db.ts",
-		"./vatsim": "./src/vatsim.ts"
+		"./vatsim": "./src/vatsim.ts",
+		"./interface": "./src/interface.ts"
 	},
 	"scripts": {
 		"dev": "tsc --watch",

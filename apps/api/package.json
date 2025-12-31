@@ -10,6 +10,7 @@
 	},
 	"devDependencies": {
 		"@sr24/typescript-config": "*",
+		"@types/compression": "^1.8.1",
 		"@types/cors": "^2.8.19",
 		"@types/express": "^5.0.5",
 		"@types/jsonwebtoken": "^9.0.10",
@@ -19,12 +20,19 @@
 		"typescript": "^5.9.3"
 	},
 	"dependencies": {
+		"@fastify/compress": "^8.3.1",
+		"@fastify/cors": "^11.2.0",
+		"@fastify/helmet": "^13.0.2",
+		"@fastify/rate-limit": "^10.3.0",
+		"@fastify/sensible": "^6.0.4",
 		"@sr24/db": "*",
 		"axios": "^1.13.2",
+		"compression": "^1.8.1",
 		"cors": "^2.8.5",
 		"dotenv": "^17.2.3",
 		"express": "^5.1.0",
 		"express-rate-limit": "^8.2.1",
+		"fastify": "^5.6.2",
 		"helmet": "^8.1.0",
 		"jsonwebtoken": "^9.0.3",
 		"xml2js": "^0.6.2"

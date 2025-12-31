@@ -1,4 +1,4 @@
-import type { DashboardStats as Stats } from "@sr24/types/vatsim";
+import type { DashboardStats as Stats } from "@sr24/types/interface";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Fragment } from "react/jsx-runtime";

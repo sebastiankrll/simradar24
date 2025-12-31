@@ -1,4 +1,4 @@
-import type { PilotShort } from "@sr24/types/vatsim";
+import type { PilotShort } from "@sr24/types/interface";
 import type { Coordinate } from "ol/coordinate";
 
 export interface PilotProperties extends Required<PilotShort> {

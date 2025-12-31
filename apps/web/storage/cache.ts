@@ -1,5 +1,5 @@
 import type { FIRFeature, SimAwareTraconFeature, StaticAirline, StaticAirport } from "@sr24/types/db";
-import type { AirportShort, ControllerMerged, TrackPoint, WsAll, WsDelta } from "@sr24/types/vatsim";
+import type { AirportShort, ControllerMerged, InitialData, TrackPoint, WsDelta } from "@sr24/types/interface";
 import { initAirportFeatures } from "@/app/(map)/lib/airportFeatures";
 import { initControllerFeatures, updateControllerFeatures } from "@/app/(map)/lib/controllerFeatures";
 import { setFeatures } from "@/app/(map)/lib/dataLayers";
@@ -22,9 +22,9 @@ export async function initCache(setStatus: StatusSetter, pathname: string): Prom
 		return;
 	}
 
-	await dxInitDatabases(setStatus);
-
-	const data = await fetchApi<WsAll>("/data/init");
+	const dbInitPromise = dxInitDatabases(setStatus);
+	const dataFetchPromise = fetchApi<InitialData>("/data/init");
+	const [_, data] = await Promise.all([dbInitPromise, dataFetchPromise]);
 	setStatus?.((prev) => ({ ...prev, cache: true }));
 
 	await initAirportFeatures();
@@ -148,19 +148,37 @@ export async function getCachedFir(id: string): Promise<FIRFeature | null> {
 	return feature || null;
 }
 
-let trackPointsCache: TrackPoint[] = [];
-let trackPointsPending: Promise<TrackPoint[]> | null = null;
+const cachedTrackPoints = new Map<string, TrackPoint[]>();
+const pendingTrackPoints = new Map<string, Promise<TrackPoint[]>>();
 
 export async function fetchTrackPoints(id: string): Promise<TrackPoint[]> {
-	if (trackPointsPending) {
-		return trackPointsPending;
+	const cached = cachedTrackPoints.get(id);
+	if (cached) {
+		return cached;
 	}
 
-	trackPointsPending = fetchApi<TrackPoint[]>(`/data/track/${id}`);
-	trackPointsCache = await trackPointsPending;
-	trackPointsPending = null;
+	const inFlight = pendingTrackPoints.get(id);
+	if (inFlight) {
+		return inFlight;
+	}
 
-	return trackPointsCache;
+	const promise = fetchApi<TrackPoint[]>(`/data/track/${id}`)
+		.then((data) => {
+			cachedTrackPoints.set(id, data);
+			pendingTrackPoints.delete(id);
+			return data;
+		})
+		.catch((err) => {
+			pendingTrackPoints.delete(id);
+			throw err;
+		});
+
+	pendingTrackPoints.set(id, promise);
+	return promise;
+}
+
+export function clearCachedTrackPoints(): void {
+	cachedTrackPoints.clear();
 }
 
 export function getControllersApiRequest(id: string, type: "airport" | "sector"): string | null {

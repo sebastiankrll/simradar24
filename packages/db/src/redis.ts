@@ -134,49 +134,6 @@ export async function rdsGetMultiple(keyPrefix: string, keys: string[]): Promise
 	}
 }
 
-export async function rdsSetRing(key: string, value: any): Promise<void> {
-	try {
-		const timestamp = Date.now();
-		const member = JSON.stringify({ t: timestamp, v: value });
-		await client.zAdd(key, { score: timestamp, value: member });
-	} catch (err) {
-		console.error(`Failed to set ring storage for key ${key}:`, err);
-		throw err;
-	}
-}
-
-export async function rdsGetRing(key: string, windowMs: number): Promise<any[]> {
-	try {
-		const timestamp = Date.now();
-		const minScore = timestamp - windowMs;
-
-		const members = await client.zRangeByScore(key, minScore, timestamp);
-		return members
-			.map((m) => {
-				try {
-					return JSON.parse(m);
-				} catch {
-					return null;
-				}
-			})
-			.filter((item) => item !== null) as any[];
-	} catch (err) {
-		console.error(`Failed to get ring storage for key ${key}:`, err);
-		throw err;
-	}
-}
-
-export async function rdsTrimRing(key: string, maxAgeMs: number): Promise<void> {
-	try {
-		const timestamp = Date.now();
-		const maxScore = timestamp - maxAgeMs;
-		await client.zRemRangeByScore(key, 0, maxScore);
-	} catch (err) {
-		console.error(`Failed to clean ring storage for key ${key}:`, err);
-		throw err;
-	}
-}
-
 export async function rdsSetMultipleTimeSeries<T>(
 	items: T[],
 	keyPrefix: string,

@@ -1,7 +1,7 @@
 import type { Feature } from "ol";
 import "./Overlays.css";
 import type { FIRFeature, SimAwareTraconFeature, StaticAirline, StaticAirport } from "@sr24/types/db";
-import type { AirportShort, ControllerMerged, ControllerShort } from "@sr24/types/vatsim";
+import type { AirportShort, ControllerMerged, ControllerShort } from "@sr24/types/interface";
 import type { Point } from "ol/geom";
 import { useState } from "react";
 import FlagSprite from "@/assets/images/sprites/flagSprite42.png";

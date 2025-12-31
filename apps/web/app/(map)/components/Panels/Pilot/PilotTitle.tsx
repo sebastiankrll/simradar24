@@ -1,4 +1,4 @@
-import type { PilotLong } from "@sr24/types/vatsim";
+import type { PilotLong } from "@sr24/types/interface";
 import { getAirlineIcon } from "@/components/Icon/Icon";
 import type { PilotPanelStatic } from "./PilotPanel";
 

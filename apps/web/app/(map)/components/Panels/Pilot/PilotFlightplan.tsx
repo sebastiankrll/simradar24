@@ -1,4 +1,4 @@
-import type { PilotLong } from "@sr24/types/vatsim";
+import type { PilotLong } from "@sr24/types/interface";
 import Icon from "@/components/Icon/Icon";
 import { useSettingsStore } from "@/storage/zustand";
 import { convertDistance, haversineDistance } from "@/utils/helpers";

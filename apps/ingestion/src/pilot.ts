@@ -1,16 +1,8 @@
 import { createHash } from "node:crypto";
 import { rdsGetMultiple, rdsGetSingle } from "@sr24/db/redis";
 import type { StaticAirport } from "@sr24/types/db";
-import type {
-	PilotDelta,
-	PilotFlightPlan,
-	PilotLong,
-	PilotShort,
-	PilotTimes,
-	VatsimData,
-	VatsimPilot,
-	VatsimPilotFlightPlan,
-} from "@sr24/types/vatsim";
+import type { PilotDelta, PilotFlightPlan, PilotLong, PilotShort, PilotTimes } from "@sr24/types/interface";
+import type { VatsimData, VatsimPilot, VatsimPilotFlightPlan } from "@sr24/types/vatsim";
 import { haversineDistance } from "./utils/helpers.js";
 
 const TAXI_TIME_MS = 5 * 60 * 1000;
@@ -80,73 +72,86 @@ const MILITARY_RATINGS = [
 ];
 
 let cached: PilotLong[] = [];
-let updated: PilotShort[] = [];
 let added: Required<PilotShort>[] = [];
+let updated: PilotShort[] = [];
 
-export async function mapPilots(latestVatsimData: VatsimData): Promise<[PilotLong[], PilotLong[]]> {
-	const pilotsLongPromises: Promise<PilotLong>[] = latestVatsimData.pilots.map(async (pilot) => {
-		const id = getPilotId(pilot);
-		const cachedPilot = cached.find((c) => c.id === id);
+export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong[]> {
+	const newPilotsLong: PilotLong[] = [];
+	const newCached: PilotLong[] = [];
+	added = [];
+	updated = [];
 
-		const transceiverData = latestVatsimData.transceivers.find((transceiver) => transceiver.callsign === pilot.callsign);
-		const transceiver = transceiverData?.transceivers[0];
+	await Promise.all(
+		latestVatsimData.pilots.map(async (pilot) => {
+			const id = getPilotId(pilot);
+			const cachedPilot = cached.find((c) => c.id === id);
 
-		const updatedFields = {
-			latitude: pilot.latitude,
-			longitude: pilot.longitude,
-			altitude_agl: transceiver?.heightAglM ? Math.round(transceiver.heightAglM * 3.28084) : pilot.altitude,
-			altitude_ms: pilot.altitude,
-			groundspeed: pilot.groundspeed,
-			vertical_speed: 0,
-			heading: pilot.heading,
-			timestamp: new Date(pilot.last_updated),
-			transponder: pilot.transponder,
-			frequency: Number(transceiver?.frequency.toString().slice(0, 6)) || 122_800,
-			qnh_i_hg: pilot.qnh_i_hg,
-			qnh_mb: pilot.qnh_mb,
-			ghost: false,
-		};
+			const transceiverData = latestVatsimData.transceivers.find((transceiver) => transceiver.callsign === pilot.callsign);
+			const transceiver = transceiverData?.transceivers[0];
 
-		let pilotLong: PilotLong;
-		if (cachedPilot) {
-			// hit cache, use cache
-			pilotLong = { ...cachedPilot, ...updatedFields };
-			// console.log("Hit cache!")
-		} else {
-			// cache missed, re-create
-			pilotLong = {
-				id: id,
-				cid: String(pilot.cid),
-				callsign: pilot.callsign,
-				aircraft: pilot.flight_plan?.aircraft_short || "A320",
-				name: pilot.name,
-				server: pilot.server,
-				pilot_rating: PILOT_RATINGS.find((r) => r.id === pilot.pilot_rating)?.short_name || "NEW",
-				military_rating: MILITARY_RATINGS.find((r) => r.id === pilot.military_rating)?.short_name || "M0",
-				flight_plan: await mapPilotFlightPlan(pilot.flight_plan),
-				logon_time: new Date(pilot.logon_time),
-				times: null,
-				live: true,
-				...updatedFields,
+			const updatedFields = {
+				latitude: pilot.latitude,
+				longitude: pilot.longitude,
+				altitude_agl: transceiver?.heightAglM ? Math.round(transceiver.heightAglM * 3.28084) : pilot.altitude,
+				altitude_ms: pilot.altitude,
+				groundspeed: pilot.groundspeed,
+				vertical_speed: 0,
+				heading: pilot.heading,
+				timestamp: new Date(pilot.last_updated),
+				transponder: pilot.transponder.slice(0, 4),
+				frequency: Number(transceiver?.frequency.toString().slice(0, 6)) || 122_800,
+				qnh_i_hg: pilot.qnh_i_hg,
+				qnh_mb: pilot.qnh_mb,
 			};
-			// console.log("Missed cache, re-creating...")
+
+			let pilotLong: PilotLong;
+			if (cachedPilot) {
+				// hit cache, use cache
+				pilotLong = { ...cachedPilot, ...updatedFields };
+				const short = getPilotShort(pilotLong, cachedPilot);
+				if (short) {
+					updated.push(short);
+				}
+				// console.log("Hit cache!")
+			} else {
+				// cache missed, re-create
+				pilotLong = {
+					id: id,
+					cid: String(pilot.cid),
+					callsign: pilot.callsign,
+					aircraft: pilot.flight_plan?.aircraft_short || "A320",
+					name: pilot.name,
+					server: pilot.server,
+					pilot_rating: PILOT_RATINGS.find((r) => r.id === pilot.pilot_rating)?.short_name || "NEW",
+					military_rating: MILITARY_RATINGS.find((r) => r.id === pilot.military_rating)?.short_name || "M0",
+					flight_plan: await mapPilotFlightPlan(pilot.flight_plan),
+					logon_time: new Date(pilot.logon_time),
+					times: null,
+					live: true,
+					...updatedFields,
+				};
+				added.push(getPilotShort(pilotLong) as Required<PilotShort>);
+				// console.log("Missed cache, re-creating...")
+			}
+
+			pilotLong.vertical_speed = calculateVerticalSpeed(pilotLong, cachedPilot);
+			pilotLong.times = mapPilotTimes(pilotLong, cachedPilot, pilot);
+
+			newPilotsLong.push(pilotLong);
+			newCached.push(pilotLong);
+		}),
+	);
+
+	for (const p of cached) {
+		const stillOnline = newPilotsLong.some((b) => b.id === p.id);
+		if (!stillOnline) {
+			p.live = false;
+			newPilotsLong.push(p);
 		}
+	}
 
-		pilotLong.vertical_speed = calculateVerticalSpeed(pilotLong, cachedPilot);
-		pilotLong.times = mapPilotTimes(pilotLong, cachedPilot, pilot);
-
-		return pilotLong;
-	});
-
-	const pilotsLong = await Promise.all(pilotsLongPromises);
-	const deletedLong = cached.filter((a) => !pilotsLong.some((b) => b.id === a.id));
-	deletedLong.forEach((p) => {
-		p.live = false;
-	});
-
-	setPilotDelta(pilotsLong);
-
-	return [pilotsLong, deletedLong];
+	cached = newCached;
+	return newPilotsLong;
 }
 
 function getPilotId(pilot: VatsimPilot): string {
@@ -162,23 +167,6 @@ function getPilotId(pilot: VatsimPilot): string {
 	return b64url.slice(0, 10);
 }
 
-function setPilotDelta(pilotsLong: PilotLong[]): void {
-	added = [];
-	updated = [];
-
-	for (const p of pilotsLong) {
-		const cachedPilot = cached.find((c) => c.id === p.id);
-		if (!cachedPilot) {
-			added.push(getPilotShort(p) as Required<PilotShort>);
-		} else {
-			const pilotShort = getPilotShort(p, cachedPilot);
-			updated.push(pilotShort);
-		}
-	}
-
-	cached = pilotsLong;
-}
-
 export function getPilotDelta(): PilotDelta {
 	return {
 		added,
@@ -186,6 +174,8 @@ export function getPilotDelta(): PilotDelta {
 	};
 }
 
+export function getPilotShort(p: PilotLong): Required<PilotShort>;
+export function getPilotShort(p: PilotLong, c: PilotLong): PilotShort;
 export function getPilotShort(p: PilotLong, c?: PilotLong): PilotShort {
 	if (!c) {
 		return {

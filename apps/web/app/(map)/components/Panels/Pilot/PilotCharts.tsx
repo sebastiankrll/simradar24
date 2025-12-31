@@ -1,4 +1,4 @@
-import type { TrackPoint } from "@sr24/types/vatsim";
+import type { TrackPoint } from "@sr24/types/interface";
 import { Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import Icon from "@/components/Icon/Icon";
 import { useSettingsStore } from "@/storage/zustand";

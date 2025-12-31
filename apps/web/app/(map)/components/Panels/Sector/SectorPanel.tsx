@@ -1,7 +1,7 @@
 "use client";
 
 import type { FIRFeature, SimAwareTraconFeature } from "@sr24/types/db";
-import type { ControllerLong } from "@sr24/types/vatsim";
+import type { ControllerLong } from "@sr24/types/interface";
 import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import { resetMap } from "@/app/(map)/lib/events";

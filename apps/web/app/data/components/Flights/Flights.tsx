@@ -3,7 +3,7 @@
 import Icon from "@/components/Icon/Icon";
 import "./Flights.css";
 import type { StaticAirport } from "@sr24/types/db";
-import type { PilotLong } from "@sr24/types/vatsim";
+import type { PilotLong } from "@sr24/types/interface";
 import { type InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Fragment } from "react/jsx-runtime";

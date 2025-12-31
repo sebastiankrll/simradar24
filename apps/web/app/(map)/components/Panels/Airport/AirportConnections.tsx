@@ -1,4 +1,4 @@
-import type { AirportLong } from "@sr24/types/vatsim";
+import type { AirportLong } from "@sr24/types/interface";
 import Icon from "@/components/Icon/Icon";
 import { getDelayColor } from "./AirportStatus";
 

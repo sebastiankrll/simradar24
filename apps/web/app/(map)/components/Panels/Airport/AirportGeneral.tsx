@@ -1,7 +1,7 @@
 "use client";
 
 import type { SimAwareTraconFeature, StaticAirport } from "@sr24/types/db";
-import type { AirportLong, ControllerLong } from "@sr24/types/vatsim";
+import type { AirportLong, ControllerLong } from "@sr24/types/interface";
 import { parseMetar } from "metar-taf-parser";
 import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";

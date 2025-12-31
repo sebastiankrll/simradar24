@@ -1,4 +1,4 @@
-import type { PilotDelta } from "@sr24/types/vatsim";
+import type { PilotDelta } from "@sr24/types/interface";
 import { Feature } from "ol";
 import type { Coordinate } from "ol/coordinate";
 import { LineString, type Point } from "ol/geom";

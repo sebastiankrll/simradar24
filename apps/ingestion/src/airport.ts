@@ -1,4 +1,4 @@
-import type { AirportDelta, AirportLong, AirportShort, PilotLong } from "@sr24/types/vatsim";
+import type { AirportDelta, AirportLong, AirportShort, PilotLong } from "@sr24/types/interface";
 
 let cached: AirportLong[] = [];
 let updated: AirportShort[] = [];
@@ -116,6 +116,8 @@ function setAirportDelta(airportsLong: AirportLong[]): void {
 	cached = airportsLong;
 }
 
+export function getAirportShort(a: AirportLong): Required<AirportShort>;
+export function getAirportShort(a: AirportLong, c: AirportLong): AirportShort;
 export function getAirportShort(a: AirportLong, c?: AirportLong): AirportShort {
 	if (!c) {
 		return {

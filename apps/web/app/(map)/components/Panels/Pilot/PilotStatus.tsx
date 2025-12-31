@@ -1,4 +1,4 @@
-import type { PilotLong } from "@sr24/types/vatsim";
+import type { PilotLong } from "@sr24/types/interface";
 import flightStatusSprite from "@/assets/images/sprites/flightStatusSprite.png";
 import { PilotAirport } from "./PilotAirport";
 import type { PilotPanelStatic } from "./PilotPanel";

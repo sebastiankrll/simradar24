@@ -5,7 +5,15 @@ import { boundingExtent, type Extent } from "ol/extent";
 import type { Point } from "ol/geom";
 import { fromLonLat, toLonLat } from "ol/proj";
 import { createRoot, type Root } from "react-dom/client";
-import { getAirportShort, getCachedAirline, getCachedAirport, getCachedFir, getCachedTracon, getControllerMerged } from "@/storage/cache";
+import {
+	clearCachedTrackPoints,
+	getAirportShort,
+	getCachedAirline,
+	getCachedAirport,
+	getCachedFir,
+	getCachedTracon,
+	getControllerMerged,
+} from "@/storage/cache";
 import { AirportOverlay, PilotOverlay, SectorOverlay } from "../components/Overlays";
 import { addHighlightedAirport, clearHighlightedAirport, moveToAirportFeature } from "./airportFeatures";
 import { addHighlightedController, clearHighlightedController, moveToSectorFeature } from "./controllerFeatures";
@@ -390,10 +398,13 @@ export function followPilotOnMap(id: string, toggle: "route" | "follow" | null):
 
 function clearMap(): void {
 	trackSource.clear();
+	clearCachedTrackPoints();
+
 	toggleControllerSectorHover(clickedFeature, false, "clicked");
 	clearHighlightedAirport();
 	clearHighlightedPilot();
 	clearHighlightedController();
+
 	if (followInterval) {
 		clearInterval(followInterval);
 		followInterval = null;

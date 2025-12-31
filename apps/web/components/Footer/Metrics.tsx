@@ -1,6 +1,6 @@
 "use client";
 
-import type { WsDelta } from "@sr24/types/vatsim";
+import type { WsDelta } from "@sr24/types/interface";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { fetchApi } from "@/utils/api";

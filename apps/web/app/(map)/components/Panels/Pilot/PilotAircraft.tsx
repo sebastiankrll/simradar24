@@ -1,5 +1,5 @@
 import type { StaticAircraft } from "@sr24/types/db";
-import type { PilotLong } from "@sr24/types/vatsim";
+import type { PilotLong } from "@sr24/types/interface";
 import FlagSprite from "@/assets/images/sprites/flagSprite42.png";
 import Icon from "@/components/Icon/Icon";
 

@@ -1,5 +1,5 @@
 import type { StaticAirport } from "@sr24/types/db";
-import type { PilotLong } from "@sr24/types/vatsim";
+import type { PilotLong } from "@sr24/types/interface";
 import { useSettingsStore } from "@/storage/zustand";
 import { convertDistance, haversineDistance } from "@/utils/helpers";
 

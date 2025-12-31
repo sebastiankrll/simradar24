@@ -1,7 +1,7 @@
 "use client";
 
 import type { StaticAircraft, StaticAirline, StaticAirport } from "@sr24/types/db";
-import type { PilotLong, TrackPoint, WsDelta } from "@sr24/types/vatsim";
+import type { PilotLong, TrackPoint, WsDelta } from "@sr24/types/interface";
 import { useEffect, useRef, useState } from "react";
 import { cacheIsInitialized, fetchTrackPoints, getCachedAirline, getCachedAirport } from "@/storage/cache";
 import "./PilotPanel.css";

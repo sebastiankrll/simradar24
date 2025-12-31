@@ -1,4 +1,4 @@
-import type { VatsimEvent } from "@sr24/types/vatsim";
+import type { VatsimEvent } from "@sr24/types/interface";
 import { useSettingsStore } from "@/storage/zustand";
 import { convertTime } from "@/utils/helpers";
 

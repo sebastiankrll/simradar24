@@ -1,34 +1,32 @@
-import { rdsSetRing, rdsSetSingle, rdsTrimRing } from "@sr24/db/redis";
-import type { ControllerLong, DashboardStats, VatsimData, VatsimEventData } from "@sr24/types/vatsim";
+import { rdsGetSingle, rdsSetSingle } from "@sr24/db/redis";
+import type { ControllerLong, DashboardData, DashboardHistory, DashboardStats } from "@sr24/types/interface";
+import type { VatsimData, VatsimEvent, VatsimEventData } from "@sr24/types/vatsim";
 import axios from "axios";
 
 const VATSIM_EVENT_URL = "https://my.vatsim.net/api/v2/events/latest";
 const VATSIM_EVENT_INTERVAL = 60 * 60 * 1000;
-const VATSIM_HISTORY_WINDOW = 24 * 60 * 60 * 1000;
 const VATSIM_HISTORY_INTERVAL = 10 * 60 * 1000;
 
-let lastHistoryUpdateTimestamp: Date | null = null;
+let events: VatsimEvent[] = [];
+let history: DashboardHistory[] = [];
 
-export async function updateDashboardData(vatsimData: VatsimData, controllers: ControllerLong[]): Promise<void> {
-	updateVatsimEvents();
-
+export async function updateDashboardData(vatsimData: VatsimData, controllers: ControllerLong[]): Promise<DashboardData> {
+	const events = await getDashboardEvents();
 	const stats = getDashboardStats(vatsimData, controllers);
-	rdsSetSingle("dashboard:stats", stats);
+	const history = await getDashboardHistory(vatsimData, controllers);
 
-	if (lastHistoryUpdateTimestamp && Date.now() - lastHistoryUpdateTimestamp.getTime() < VATSIM_HISTORY_INTERVAL) {
-		return;
-	}
-	lastHistoryUpdateTimestamp = new Date();
-	const historyItem = { pilots: vatsimData.pilots.length, controllers: controllers.length };
-	await rdsSetRing("dashboard:history", historyItem);
-	await rdsTrimRing("dashboard:history", VATSIM_HISTORY_WINDOW);
+	return {
+		events,
+		stats,
+		history,
+	};
 }
 
 let lastEventUpdateTimestamp: Date | null = null;
 
-async function updateVatsimEvents(): Promise<void> {
+async function getDashboardEvents(): Promise<VatsimEvent[]> {
 	if (lastEventUpdateTimestamp && Date.now() - lastEventUpdateTimestamp.getTime() < VATSIM_EVENT_INTERVAL) {
-		return;
+		return events;
 	}
 	lastEventUpdateTimestamp = new Date();
 
@@ -41,12 +39,11 @@ async function updateVatsimEvents(): Promise<void> {
 	const tomorrow = new Date(today);
 	tomorrow.setDate(tomorrow.getDate() + 3);
 
-	const activeEvents = vatsimEvents.filter((event) => {
+	events = vatsimEvents.filter((event) => {
 		const eventDate = new Date(event.start_time);
 		return eventDate >= today && eventDate < tomorrow;
 	});
-
-	await rdsSetSingle("dashboard:events", activeEvents);
+	return events;
 }
 
 function getDashboardStats(vatsimData: VatsimData, controllersLong: ControllerLong[]): DashboardStats {
@@ -118,4 +115,21 @@ function getDashboardStats(vatsimData: VatsimData, controllersLong: ControllerLo
 		busiestControllers,
 		quietestControllers,
 	};
+}
+
+let lastHistoryUpdateTimestamp: Date | null = null;
+
+async function getDashboardHistory(vatsimData: VatsimData, controllersLong: ControllerLong[]): Promise<DashboardHistory[]> {
+	if (history.length === 0) {
+		history = (await rdsGetSingle("dashboard:history")) || [];
+	}
+	if (lastHistoryUpdateTimestamp && Date.now() - lastHistoryUpdateTimestamp.getTime() < VATSIM_HISTORY_INTERVAL) {
+		return history;
+	}
+	lastHistoryUpdateTimestamp = new Date();
+
+	history.push({ t: new Date(), v: { pilots: vatsimData.pilots.length, controllers: controllersLong.length } });
+	rdsSetSingle("dashboard:history", history);
+
+	return history;
 }

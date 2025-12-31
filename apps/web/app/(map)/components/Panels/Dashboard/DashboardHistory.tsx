@@ -1,4 +1,4 @@
-import type { DashboardData } from "@sr24/types/vatsim";
+import type { DashboardData } from "@sr24/types/interface";
 import { Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useSettingsStore } from "@/storage/zustand";
 import { convertTime } from "@/utils/helpers";

@@ -1,5 +1,5 @@
 import type { FIRFeature, SimAwareTraconFeature } from "@sr24/types/db";
-import type { ControllerDelta, ControllerMerged, WsAll } from "@sr24/types/vatsim";
+import type { ControllerDelta, ControllerMerged, WsAll } from "@sr24/types/interface";
 import Feature, { type FeatureLike } from "ol/Feature";
 import GeoJSON from "ol/format/GeoJSON";
 import { Circle, type MultiPolygon, Point, type Polygon } from "ol/geom";
