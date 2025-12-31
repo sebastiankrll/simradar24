@@ -11,4 +11,5 @@ RUN npm install
 
 RUN cd packages/db && npm run db:generate
 
+# CMD ["npm", "-w", "@sr24/db", "run", "db:reset"]
 CMD ["npm", "-w", "@sr24/db", "run", "db:deploy"]

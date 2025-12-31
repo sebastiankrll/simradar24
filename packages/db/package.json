@@ -20,7 +20,8 @@
 		"format-and-lint:fix": "biome check . --write",
 		"db:generate": "prisma generate",
 		"db:migrate": "prisma migrate dev",
-		"db:deploy": "prisma migrate deploy"
+		"db:deploy": "prisma migrate deploy",
+		"db:reset": "prisma migrate reset --force"
 	},
 	"devDependencies": {
 		"@sr24/typescript-config": "*",
