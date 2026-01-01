@@ -33,6 +33,7 @@ jobs:
             - name: Copy files to VM
               run: |
                   rsync -avz --delete \
+                    --filter="P /env/" \
                     --filter=":- .deployignore" \
                     -e "ssh -o StrictHostKeyChecking=no" \
                     ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/simradar21
