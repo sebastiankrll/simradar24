@@ -3,8 +3,6 @@ services:
     image: postgres:18.1
     container_name: sr21_postgres
     restart: unless-stopped
-    env_file:
-      - ../env/.env
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -24,8 +22,6 @@ services:
     image: redis:8.4.0
     container_name: sr21_redis
     restart: unless-stopped
-    env_file:
-      - ../env/.env
     environment:
       REDIS_PORT: ${REDIS_PORT}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
@@ -46,8 +42,6 @@ services:
       context: ..
       dockerfile: packages/db/Dockerfile
     container_name: sr21_prisma
-    env_file:
-      - ../env/.env
     environment:
       POSTGRES_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?schema=public
     depends_on:
@@ -70,8 +64,6 @@ services:
         NEXT_PUBLIC_APP_VERSION: ${APP_VERSION}
     container_name: sr21_web
     restart: always
-    env_file:
-      - ../env/.env
     environment:
       NODE_ENV: production
       HOST: ${HOST}
@@ -99,8 +91,6 @@ services:
       dockerfile: apps/api/Dockerfile
     container_name: sr21_api
     restart: always
-    env_file:
-      - ../env/.env
     environment:
       NODE_ENV: production
       POSTGRES_USER: ${POSTGRES_USER}
@@ -142,8 +132,6 @@ services:
       dockerfile: apps/websocket/Dockerfile
     container_name: sr21_websocket
     restart: always
-    env_file:
-      - ../env/.env
     environment:
       NODE_ENV: production
       WS_HOST: ${HOST}
@@ -178,8 +166,6 @@ services:
       dockerfile: apps/ingestion/Dockerfile
     container_name: sr21_ingestion
     restart: always
-    env_file:
-      - ../env/.env
     environment:
       NODE_ENV: production
       POSTGRES_USER: ${POSTGRES_USER}
@@ -207,8 +193,6 @@ services:
       dockerfile: apps/updater/Dockerfile
     container_name: sr21_updater
     restart: always
-    env_file:
-      - ../env/.env
     environment:
       NODE_ENV: production
       POSTGRES_USER: ${POSTGRES_USER}

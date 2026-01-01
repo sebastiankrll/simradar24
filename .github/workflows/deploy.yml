@@ -28,12 +28,12 @@ jobs:
 
             - name: Check .env file presence
               run: |
-                  ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "test -f /opt/simradar21/env/.env && echo '✅ .env file exists' || (echo '❌ .env file is missing' && exit 1)"
+                  ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "test -f /opt/simradar21/.env && echo '✅ .env file exists' || (echo '❌ .env file is missing' && exit 1)"
 
             - name: Copy files to VM
               run: |
                   rsync -avz --delete \
-                    --filter="P /env/" \
+                    --exclude=".env" \
                     --filter=":- .deployignore" \
                     -e "ssh -o StrictHostKeyChecking=no" \
                     ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/simradar21
