@@ -89,7 +89,7 @@ async function fetchVatsimData(): Promise<void> {
 		};
 		rdsPub("ws:delta", delta);
 
-		console.log("Updated");
+		// console.log("Updated");
 	} catch (error) {
 		console.error("❌ Error fetching VATSIM data:", error instanceof Error ? error.message : error);
 	}
