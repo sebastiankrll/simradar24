@@ -16,4 +16,6 @@
 *.log
 
 # Env (allow prod only if needed)
-!.env
+.env
+.env.*
+**/*.env
