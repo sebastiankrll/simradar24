@@ -14,6 +14,10 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v4
 
+            - name: Set release version
+              id: release
+              run: echo "release=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+
             - name: Set up SSH
               uses: webfactory/ssh-agent@v0.8.0
               with:
@@ -37,11 +41,12 @@ jobs:
 
             - name: Deploy on VM
               run: |
-                  ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
-                    cd /opt/simradar21
-                    
-                    docker compose --env-file /opt/simradar21/.env -f docker/docker-compose.prod.yml down
-                    docker compose --env-file /opt/simradar21/.env -f docker/docker-compose.prod.yml pull || true
-                    docker compose --env-file /opt/simradar21/.env -f docker/docker-compose.prod.yml build --build-arg NEXT_PUBLIC_RELEASE=${{ github.ref_name }}
-                    docker compose --env-file /opt/simradar21/.env -f docker/docker-compose.prod.yml up -d --remove-orphans
+                  ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
+                  cd /opt/simradar21
+
+                  export NEXT_PUBLIC_APP_RELEASE=${{ steps.release.outputs.release }}
+
+                  docker compose --env-file /opt/simradar21/.env -f docker/docker-compose.prod.yml down
+                  docker compose --env-file /opt/simradar21/.env -f docker/docker-compose.prod.yml build
+                  docker compose --env-file /opt/simradar21/.env -f docker/docker-compose.prod.yml up -d --remove-orphans
                   EOF
