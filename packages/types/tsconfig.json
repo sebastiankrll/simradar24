@@ -1,10 +1,8 @@
 {
 	"extends": "@sr24/typescript-config/base.json",
 	"compilerOptions": {
-		"compilerOptions": {
-			"noEmit": true,
-			"lib": ["ES2022"]
-		}
+		"noEmit": true,
+		"lib": ["ES2022"]
 	},
 	"include": ["src"],
 	"exclude": ["dist"]

@@ -2,7 +2,6 @@ import type { InitialData, PilotDelta } from "@sr24/types/interface";
 import { Feature, type Map as OlMap } from "ol";
 import type { Extent } from "ol/extent";
 import { Point } from "ol/geom";
-import { fromLonLat, transformExtent } from "ol/proj";
 import RBush from "rbush";
 import { toast } from "react-toastify";
 import MessageBox from "@/components/MessageBox/MessageBox";
@@ -28,23 +27,23 @@ export function initPilotFeatures(data: InitialData): void {
 	for (const p of data.pilots) {
 		const props: PilotProperties = {
 			type: "pilot",
-			coord3857: fromLonLat([p.longitude, p.latitude]),
+			coord3857: p.coordinates,
 			clicked: false,
 			hovered: false,
 			...p,
 		};
 
 		const feature = new Feature({
-			geometry: new Point(fromLonLat([p.longitude, p.latitude])),
+			geometry: new Point(p.coordinates),
 		});
 		feature.setProperties(props);
 		feature.setId(`pilot_${p.id}`);
 
 		const newItem: RBushPilotFeature = {
-			minX: p.longitude,
-			minY: p.latitude,
-			maxX: p.longitude,
-			maxY: p.latitude,
+			minX: p.coordinates[0],
+			minY: p.coordinates[1],
+			maxX: p.coordinates[0],
+			maxY: p.coordinates[1],
 			feature,
 		};
 
@@ -68,15 +67,14 @@ export function updatePilotFeatures(delta: PilotDelta): void {
 			item.feature.set(k, p[k as keyof typeof p], true);
 		}
 
-		if (p.longitude !== undefined && p.latitude !== undefined) {
+		if (p.coordinates) {
 			const geom = item.feature.getGeometry();
-			geom?.setCoordinates(fromLonLat([p.longitude, p.latitude]));
+			geom?.setCoordinates(p.coordinates);
 
-			item.feature.set("coord3857", fromLonLat([p.longitude, p.latitude]), true);
-
+			item.feature.set("coord3857", p.coordinates, true);
 			pilotRBush.remove(item);
-			item.minX = item.maxX = p.longitude;
-			item.minY = item.maxY = p.latitude;
+			item.minX = item.maxX = p.coordinates[0];
+			item.minY = item.maxY = p.coordinates[1];
 			pilotRBush.insert(item);
 		}
 
@@ -88,22 +86,22 @@ export function updatePilotFeatures(delta: PilotDelta): void {
 
 		const props: PilotProperties = {
 			type: "pilot",
-			coord3857: fromLonLat([p.longitude, p.latitude]),
+			coord3857: p.coordinates,
 			clicked: false,
 			hovered: false,
 			...p,
 		};
 		const feature = new Feature({
-			geometry: new Point(fromLonLat([p.longitude, p.latitude])),
+			geometry: new Point(p.coordinates),
 		});
 		feature.setProperties(props);
 		feature.setId(`pilot_${p.id}`);
 
 		const newItem: RBushPilotFeature = {
-			minX: p.longitude,
-			minY: p.latitude,
-			maxX: p.longitude,
-			maxY: p.latitude,
+			minX: p.coordinates[0],
+			minY: p.coordinates[1],
+			maxX: p.coordinates[0],
+			maxY: p.coordinates[1],
 			feature,
 		};
 
@@ -147,7 +145,7 @@ export function setPilotFeatures(extent: Extent, zoom: number): void {
 		return;
 	}
 
-	const [minX, minY, maxX, maxY] = transformExtent(extent, "EPSG:3857", "EPSG:4326");
+	const [minX, minY, maxX, maxY] = extent;
 	const pilotsByExtent = pilotRBush.search({ minX, minY, maxX, maxY });
 	const pilotsByAltitude = pilotsByExtent.sort((a, b) => (b.feature.get("altitude_agl") || 0) - (a.feature.get("altitude_agl") || 0));
 

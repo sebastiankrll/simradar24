@@ -4,7 +4,7 @@ import fastifyHelmet from "@fastify/helmet";
 import fastifyRateLimit from "@fastify/rate-limit";
 import fastifySensible from "@fastify/sensible";
 import { pgFindAirportFlights, pgHealthCheck, pgShutdown, prisma } from "@sr24/db/pg";
-import { rdsConnect, rdsGetSingle, rdsGetTimeSeries, rdsHealthCheck, rdsShutdown, rdsSub } from "@sr24/db/redis";
+import { rdsGetSingle, rdsGetTrackPoints, rdsHealthCheck, rdsShutdown, rdsSub } from "@sr24/db/redis";
 import type { AirportLong, ControllerLong, DashboardData, InitialData, PilotLong, RedisAll } from "@sr24/types/interface";
 import Fastify from "fastify";
 import type { Prisma } from "../../../packages/db/src/generated/prisma/index.js";
@@ -17,33 +17,26 @@ const pilotsLong: Map<string, PilotLong> = new Map();
 const controllersLong: Map<string, ControllerLong> = new Map();
 const airportsLong: Map<string, AirportLong> = new Map();
 
-async function connectDBs(): Promise<void> {
-	await rdsConnect();
-	rdsSub("data:all", async (data: string) => {
-		try {
-			const parsed: RedisAll = JSON.parse(data);
-			initialData = parsed.init;
-			dashboardData = parsed.dashboard;
-			pilotsLong.clear();
-			parsed.pilots.forEach((p) => {
-				pilotsLong.set(p.id, p);
-			});
-			controllersLong.clear();
-			parsed.controllers.forEach((c) => {
-				controllersLong.set(c.callsign, c);
-			});
-			airportsLong.clear();
-			parsed.airports.forEach((a) => {
-				airportsLong.set(a.icao, a);
-			});
-		} catch (err) {
-			console.error("Error parsing RedisAll data from subscription:", err);
-		}
-	});
-}
-connectDBs().catch((err) => {
-	console.error("Error connecting to databases:", err);
-	process.exit(1);
+rdsSub("data:all", async (data: string) => {
+	try {
+		const parsed: RedisAll = JSON.parse(data);
+		initialData = parsed.init;
+		dashboardData = parsed.dashboard;
+		pilotsLong.clear();
+		parsed.pilots.forEach((p) => {
+			pilotsLong.set(p.id, p);
+		});
+		controllersLong.clear();
+		parsed.controllers.forEach((c) => {
+			controllersLong.set(c.callsign, c);
+		});
+		airportsLong.clear();
+		parsed.airports.forEach((a) => {
+			airportsLong.set(a.icao, a);
+		});
+	} catch (err) {
+		console.error("Error parsing RedisAll data from subscription:", err);
+	}
 });
 
 const app = Fastify({
@@ -209,7 +202,7 @@ app.get(
 	},
 	async (request) => {
 		const { id } = request.params as { id: string };
-		const trackPoints = await rdsGetTimeSeries(`pilot:tp:${id}`);
+		const trackPoints = await rdsGetTrackPoints(id);
 		if (!trackPoints || trackPoints.length === 0) {
 			throw app.httpErrors.notFound({ error: "Track not found" });
 		}

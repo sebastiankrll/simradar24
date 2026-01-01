@@ -3,7 +3,7 @@ import { rdsGetMultiple, rdsGetSingle } from "@sr24/db/redis";
 import type { StaticAirport } from "@sr24/types/db";
 import type { PilotDelta, PilotFlightPlan, PilotLong, PilotShort, PilotTimes } from "@sr24/types/interface";
 import type { VatsimData, VatsimPilot, VatsimPilotFlightPlan } from "@sr24/types/vatsim";
-import { haversineDistance } from "./utils/helpers.js";
+import { fromLonLat, haversineDistance } from "./utils/helpers.js";
 
 const TAXI_TIME_MS = 5 * 60 * 1000;
 const PILOT_RATINGS = [
@@ -75,23 +75,23 @@ let cached: PilotLong[] = [];
 let added: Required<PilotShort>[] = [];
 let updated: PilotShort[] = [];
 
-export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong[]> {
+export async function mapPilots(vatsimData: VatsimData): Promise<PilotLong[]> {
 	const newPilotsLong: PilotLong[] = [];
 	const newCached: PilotLong[] = [];
 	added = [];
 	updated = [];
 
 	await Promise.all(
-		latestVatsimData.pilots.map(async (pilot) => {
+		vatsimData.pilots.map(async (pilot) => {
 			const id = getPilotId(pilot);
 			const cachedPilot = cached.find((c) => c.id === id);
 
-			const transceiverData = latestVatsimData.transceivers.find((transceiver) => transceiver.callsign === pilot.callsign);
+			const transceiverData = vatsimData.transceivers.find((transceiver) => transceiver.callsign === pilot.callsign);
 			const transceiver = transceiverData?.transceivers[0];
 
 			const updatedFields = {
-				latitude: pilot.latitude,
 				longitude: pilot.longitude,
+				latitude: pilot.latitude,
 				altitude_agl: transceiver?.heightAglM ? Math.round(transceiver.heightAglM * 3.28084) : pilot.altitude,
 				altitude_ms: pilot.altitude,
 				groundspeed: pilot.groundspeed,
@@ -106,15 +106,12 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 
 			let pilotLong: PilotLong;
 			if (cachedPilot) {
-				// hit cache, use cache
 				pilotLong = { ...cachedPilot, ...updatedFields };
 				const short = getPilotShort(pilotLong, cachedPilot);
 				if (short) {
 					updated.push(short);
 				}
-				// console.log("Hit cache!")
 			} else {
-				// cache missed, re-create
 				pilotLong = {
 					id: id,
 					cid: String(pilot.cid),
@@ -131,7 +128,6 @@ export async function mapPilots(latestVatsimData: VatsimData): Promise<PilotLong
 					...updatedFields,
 				};
 				added.push(getPilotShort(pilotLong) as Required<PilotShort>);
-				// console.log("Missed cache, re-creating...")
 			}
 
 			pilotLong.vertical_speed = calculateVerticalSpeed(pilotLong, cachedPilot);
@@ -181,8 +177,7 @@ export function getPilotShort(p: PilotLong, c?: PilotLong): PilotShort {
 		return {
 			id: p.id,
 			callsign: p.callsign,
-			latitude: p.latitude,
-			longitude: p.longitude,
+			coordinates: fromLonLat([p.longitude, p.latitude]),
 			altitude_agl: p.altitude_agl,
 			altitude_ms: p.altitude_ms,
 			groundspeed: p.groundspeed,
@@ -198,8 +193,7 @@ export function getPilotShort(p: PilotLong, c?: PilotLong): PilotShort {
 	} else {
 		const pilotShort: PilotShort = { id: p.id };
 
-		if (p.latitude !== c.latitude) pilotShort.latitude = p.latitude;
-		if (p.longitude !== c.longitude) pilotShort.longitude = p.longitude;
+		if (p.longitude !== c.longitude || p.latitude !== c.latitude) pilotShort.coordinates = fromLonLat([p.longitude, p.latitude]);
 		if (p.altitude_agl !== c.altitude_agl) pilotShort.altitude_agl = p.altitude_agl;
 		if (p.altitude_ms !== c.altitude_ms) pilotShort.altitude_ms = p.altitude_ms;
 		if (p.groundspeed !== c.groundspeed) pilotShort.groundspeed = p.groundspeed;
@@ -398,12 +392,11 @@ function estimateInitState(current: PilotLong): PilotTimes["state"] {
 	)
 		return "Cruise";
 
-	const departureCoordinates = [current.flight_plan.departure.latitude, current.flight_plan.departure.longitude];
-	const arrivalCoordinates = [current.flight_plan.arrival.latitude, current.flight_plan.arrival.longitude];
-	const currentCoordinates = [current.latitude, current.longitude];
+	const departureCoordinates = [current.flight_plan.departure.longitude, current.flight_plan.departure.latitude];
+	const arrivalCoordinates = [current.flight_plan.arrival.longitude, current.flight_plan.arrival.latitude];
 
-	const distToDeparture = haversineDistance(departureCoordinates, currentCoordinates);
-	const distToArrival = haversineDistance(currentCoordinates, arrivalCoordinates);
+	const distToDeparture = haversineDistance(departureCoordinates, [current.longitude, current.latitude]);
+	const distToArrival = haversineDistance([current.longitude, current.latitude], arrivalCoordinates);
 
 	// Not moving, closer to departure airport
 	if (current.groundspeed === 0 && distToDeparture <= distToArrival) return "Boarding";
@@ -435,13 +428,12 @@ function estimateTouchdown(current: PilotLong): Date | null {
 	)
 		return null;
 
-	const departureCoordinates = [current.flight_plan.departure.latitude, current.flight_plan.departure.longitude];
-	const arrivalCoordinates = [current.flight_plan.arrival.latitude, current.flight_plan.arrival.longitude];
-	const currentCoordinates = [current.latitude, current.longitude];
+	const departureCoordinates = [current.flight_plan.departure.longitude, current.flight_plan.departure.latitude];
+	const arrivalCoordinates = [current.flight_plan.arrival.longitude, current.flight_plan.arrival.latitude];
 
 	// Multiply with 1.1 to account for non direct routing (temporary until Navigraph)
-	const distToDeparture = haversineDistance(departureCoordinates, currentCoordinates) * 1.1;
-	const distToArrival = haversineDistance(currentCoordinates, arrivalCoordinates) * 1.1;
+	const distToDeparture = haversineDistance(departureCoordinates, [current.longitude, current.latitude]) * 1.1;
+	const distToArrival = haversineDistance([current.longitude, current.latitude], arrivalCoordinates) * 1.1;
 	const distTotal = distToDeparture + distToArrival;
 
 	const fractionRemaining = distToArrival / distTotal;
@@ -493,49 +485,3 @@ function roundDateTo5Min(date: Date): Date {
 
 	return newDate;
 }
-
-// const SPD_RATE = 5;
-// const ALT_RATE = 500;
-
-// function estimateDisconnectedPosition(pilot: PilotLong): PilotLong | null {
-//     const departure = pilot.flight_plan?.departure;
-//     const arrival = pilot.flight_plan?.arrival;
-//     if (!arrival?.latitude || !arrival?.longitude || !departure?.latitude || !departure?.longitude) return null;
-
-//     const currentSpeed = pilot.groundspeed;
-//     const currentAltitude = pilot.altitude_agl;
-//     if (currentSpeed < 20 || currentAltitude < 1000) return null;
-
-//     const filedSpeed = pilot.flight_plan?.filed_tas || currentSpeed;
-//     const filedAltitude = pilot.flight_plan?.filed_altitude || currentAltitude;
-
-//     const newSpeed = currentSpeed > filedSpeed ? Math.max(currentSpeed - SPD_RATE, filedSpeed) : Math.min(currentSpeed + SPD_RATE, filedSpeed);
-//     const newAltitude = currentAltitude > filedAltitude ? Math.max(currentAltitude - ALT_RATE, filedAltitude) : Math.min(currentAltitude + ALT_RATE, filedAltitude);
-
-//     const distanceNM = newSpeed / 3600;
-
-//     const lat1 = pilot.latitude * Math.PI / 180;
-//     const lon1 = pilot.longitude * Math.PI / 180;
-//     const lat2 = arrival.latitude * Math.PI / 180;
-//     const lon2 = arrival.longitude * Math.PI / 180;
-
-//     const y = Math.sin(lon2 - lon1) * Math.cos(lat2);
-//     const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
-//     const bearing = Math.atan2(y, x);
-
-//     const distRad = distanceNM / 3440;
-//     const newLat = Math.asin(Math.sin(lat1) * Math.cos(distRad) + Math.cos(lat1) * Math.sin(distRad) * Math.cos(bearing));
-//     const newLon = lon1 + Math.atan2(Math.sin(bearing) * Math.sin(distRad) * Math.cos(lat1), Math.cos(distRad) - Math.sin(lat1) * Math.sin(newLat));
-
-//     return {
-//         ...pilot,
-//         latitude: newLat * 180 / Math.PI,
-//         longitude: newLon * 180 / Math.PI,
-//         groundspeed: newSpeed,
-//         altitude_agl: newAltitude,
-//         altitude_ms: newAltitude,
-//         heading: bearing * 180 / Math.PI < 0 ? bearing * 180 / Math.PI + 360 : bearing * 180 / Math.PI,
-//         timestamp: new Date(),
-//         ghost: true,
-//     };
-// }

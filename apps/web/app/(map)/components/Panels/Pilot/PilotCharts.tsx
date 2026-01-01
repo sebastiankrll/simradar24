@@ -4,6 +4,12 @@ import Icon from "@/components/Icon/Icon";
 import { useSettingsStore } from "@/storage/zustand";
 import { convertAltitude, convertSpeed, convertTime } from "@/utils/helpers";
 
+type DataPoint = {
+	name: string;
+	altitude: number;
+	speed: number;
+};
+
 export function PilotCharts({
 	trackPoints,
 	openSection,
@@ -14,12 +20,7 @@ export function PilotCharts({
 	ref: React.Ref<HTMLDivElement>;
 }) {
 	const { altitudeUnit, speedUnit, timeFormat, timeZone } = useSettingsStore();
-
-	const data = trackPoints.map((point, _index) => ({
-		name: convertTime(point.timestamp, timeFormat, timeZone),
-		altitude: convertAltitude(point.altitude_ms, altitudeUnit, false),
-		speed: convertSpeed(point.groundspeed, speedUnit, false),
-	}));
+	const data = mapData(trackPoints, altitudeUnit, speedUnit, timeFormat, timeZone);
 
 	return (
 		<div ref={ref} className={`panel-sub-container accordion${openSection === "charts" ? " open" : ""}`}>
@@ -73,4 +74,28 @@ export function PilotCharts({
 			</div>
 		</div>
 	);
+}
+
+function mapData(
+	trackPoints: TrackPoint[],
+	altitudeUnit: "feet" | "meters",
+	speedUnit: "knots" | "kmh" | "mph" | "ms",
+	timeFormat: "12h" | "24h",
+	timeZone: "local" | "utc",
+): DataPoint[] {
+	let lastAlt = 0;
+	let lastSpeed = 0;
+
+	return trackPoints.map((point) => {
+		const alt = point.altitude_ms || lastAlt;
+		const speed = point.groundspeed || lastSpeed;
+		lastAlt = alt;
+		lastSpeed = speed;
+
+		return {
+			name: convertTime(point.timestamp, timeFormat, timeZone),
+			altitude: convertAltitude(alt, altitudeUnit),
+			speed: convertSpeed(speed, speedUnit),
+		};
+	});
 }

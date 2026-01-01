@@ -2,7 +2,6 @@ import type { PilotDelta } from "@sr24/types/interface";
 import { Feature } from "ol";
 import type { Coordinate } from "ol/coordinate";
 import { LineString, type Point } from "ol/geom";
-import { fromLonLat } from "ol/proj";
 import Stroke from "ol/style/Stroke";
 import Style from "ol/style/Style";
 import { fetchTrackPoints } from "@/storage/cache";
@@ -28,24 +27,28 @@ export async function initTrackFeatures(id: string | null): Promise<void> {
 		const end = trackPoints[lastIndex + 1];
 
 		const trackFeature = new Feature({
-			geometry: new LineString(
-				[
-					[start.longitude, start.latitude],
-					[end.longitude, end.latitude],
-				].map((coord) => fromLonLat(coord)),
-			),
+			geometry: new LineString([start.coordinates, end.coordinates]),
 			type: "track",
 		});
-		const stroke = getTrackSegmentColor(end.altitude_agl, end.altitude_ms);
-		const style = new Style({ stroke: stroke });
+		const stroke = start.color
+			? new Stroke({
+					color: start.color,
+					width: 3,
+				})
+			: lastStroke;
 
-		trackFeature.setStyle(style);
+		lastStroke = stroke;
+
+		trackFeature.setStyle(
+			new Style({
+				stroke: stroke,
+			}),
+		);
 		trackFeature.setId(`track_${id}_${lastIndex}`);
 		trackFeatures.push(trackFeature);
 
 		if (lastIndex === trackPoints.length - 2) {
-			lastCoords = fromLonLat([end.longitude, end.latitude]);
-			lastStroke = stroke;
+			lastCoords = end.coordinates;
 			animatedTrackFeature = trackFeature;
 		}
 	}
@@ -63,7 +66,7 @@ export async function updateTrackFeatures(delta: PilotDelta): Promise<void> {
 
 	const pilot = delta.updated.find((p) => `pilot_${p.id}` === pilotId);
 	if (!pilotId || !pilot) return;
-	if (pilot.latitude === undefined || pilot.longitude === undefined) return;
+	if (!pilot.coordinates) return;
 
 	if (Date.now() - (lastTimestamp || 0) > STALE_MS) {
 		await initTrackFeatures(pilotId);
@@ -79,7 +82,7 @@ export async function updateTrackFeatures(delta: PilotDelta): Promise<void> {
 	}
 
 	const trackFeature = new Feature({
-		geometry: new LineString([lastCoords, fromLonLat([pilot.longitude, pilot.latitude])]),
+		geometry: new LineString([lastCoords, pilot.coordinates]),
 		type: "track",
 	});
 
@@ -92,7 +95,7 @@ export async function updateTrackFeatures(delta: PilotDelta): Promise<void> {
 
 	trackSource.addFeature(trackFeature);
 
-	lastCoords = fromLonLat([pilot.longitude, pilot.latitude]);
+	lastCoords = pilot.coordinates;
 	lastStroke = stroke;
 	pilotFeature = pilotMainSource.getFeatureById(`pilot_${pilot.id}`) as Feature<Point>;
 	lastTimestamp = Date.now();
