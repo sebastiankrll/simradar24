@@ -1,3 +1,4 @@
+import { deflateSync } from "node:zlib";
 import { PrismaPg } from "@prisma/adapter-pg";
 import type { PilotLong } from "@sr24/types/interface";
 import { PrismaClient } from "./generated/prisma/client.js";
@@ -47,11 +48,12 @@ export async function pgUpsertPilots(pilots: PilotLong[]): Promise<void> {
 			if (buffers.length === 0) continue;
 
 			const blob = Buffer.concat(buffers);
+			const compressed = deflateSync(blob);
 			transactions.push(
 				prisma.trackpoint.upsert({
-					where: { pilot_id: p.id },
+					where: { id: p.id },
 					update: { points: blob, created_at: new Date() },
-					create: { pilot_id: p.id, points: blob, created_at: new Date() },
+					create: { id: p.id, points: compressed, created_at: new Date() },
 				}),
 			);
 		} catch (err) {
@@ -109,7 +111,7 @@ async function pgUpsertPilotsBatch(pilots: PilotLong[]): Promise<void> {
 			JSON.stringify(p.flight_plan),
 			JSON.stringify(p.times),
 			p.logon_time,
-			p.timestamp,
+			p.last_update,
 			p.live,
 			// ---- Indexes ----
 			p.times?.sched_off_block || null,
@@ -123,7 +125,7 @@ async function pgUpsertPilotsBatch(pilots: PilotLong[]): Promise<void> {
 
 	const query = `
 		INSERT INTO "Pilot" (
-			pilot_id, cid, callsign, latitude, longitude, altitude_agl,
+			id, cid, callsign, latitude, longitude, altitude_agl,
 			altitude_ms, groundspeed, vertical_speed, heading, aircraft,
 			transponder, frequency,
 			name, server, pilot_rating, military_rating, qnh_i_hg,
@@ -131,7 +133,7 @@ async function pgUpsertPilotsBatch(pilots: PilotLong[]): Promise<void> {
 			sched_off_block, sched_on_block, dep_icao, arr_icao
 		)
 		VALUES ${values.join(",")}
-		ON CONFLICT (pilot_id) DO UPDATE SET
+		ON CONFLICT (id) DO UPDATE SET
 			cid = EXCLUDED.cid,
 			callsign = EXCLUDED.callsign,
 			latitude = EXCLUDED.latitude,
@@ -169,73 +171,6 @@ async function pgUpsertPilotsBatch(pilots: PilotLong[]): Promise<void> {
 	}
 }
 
-export async function pgFindAirportFlights(
-	icao: string,
-	direction: "dep" | "arr",
-	limit: number,
-	cursor?: string,
-	backwards?: boolean,
-): Promise<PilotLong[]> {
-	try {
-		const dirCol = direction === "dep" ? "dep_icao" : "arr_icao";
-		const timeCol = direction === "dep" ? "sched_off_block" : "sched_on_block";
-
-		const where: any = {
-			[dirCol]: icao,
-			[timeCol]: { not: null },
-		};
-		if (!cursor) {
-			where[timeCol] = { gte: new Date() };
-		}
-
-		const results = await prisma.pilot.findMany({
-			take: backwards ? -(limit + 1) : limit + 1,
-			skip: cursor ? 1 : 0,
-			cursor: cursor
-				? {
-						pilot_id: cursor,
-					}
-				: undefined,
-			where,
-			orderBy: {
-				[timeCol]: "asc",
-			},
-		});
-
-		const pilots: PilotLong[] = results.map((r) => ({
-			id: r.pilot_id,
-			cid: r.cid,
-			callsign: r.callsign,
-			latitude: r.latitude,
-			longitude: r.longitude,
-			altitude_agl: r.altitude_agl,
-			altitude_ms: r.altitude_ms,
-			groundspeed: r.groundspeed,
-			vertical_speed: r.vertical_speed,
-			heading: r.heading,
-			aircraft: r.aircraft,
-			transponder: r.transponder,
-			frequency: r.frequency,
-			name: r.name,
-			server: r.server,
-			pilot_rating: r.pilot_rating,
-			military_rating: r.military_rating,
-			qnh_i_hg: r.qnh_i_hg,
-			qnh_mb: r.qnh_mb,
-			flight_plan: r.flight_plan as any,
-			times: r.times as any,
-			logon_time: r.logon_time,
-			timestamp: r.last_update,
-			live: r.live,
-		}));
-
-		return pilots;
-	} catch (err) {
-		console.error("Error fetching airport pilots:", err);
-		throw err;
-	}
-}
-
 export async function pgDeleteStalePilots(): Promise<void> {
 	try {
 		await prisma.pilot.deleteMany({
@@ -249,14 +184,14 @@ export async function pgDeleteStalePilots(): Promise<void> {
 				live: true,
 				last_update: { lt: new Date(Date.now() - 120 * 1000) },
 			},
-			select: { pilot_id: true },
+			select: { id: true },
 		});
 
 		if (pilots.length === 0) return;
 
 		await prisma.pilot.updateMany({
 			where: {
-				pilot_id: { in: pilots.map((p) => p.pilot_id) },
+				id: { in: pilots.map((p) => p.id) },
 			},
 			data: {
 				live: false,
@@ -267,19 +202,20 @@ export async function pgDeleteStalePilots(): Promise<void> {
 
 		for (const p of pilots) {
 			try {
-				const buffers: Buffer[] = await rdsGetTrackPoints(p.pilot_id, true);
+				const id = p.id;
+				const buffers: Buffer[] = await rdsGetTrackPoints(id, true);
 				if (buffers.length === 0) continue;
 
 				const blob = Buffer.concat(buffers);
 				transactions.push(
 					prisma.trackpoint.upsert({
-						where: { pilot_id: p.pilot_id },
+						where: { id: id },
 						update: { points: blob, created_at: new Date() },
-						create: { pilot_id: p.pilot_id, points: blob, created_at: new Date() },
+						create: { id: id, points: blob, created_at: new Date() },
 					}),
 				);
 			} catch (err) {
-				console.error(`Error upserting trackpoints for pilot ${p.pilot_id}:`, err);
+				console.error(`Error upserting trackpoints for pilot ${p.id}:`, err);
 			}
 		}
 

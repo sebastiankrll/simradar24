@@ -1,9 +1,11 @@
 import "dotenv/config";
+import { inflateSync } from "node:zlib";
 import fastifyCors from "@fastify/cors";
 import fastifyHelmet from "@fastify/helmet";
 import fastifyRateLimit from "@fastify/rate-limit";
 import fastifySensible from "@fastify/sensible";
-import { pgFindAirportFlights, pgHealthCheck, pgShutdown, prisma } from "@sr24/db/pg";
+import { decodeTrackpoints, parseTrackPointBuffer } from "@sr24/db/buffer";
+import { pgHealthCheck, pgShutdown, prisma } from "@sr24/db/pg";
 import { rdsConnectBufferClient, rdsGetSingle, rdsGetTrackPoints, rdsHealthCheck, rdsShutdown, rdsSub } from "@sr24/db/redis";
 import type { AirportLong, ControllerLong, DashboardData, InitialData, PilotLong, RedisAll } from "@sr24/types/interface";
 import Fastify from "fastify";
@@ -152,27 +154,6 @@ app.get(
 );
 
 app.get(
-	"/map/aircraft/:reg",
-	{
-		schema: {
-			params: {
-				type: "object",
-				properties: { reg: { type: "string", minLength: 4, maxLength: 8 } },
-				required: ["reg"],
-			},
-		},
-	},
-	async (request) => {
-		const { reg } = request.params as { reg: string };
-		const aircraft = await rdsGetSingle(`static_fleet:${reg.toUpperCase()}`);
-		if (!aircraft) {
-			throw app.httpErrors.notFound({ error: "Aircraft not found" });
-		}
-		return aircraft;
-	},
-);
-
-app.get(
 	"/map/airport/:icao",
 	{
 		schema: {
@@ -235,14 +216,43 @@ app.get(
 	async (request) => {
 		const { icao } = request.params as { icao: string };
 		const { direction, limit, cursor, backwards } = request.query as { direction?: string; limit?: string; cursor?: string; backwards?: string };
-		const flights = await pgFindAirportFlights(
-			icao.toUpperCase(),
-			(direction || "dep").toLowerCase() === "arr" ? "arr" : "dep",
-			Number(limit || 20),
-			cursor,
-			backwards === "true",
-		);
-		return flights;
+
+		const normalizedDirection = (direction || "dep").toLowerCase() === "arr" ? "arr" : "dep";
+		const normalizedLimit = Number(limit || 20);
+		const normalizedBackwards = backwards === "true";
+
+		const dirCol = normalizedDirection === "dep" ? "dep_icao" : "arr_icao";
+		const timeCol = normalizedDirection === "dep" ? "sched_off_block" : "sched_on_block";
+
+		const where: any = {
+			[dirCol]: icao.toUpperCase(),
+			[timeCol]: { not: null },
+		};
+		if (!cursor) {
+			where[timeCol] = { gte: new Date() };
+		}
+
+		return await prisma.pilot.findMany({
+			take: normalizedBackwards ? -(normalizedLimit + 1) : normalizedLimit + 1,
+			skip: cursor ? 1 : 0,
+			cursor: cursor
+				? {
+						id: cursor,
+					}
+				: undefined,
+			where,
+			orderBy: {
+				[timeCol]: "asc",
+			},
+			select: {
+				id: true,
+				callsign: true,
+				aircraft: true,
+				flight_plan: true,
+				times: true,
+				live: true,
+			},
+		});
 	},
 );
 
@@ -311,10 +321,9 @@ app.get(
 					callsign: "asc",
 				},
 				select: {
-					pilot_id: true,
+					id: true,
 					callsign: true,
-					dep_icao: true,
-					arr_icao: true,
+					flight_plan: true,
 					aircraft: true,
 					live: true,
 				},
@@ -331,10 +340,9 @@ app.get(
 				},
 				distinct: ["callsign"],
 				select: {
-					pilot_id: true,
+					id: true,
 					callsign: true,
-					dep_icao: true,
-					arr_icao: true,
+					flight_plan: true,
 					aircraft: true,
 					live: true,
 				},
@@ -371,7 +379,7 @@ app.get(
 		const { callsign } = request.params as { callsign: string };
 		const { limit, cursor } = request.query as { limit?: string; cursor?: string };
 
-		const results = await prisma.pilot.findMany({
+		return await prisma.pilot.findMany({
 			where: {
 				callsign,
 			},
@@ -382,39 +390,72 @@ app.get(
 			...(cursor && {
 				skip: 1,
 				cursor: {
-					pilot_id: cursor,
+					id: cursor,
 				},
 			}),
+			select: {
+				id: true,
+				aircraft: true,
+				flight_plan: true,
+				times: true,
+			},
+		});
+	},
+);
+
+app.get(
+	"/data/pilot/:id",
+	{
+		schema: {
+			params: {
+				type: "object",
+				properties: { id: { type: "string", minLength: 10, maxLength: 10 } },
+				required: ["id"],
+			},
+		},
+	},
+	async (request) => {
+		const { id } = request.params as { id: string };
+		const pilot = await prisma.pilot.findUnique({
+			where: { id },
+		});
+		const trackPoint = await prisma.trackpoint.findUnique({
+			where: { id },
 		});
 
-		const pilots: PilotLong[] = results.map((r) => ({
-			id: r.pilot_id,
-			cid: r.cid,
-			callsign: r.callsign,
-			latitude: r.latitude,
-			longitude: r.longitude,
-			altitude_agl: r.altitude_agl,
-			altitude_ms: r.altitude_ms,
-			groundspeed: r.groundspeed,
-			vertical_speed: r.vertical_speed,
-			heading: r.heading,
-			aircraft: r.aircraft,
-			transponder: r.transponder,
-			frequency: r.frequency,
-			name: r.name,
-			server: r.server,
-			pilot_rating: r.pilot_rating,
-			military_rating: r.military_rating,
-			qnh_i_hg: r.qnh_i_hg,
-			qnh_mb: r.qnh_mb,
-			flight_plan: r.flight_plan as any,
-			times: r.times as any,
-			logon_time: r.logon_time,
-			timestamp: r.last_update,
-			live: r.live,
-		}));
+		if (!pilot) {
+			throw app.httpErrors.notFound({ error: "Pilot not found" });
+		}
 
-		return pilots;
+		const compressed = trackPoint?.points;
+		if (!compressed) return { pilot };
+
+		const blob = inflateSync(compressed);
+		const buffers = parseTrackPointBuffer(blob);
+		const trackPoints = decodeTrackpoints(buffers, true);
+
+		return { pilot, trackPoints };
+	},
+);
+
+app.get(
+	"/data/aircraft/:reg",
+	{
+		schema: {
+			params: {
+				type: "object",
+				properties: { reg: { type: "string", minLength: 4, maxLength: 8 } },
+				required: ["reg"],
+			},
+		},
+	},
+	async (request) => {
+		const { reg } = request.params as { reg: string };
+		const aircraft = await rdsGetSingle(`static_fleet:${reg.toUpperCase()}`);
+		if (!aircraft) {
+			throw app.httpErrors.notFound({ error: "Aircraft not found" });
+		}
+		return aircraft;
 	},
 );
 

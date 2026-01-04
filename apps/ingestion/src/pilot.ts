@@ -97,7 +97,7 @@ export async function mapPilots(vatsimData: VatsimData): Promise<PilotLong[]> {
 				groundspeed: pilot.groundspeed,
 				vertical_speed: 0,
 				heading: pilot.heading,
-				timestamp: new Date(pilot.last_updated),
+				last_update: new Date(pilot.last_updated),
 				transponder: pilot.transponder.slice(0, 4),
 				frequency: Number(transceiver?.frequency.toString().slice(0, 6)) || 122_800,
 				qnh_i_hg: pilot.qnh_i_hg,
@@ -216,8 +216,8 @@ export function getPilotShort(p: PilotLong, c?: PilotLong): PilotShort {
 function calculateVerticalSpeed(current: PilotLong, cache: PilotLong | undefined): number {
 	if (!cache) return 0;
 
-	const prevTime = new Date(cache.timestamp).getTime();
-	const currTime = new Date(current.timestamp).getTime();
+	const prevTime = new Date(cache.last_update).getTime();
+	const currTime = new Date(current.last_update).getTime();
 	const diffSeconds = (currTime - prevTime) / 1000;
 
 	// Avoid divide-by-zero or extremely small timestamp differences

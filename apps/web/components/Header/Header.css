@@ -136,7 +136,7 @@ header {
 	background-color: var(--color-bg);
 	border: 1px solid var(--color-border);
 	box-shadow: var(--box-shadow);
-	z-index: 10;
+	z-index: 9999;
 	width: 100%;
 }
 

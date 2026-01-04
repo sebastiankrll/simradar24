@@ -1,5 +1,6 @@
-import type { DecodedTrackPoint, DeltaTrackPoint, TrackPoint } from "@sr24/types/interface";
+import type { DeltaTrackPoint, TrackPoint } from "@sr24/types/interface";
 import { createClient, RESP_TYPES } from "redis";
+import { decodeTrackpoints } from "./buffer.js";
 
 const BATCH_SIZE = 1000;
 
@@ -155,13 +156,6 @@ export async function rdsSetTrackpoints(trackpoints: Map<string, Buffer>): Promi
 	}
 }
 
-const TP_MASK = {
-	COORDS: 1 << 0,
-	ALT_MSL: 1 << 1,
-	GS: 1 << 2,
-	COLOR: 1 << 3,
-} as const;
-
 export async function rdsGetTrackPoints(id: string): Promise<(TrackPoint | DeltaTrackPoint)[]>;
 export async function rdsGetTrackPoints(id: string, buffer: true): Promise<Buffer[]>;
 export async function rdsGetTrackPoints(id: string, buffer?: boolean): Promise<(TrackPoint | DeltaTrackPoint)[] | Buffer[]> {
@@ -170,68 +164,9 @@ export async function rdsGetTrackPoints(id: string, buffer?: boolean): Promise<(
 		if (buffers.length === 0) return [];
 		if (buffer) return buffers;
 
-		const result: (TrackPoint | DeltaTrackPoint)[] = [];
-		let prev: DecodedTrackPoint | null = null;
-
-		for (const buf of buffers) {
-			const curr = decodeTrackPoint(buf);
-
-			if (!prev) {
-				result.push({
-					coordinates: [curr.x, curr.y],
-					altitude_ms: curr.alt_msl * 100,
-					groundspeed: curr.gs,
-					color: `#${curr.color.toString(16).padStart(6, "0")}`,
-					timestamp: curr.ts,
-				});
-			} else {
-				let mask = 0;
-				const values: number[] = [];
-
-				if (curr.x !== prev.x || curr.y !== prev.y) {
-					mask |= TP_MASK.COORDS;
-					values.push(curr.x, curr.y);
-				}
-				if (curr.alt_msl !== prev.alt_msl) {
-					mask |= TP_MASK.ALT_MSL;
-					values.push(curr.alt_msl);
-				}
-				if (curr.gs !== prev.gs) {
-					mask |= TP_MASK.GS;
-					values.push(curr.gs);
-				}
-				if (curr.color !== prev.color) {
-					mask |= TP_MASK.COLOR;
-					values.push(curr.color);
-				}
-
-				result.push({
-					m: mask,
-					v: values,
-					t: curr.ts,
-				});
-			}
-
-			prev = curr;
-		}
-
-		return result;
+		return decodeTrackpoints(buffers);
 	} catch (err) {
 		console.error(`Failed to get trackpoints for id ${id}:`, err);
 		throw err;
 	}
-}
-
-function decodeTrackPoint(buf: Buffer): DecodedTrackPoint {
-	return {
-		x: buf.readInt32BE(0),
-		y: buf.readInt32BE(4),
-		alt_msl: buf.readInt16BE(8),
-		alt_agl: buf.readInt16BE(10),
-		gs: buf.readInt16BE(12),
-		vs: buf.readInt16BE(14),
-		hdg: buf.readUInt16BE(16),
-		color: (buf.readUInt8(18) << 16) | (buf.readUInt8(19) << 8) | buf.readUInt8(20),
-		ts: buf.readUInt32BE(21),
-	};
 }

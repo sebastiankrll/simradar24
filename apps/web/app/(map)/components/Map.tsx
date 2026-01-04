@@ -6,15 +6,15 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { ToastContainer } from "react-toastify";
 import { useSettingsStore } from "@/storage/zustand";
+import { setSunLayerSettings } from "../../../components/Map/sunLayer";
 import { MessageBoxCloseButton } from "../../../components/MessageBox/MessageBox";
+import BasePanel from "../../../components/Panel/BasePanel";
 import { setDataLayersSettings } from "../lib/dataLayers";
 import { onClick, onMoveEnd, onPointerMove, setNavigator } from "../lib/events";
 import { getMap, initMap, setMapTheme } from "../lib/init";
 import { animatePilotFeatures } from "../lib/pilotFeatures";
-import { setSunLayerSettings } from "../lib/sunLayer";
 import Controls from "./Controls";
 import Initializer from "./Initializer";
-import BasePanel from "./Panels/BasePanel";
 
 export default function OMap({ children }: { children?: React.ReactNode }) {
 	const router = useRouter();

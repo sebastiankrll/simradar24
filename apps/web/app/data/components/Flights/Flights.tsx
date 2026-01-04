@@ -11,10 +11,13 @@ import { getCachedAirport } from "@/storage/cache";
 import { useSettingsStore } from "@/storage/zustand";
 import { fetchApi } from "@/utils/api";
 import { convertTime } from "@/utils/helpers";
+import { Replay } from "./Replay";
 
 const LIMIT = 20;
 
 export default function Flights({ callsign }: { callsign: string }) {
+	const [open, setOpen] = useState<string | null>(null);
+
 	const { data } = useInfiniteQuery<PilotLong[], Error, InfiniteData<PilotLong[]>, readonly [string, string], string | null>({
 		queryKey: ["flights-page", callsign],
 		enabled: !!callsign,
@@ -67,17 +70,18 @@ export default function Flights({ callsign }: { callsign: string }) {
 					{data?.pages.map((page, i) => (
 						<Fragment key={i}>
 							{page.map((p) => (
-								<Row key={p.id} pilot={p} />
+								<Row key={p.id} pilot={p} setOpen={setOpen} />
 							))}
 						</Fragment>
 					))}
 				</tbody>
 			</table>
+			{open && <Replay id={open} setOpen={setOpen} />}
 		</div>
 	);
 }
 
-function Row({ pilot }: { pilot: PilotLong }) {
+function Row({ pilot, setOpen }: { pilot: PilotLong; setOpen: React.Dispatch<React.SetStateAction<string | null>> }) {
 	const { timeFormat, timeZone } = useSettingsStore();
 
 	const [data, setData] = useState<{ departure: StaticAirport | null; arrival: StaticAirport | null }>({
@@ -97,7 +101,7 @@ function Row({ pilot }: { pilot: PilotLong }) {
 
 	return (
 		<tr>
-			<td>{convertTime(pilot.timestamp, timeFormat, timeZone)}</td>
+			<td>{getDay(pilot.times?.sched_off_block)}</td>
 			<td>{pilot.flight_plan?.departure.icao || "N/A"}</td>
 			<td>{pilot.flight_plan?.arrival.icao || "N/A"}</td>
 			<td>{pilot.aircraft}</td>
@@ -108,14 +112,8 @@ function Row({ pilot }: { pilot: PilotLong }) {
 			<td>{convertTime(pilot.times?.on_block, timeFormat, timeZone, false, data.arrival?.timezone)}</td>
 			<td>
 				<div className="flights-page-buttons">
-					<button type="button">
-						<Icon name="download" size={24} />
-					</button>
-					<button type="button">
-						<Icon name="download" size={24} />
-					</button>
-					<button type="button">
-						<Icon name="download" size={24} />
+					<button type="button" onClick={() => setOpen(pilot.id)}>
+						<Icon name="external-link" size={24} />
 					</button>
 				</div>
 			</td>
@@ -133,4 +131,14 @@ function calculateFlightTime(off_block: string | Date | undefined, on_block: str
 	const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
 
 	return `${diffHours}h ${diffMinutes}m`;
+}
+
+function getDay(time: string | Date | undefined): string {
+	if (!time) return "N/A";
+
+	const date = new Date(time);
+	const day = date.getDate();
+	const month = date.toLocaleString("default", { month: "short" });
+
+	return `${day} ${month}`;
 }

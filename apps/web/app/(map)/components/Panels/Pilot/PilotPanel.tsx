@@ -4,23 +4,26 @@ import type { StaticAircraft, StaticAirline, StaticAirport } from "@sr24/types/d
 import type { PilotLong, TrackPoint, WsDelta } from "@sr24/types/interface";
 import { useEffect, useRef, useState } from "react";
 import { cacheIsInitialized, fetchTrackPoints, getCachedAirline, getCachedAirport } from "@/storage/cache";
-import "./PilotPanel.css";
+import "@/components/Panel/Pilot/PilotPanel.css";
 import useSWR from "swr";
 import { followPilotOnMap, resetMap, showRouteOnMap } from "@/app/(map)/lib/events";
+import flightStatusSprite from "@/assets/images/sprites/flightStatusSprite.png";
 import Icon from "@/components/Icon/Icon";
+import NotFoundPanel from "@/components/Panel/NotFound";
+import { PilotAircraft } from "@/components/Panel/Pilot/PilotAircraft";
+import { PilotAirport } from "@/components/Panel/Pilot/PilotAirport";
+import { PilotCharts } from "@/components/Panel/Pilot/PilotCharts";
+import { PilotFlightplan } from "@/components/Panel/Pilot/PilotFlightplan";
+import { PilotMisc } from "@/components/Panel/Pilot/PilotMisc";
+import { PilotProgress } from "@/components/Panel/Pilot/PilotProgress";
+import { PilotTelemetry } from "@/components/Panel/Pilot/PilotTelemetry";
+import { PilotTimes } from "@/components/Panel/Pilot/PilotTimes";
+import { PilotTitle } from "@/components/Panel/Pilot/PilotTitle";
+import { PilotUser } from "@/components/Panel/Pilot/PilotUser";
+import { getSpriteOffset, setHeight } from "@/components/Panel/utils";
 import Spinner from "@/components/Spinner/Spinner";
 import { fetchApi } from "@/utils/api";
 import { wsClient } from "@/utils/ws";
-import { setHeight } from "../height";
-import NotFoundPanel from "../NotFound";
-import { PilotAircraft } from "./PilotAircraft";
-import { PilotCharts } from "./PilotCharts";
-import { PilotFlightplan } from "./PilotFlightplan";
-import { PilotMisc } from "./PilotMisc";
-import { PilotStatus } from "./PilotStatus";
-import { PilotTelemetry } from "./PilotTelemetry";
-import { PilotTitle } from "./PilotTitle";
-import { PilotUser } from "./PilotUser";
 
 export interface PilotPanelStatic {
 	airline: StaticAirline | null;
@@ -46,7 +49,7 @@ export default function PilotPanel({ id }: { id: string }) {
 	const lastIdRef = useRef<string | null>(null);
 
 	const registration = pilotData?.flight_plan?.ac_reg;
-	const { data: aircraftData } = useSWR<StaticAircraft>(registration ? `/map/aircraft/${registration}` : null, fetchApi, {
+	const { data: aircraftData } = useSWR<StaticAircraft>(registration ? `/data/aircraft/${registration}` : null, fetchApi, {
 		revalidateIfStale: false,
 		revalidateOnFocus: false,
 		shouldRetryOnError: false,
@@ -130,14 +133,11 @@ export default function PilotPanel({ id }: { id: string }) {
 					...prev,
 					{
 						id: updatedPilot.id,
-						latitude: updatedPilot.latitude ?? prev[prev.length - 1]?.latitude,
-						longitude: updatedPilot.longitude ?? prev[prev.length - 1]?.longitude,
-						altitude_agl: updatedPilot.altitude_agl ?? prev[prev.length - 1]?.altitude_agl,
+						coordinates: [0, 0],
 						altitude_ms: updatedPilot.altitude_ms ?? prev[prev.length - 1]?.altitude_ms,
 						groundspeed: updatedPilot.groundspeed ?? prev[prev.length - 1]?.groundspeed,
-						vertical_speed: updatedPilot.vertical_speed ?? prev[prev.length - 1]?.vertical_speed,
-						heading: updatedPilot.heading ?? prev[prev.length - 1]?.heading,
-						timestamp: new Date(),
+						color: "transparent",
+						timestamp: Date.now(),
 					},
 				]);
 			}
@@ -171,7 +171,22 @@ export default function PilotPanel({ id }: { id: string }) {
 				</button>
 			</div>
 			<PilotTitle pilot={pilotData} data={staticData} />
-			<PilotStatus pilot={pilotData} data={staticData} />
+			<div className="panel-container" id="panel-pilot-status">
+				<div id="panel-pilot-route">
+					<PilotAirport airport={staticData.departure} />
+					<div id="panel-pilot-route-line"></div>
+					<div
+						id="panel-pilot-route-icon"
+						style={{
+							backgroundImage: `url(${flightStatusSprite.src})`,
+							backgroundPositionY: `${getSpriteOffset(pilotData.times?.state)}px`,
+						}}
+					></div>
+					<PilotAirport airport={staticData.arrival} />
+				</div>
+				<PilotTimes pilot={pilotData} departure={staticData.departure} arrival={staticData.arrival} />
+				<PilotProgress pilot={pilotData} departure={staticData.departure} arrival={staticData.arrival} />
+			</div>
 			<div className="panel-container main scrollable">
 				<button className={`panel-container-header${openSection === "info" ? " open" : ""}`} type="button" onClick={() => toggleSection("info")}>
 					<p>More {flightNumber} Information</p>

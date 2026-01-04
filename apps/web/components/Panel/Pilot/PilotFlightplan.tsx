@@ -2,7 +2,7 @@ import type { PilotLong } from "@sr24/types/interface";
 import Icon from "@/components/Icon/Icon";
 import { useSettingsStore } from "@/storage/zustand";
 import { convertDistance, haversineDistance } from "@/utils/helpers";
-import type { PilotPanelStatic } from "./PilotPanel";
+import type { PilotPanelStatic } from "../../../app/(map)/components/Panels/Pilot/PilotPanel";
 
 export function PilotFlightplan({
 	pilot,

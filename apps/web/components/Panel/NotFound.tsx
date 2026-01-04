@@ -1,7 +1,7 @@
 "use client";
 
 import Icon from "@/components/Icon/Icon";
-import { resetMap } from "../../lib/events";
+import { resetMap } from "../../app/(map)/lib/events";
 
 export default function NotFoundPanel({ title, text, disableHeader = false }: { title?: string; text?: string; disableHeader?: boolean }) {
 	return (

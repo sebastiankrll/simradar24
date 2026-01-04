@@ -3,6 +3,7 @@ import type { Extent } from "ol/extent";
 import { Point } from "ol/geom";
 import { fromLonLat, transformExtent } from "ol/proj";
 import RBush from "rbush";
+import { getAirportSize } from "@/components/Map/airportFeatures";
 import { dxGetAllAirports } from "@/storage/dexie";
 import type { AirportProperties } from "@/types/ol";
 import { airportMainSource } from "./dataLayers";
@@ -48,20 +49,6 @@ export async function initAirportFeatures(): Promise<void> {
 		};
 	});
 	airportRBush.load(items);
-}
-
-export function getAirportSize(size: string): "s" | "m" | "l" {
-	switch (size) {
-		case "small_airport":
-		case "heliport":
-			return "s";
-		case "medium_airport":
-			return "m";
-		case "large_airport":
-			return "l";
-		default:
-			return "s";
-	}
 }
 
 const highlightedAirports: Set<string> = new Set();

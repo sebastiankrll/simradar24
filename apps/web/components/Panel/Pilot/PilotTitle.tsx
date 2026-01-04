@@ -1,6 +1,6 @@
 import type { PilotLong } from "@sr24/types/interface";
 import { getAirlineIcon } from "@/components/Icon/Icon";
-import type { PilotPanelStatic } from "./PilotPanel";
+import type { PilotPanelStatic } from "../../../app/(map)/components/Panels/Pilot/PilotPanel";
 
 export function PilotTitle({ pilot, data }: { pilot: PilotLong; data: PilotPanelStatic }) {
 	const callsignNumber = pilot.callsign.slice(3);

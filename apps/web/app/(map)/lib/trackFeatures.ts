@@ -1,4 +1,4 @@
-import type { DeltaTrackPoint, PilotDelta, TrackPoint } from "@sr24/types/interface";
+import type { PilotDelta } from "@sr24/types/interface";
 import { Feature } from "ol";
 import type { Coordinate } from "ol/coordinate";
 import { LineString, type Point } from "ol/geom";
@@ -141,37 +141,4 @@ export function animateTrackFeatures(): void {
 	coords[1] = pilotCoords;
 	geom.setCoordinates(coords);
 	animatedTrackFeature.setGeometry(geom);
-}
-
-const TP_MASK = {
-	COORDS: 1 << 0,
-	ALT_MSL: 1 << 1,
-	GS: 1 << 2,
-	COLOR: 1 << 3,
-} as const;
-
-export function decodeTrackPoints(masked: (TrackPoint | DeltaTrackPoint)[]): TrackPoint[] {
-	const result: TrackPoint[] = [];
-	let last: TrackPoint | null = null;
-
-	for (const item of masked) {
-		if ("coordinates" in item) {
-			last = { ...item };
-		} else if (last) {
-			let i = 0;
-
-			if (item.m & TP_MASK.COORDS) last.coordinates = [item.v[i++], item.v[i++]];
-			if (item.m & TP_MASK.ALT_MSL) last.altitude_ms = item.v[i++] * 100;
-			if (item.m & TP_MASK.GS) last.groundspeed = item.v[i++];
-			if (item.m & TP_MASK.COLOR) last.color = `#${item.v[i++].toString(16).padStart(6, "0")}`;
-
-			last.timestamp = item.t;
-		} else {
-			throw new Error("First trackpoint must be full, cannot start with delta");
-		}
-
-		result.push({ ...last });
-	}
-
-	return result;
 }

@@ -69,7 +69,7 @@ export interface PilotLong {
 	flight_plan: PilotFlightPlan | null;
 	times: PilotTimes | null;
 	logon_time: Date;
-	timestamp: Date;
+	last_update: Date;
 	live: boolean;
 }
 

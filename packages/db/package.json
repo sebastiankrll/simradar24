@@ -11,6 +11,10 @@
 		"./redis": {
 			"types": "./src/redis.ts",
 			"default": "./dist/redis.js"
+		},
+		"./buffer": {
+			"types": "./src/buffer.ts",
+			"default": "./dist/buffer.js"
 		}
 	},
 	"types": "./dist/index.d.ts",

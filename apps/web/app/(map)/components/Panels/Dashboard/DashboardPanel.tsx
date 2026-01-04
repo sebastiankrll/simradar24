@@ -2,7 +2,7 @@
 
 import type { DashboardData } from "@sr24/types/interface";
 import { useEffect, useRef, useState } from "react";
-import { setHeight } from "../height";
+import { setHeight } from "../../../../../components/Panel/utils";
 import { DashboardEvents } from "./DashboardEvents";
 import { DashboardHistory } from "./DashboardHistory";
 import { DashboardStats } from "./DashboardStats";

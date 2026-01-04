@@ -1,40 +1,24 @@
-import type { PilotLong } from "@sr24/types/interface";
+import { encodeTrackPoint } from "@sr24/db/buffer";
+import type { PilotLong, TrackPoint } from "@sr24/types/interface";
 import { fromLonLat } from "./utils/helpers.js";
 
 export function mapTrackPoints(pilots: PilotLong[]): Map<string, Buffer> {
 	const trackPoints: Map<string, Buffer> = new Map();
 	for (const pilot of pilots) {
-		const encoded = encodeTrackPoint(pilot);
+		const trackPoint: Required<TrackPoint> = {
+			coordinates: fromLonLat([pilot.longitude, pilot.latitude]),
+			altitude_ms: roundAltitude(pilot.altitude_ms),
+			altitude_agl: roundAltitude(pilot.altitude_agl),
+			groundspeed: pilot.groundspeed,
+			vertical_speed: roundAltitude(pilot.vertical_speed),
+			heading: pilot.heading,
+			color: getTrackPointColor(pilot.altitude_agl, pilot.altitude_ms),
+			timestamp: pilot.last_update.getTime(),
+		};
+		const encoded = encodeTrackPoint(trackPoint);
 		trackPoints.set(pilot.id, encoded);
 	}
 	return trackPoints;
-}
-
-const TRACKPOINT_SIZE = 25;
-
-export function encodeTrackPoint(p: PilotLong): Buffer {
-	const buf = Buffer.allocUnsafe(TRACKPOINT_SIZE);
-
-	const [x, y] = fromLonLat([p.longitude, p.latitude]);
-	buf.writeInt32BE(x, 0);
-	buf.writeInt32BE(y, 4);
-
-	buf.writeInt16BE(roundAltitude(p.altitude_ms) / 100, 8);
-	buf.writeInt16BE(roundAltitude(p.altitude_agl) / 100, 10);
-
-	buf.writeInt16BE(p.groundspeed, 12);
-	buf.writeInt16BE(roundAltitude(p.vertical_speed), 14);
-	buf.writeUInt16BE(p.heading, 16);
-
-	const color = getTrackPointColor(p.altitude_agl, p.altitude_ms);
-	const rgb = parseInt(color.slice(1), 16);
-	buf.writeUInt8((rgb >> 16) & 0xff, 18);
-	buf.writeUInt8((rgb >> 8) & 0xff, 19);
-	buf.writeUInt8(rgb & 0xff, 20);
-
-	buf.writeUInt32BE(Math.floor(p.timestamp.getTime() / 1000), 21);
-
-	return buf;
 }
 
 function roundAltitude(altitude: number): number {

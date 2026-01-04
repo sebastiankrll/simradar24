@@ -1,6 +1,7 @@
 "use client";
 
 import type { StaticAirline, StaticAirport } from "@sr24/types/db";
+import type { PilotLong } from "@sr24/types/interface";
 import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -12,18 +13,9 @@ import { fetchApi } from "@/utils/api";
 import Icon, { getAirlineIcon } from "../Icon/Icon";
 import Spinner from "../Spinner/Spinner";
 
-interface Pilot {
-	pilot_id: string;
-	callsign: string;
-	dep_icao: string | undefined;
-	arr_icao: string | undefined;
-	aircraft: string;
-	live: boolean;
-}
-
 type PilotResult = {
-	live: Pilot[];
-	offline: Pilot[];
+	live: PilotLong[];
+	offline: PilotLong[];
 };
 
 type QueryResult = {
@@ -106,12 +98,12 @@ export default function Search() {
 
 					{data?.pilots.live && data?.pilots.live.length > 0 && <div className="header-search-separator">Live Flights</div>}
 					{data?.pilots.live.map((pilot) => (
-						<PilotResult key={pilot.pilot_id} pilot={pilot} setValue={setSearchValue} />
+						<PilotResult key={pilot.id} pilot={pilot} setValue={setSearchValue} />
 					))}
 
 					{data?.pilots.offline && data?.pilots.offline.length > 0 && <div className="header-search-separator">Recent Or Scheduled Flights</div>}
 					{data?.pilots.offline.map((pilot) => (
-						<PilotResult key={pilot.pilot_id} pilot={pilot} recent setValue={setSearchValue} />
+						<PilotResult key={pilot.id} pilot={pilot} recent setValue={setSearchValue} />
 					))}
 				</div>
 			)}
@@ -171,7 +163,7 @@ function AirportResult({ airport, setValue }: { airport: StaticAirport; setValue
 	);
 }
 
-function PilotResult({ pilot, recent = false, setValue }: { pilot: Pilot; recent?: boolean; setValue: (value: string) => void }) {
+function PilotResult({ pilot, recent = false, setValue }: { pilot: PilotLong; recent?: boolean; setValue: (value: string) => void }) {
 	const [airline, setAirline] = useState<StaticAirline | null>(null);
 	const router = useRouter();
 	const pathname = usePathname();
@@ -199,14 +191,14 @@ function PilotResult({ pilot, recent = false, setValue }: { pilot: Pilot; recent
 					return;
 				}
 				if (pathname.startsWith("/data") && !recent) {
-					window.location.href = `/pilot/${pilot.pilot_id}`;
+					window.location.href = `/pilot/${pilot.id}`;
 					return;
 				}
 				if (!pathname.startsWith("/data") && recent) {
 					window.location.href = `/data/flights/${pilot.callsign}`;
 					return;
 				}
-				router.push(`/pilot/${pilot.pilot_id}`);
+				router.push(`/pilot/${pilot.id}`);
 			}}
 		>
 			<div className="search-icon" style={{ backgroundColor: airline?.color?.[0] ?? "" }}>
@@ -215,7 +207,7 @@ function PilotResult({ pilot, recent = false, setValue }: { pilot: Pilot; recent
 			<div className="search-info pilot">
 				<div className="search-title">{flightNumber}</div>
 				<div style={{ textAlign: "right", fontSize: "var(--font-size-small)" }}>
-					{recent ? null : `${pilot.dep_icao ?? "N/A"} \u2013 ${pilot.arr_icao ?? "N/A"}`}
+					{recent ? null : `${pilot.flight_plan?.departure.icao ?? "N/A"} \u2013 ${pilot.flight_plan?.arrival.icao ?? "N/A"}`}
 				</div>
 				<div className="search-tags">
 					<span style={{ background: "var(--color-red)" }} className="bg">
