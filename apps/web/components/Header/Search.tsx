@@ -24,8 +24,8 @@ type QueryResult = {
 	pilots: PilotResult;
 };
 
-async function fetchPilots(query: string): Promise<PilotResult> {
-	const pilots = await fetchApi<PilotResult>(`/search?q=${encodeURIComponent(query)}`);
+async function fetchPilots(query: string, path?: string): Promise<PilotResult> {
+	const pilots = await fetchApi<PilotResult>(`/search${path ? `/${path}` : ""}?q=${encodeURIComponent(query)}`);
 	return pilots;
 }
 
@@ -38,9 +38,15 @@ export default function Search() {
 	const { data, isLoading } = useQuery<QueryResult>({
 		queryKey: ["search", debounced],
 		queryFn: async () => {
-			if (debounced[0].startsWith("flights:")) {
+			if (debounced[0].startsWith("airline:")) {
 				const query = debounced[0].split(":")[1] || "";
-				const pilots = await fetchPilots(query);
+				const pilots = await fetchPilots(query, "airline");
+				return { airlines: [], airports: [], pilots: pilots };
+			}
+			if (debounced[0].startsWith("route:")) {
+				const route = debounced[0].split(":")[1] || "";
+				const query = route.replace(" ", "");
+				const pilots = await fetchPilots(query, "route");
 				return { airlines: [], airports: [], pilots: pilots };
 			}
 			const [airlines, airports, pilots] = await Promise.all([
@@ -81,7 +87,7 @@ export default function Search() {
 			{searchValue.length > 0 && (
 				<div id="header-search-results" className="scrollable">
 					{isLoading && <Spinner relative />}
-					{searchValue.length < 3 && <p>Type at least 3 characters to search.</p>}
+					{searchValue.length < 3 && <Placeholder />}
 					{data?.airlines.length === 0 && data?.airports.length === 0 && data?.pilots.live.length === 0 && data?.pilots.offline.length === 0 && (
 						<p>No results found.</p>
 					)}
@@ -111,9 +117,25 @@ export default function Search() {
 	);
 }
 
+function Placeholder() {
+	return (
+		<div id="header-search-placeholder">
+			<p>Type at least 3 characters to search.</p>
+			<p>
+				<strong>Advanced search:</strong>
+				<br />
+				Use <code>airline:&lt;code&gt;</code> to search for flights by airline code. E.g., <code>airline:AAL</code> for American Airlines flights.
+				<br />
+				Use <code>route:&lt;ICAO&gt;-&lt;ICAO&gt;</code> to search for flights by route. E.g., <code>route:KLAX-KJFK</code> for flights from Los
+				Angeles to New York.
+			</p>
+		</div>
+	);
+}
+
 function AirlineResult({ airline, setValue }: { airline: StaticAirline; setValue: (value: string) => void }) {
 	return (
-		<button className="search-item" type="button" onClick={() => setValue(`flights:${airline.id}`)}>
+		<button className="search-item" type="button" onClick={() => setValue(`airline:${airline.id}`)}>
 			<div className="search-icon" style={{ backgroundColor: airline.color?.[0] ?? "" }}>
 				{getAirlineIcon(airline)}
 			</div>

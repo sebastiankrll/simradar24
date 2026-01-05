@@ -3,12 +3,12 @@ import Flights from "../../components/Flights/Flights";
 export default async function FlightsLayout(
 	props: Readonly<{
 		children: React.ReactNode;
-		params: Promise<{ callsign: string }>;
+		params: Promise<{ reg: string }>;
 	}>,
 ) {
 	const params = await props.params;
-	const callsign = params.callsign;
+	const registration = params.reg;
 	const { children } = props;
 
-	return <Flights callsign={callsign}>{children}</Flights>;
+	return <Flights registration={registration}>{children}</Flights>;
 }

@@ -13,8 +13,9 @@ export function encodeTrackPoint(tp: Required<TrackPoint>): Buffer {
 	buf.writeInt16BE(tp.altitude_agl / 100, 10);
 
 	buf.writeInt16BE(tp.groundspeed, 12);
-	buf.writeInt16BE(tp.vertical_speed, 14);
+	buf.writeInt16BE(limitInt16(tp.vertical_speed), 14);
 	buf.writeUInt16BE(tp.heading, 16);
+
 	const color = tp.color;
 	const rgb = parseInt(color.slice(1), 16);
 	buf.writeUInt8((rgb >> 16) & 0xff, 18);
@@ -24,6 +25,12 @@ export function encodeTrackPoint(tp: Required<TrackPoint>): Buffer {
 	buf.writeUInt32BE(Math.floor(tp.timestamp / 1000), 21);
 
 	return buf;
+}
+
+function limitInt16(value: number): number {
+	if (value < -32768) return -32768;
+	if (value > 32767) return 32767;
+	return value;
 }
 
 export function parseTrackPointBuffer(buf: Buffer): Buffer[] {

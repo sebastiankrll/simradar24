@@ -3,11 +3,6 @@ body,
 html {
 	margin: 0;
 	padding: 0;
-	font-optical-sizing: auto;
-	font-weight: var(--font-weight-normal);
-	font-style: normal;
-	color: var(--color-main-text);
-	font-family: inherit;
 }
 
 body,
@@ -16,6 +11,10 @@ html {
 	display: flex;
 	flex-flow: column;
 	background-color: var(--color-bg);
+	font-optical-sizing: auto;
+	font-weight: var(--font-weight-normal);
+	font-style: normal;
+	color: var(--color-main-text);
 }
 
 :root {
@@ -53,6 +52,11 @@ html {
 	--color-glass-bg: rgba(80, 80, 80, 0.3);
 	--color-hover: rgb(105, 124, 165);
 	--color-green: #11b995;
+}
+
+button,
+input {
+	font-family: inherit;
 }
 
 button {
@@ -100,6 +104,10 @@ select option:checked {
 
 select option:hover {
 	background: var(--color-hover);
+}
+
+code {
+	color: var(--color-orange);
 }
 
 .scrollable {

@@ -54,10 +54,6 @@ app.register(fastifyRateLimit);
 app.register(fastifySensible);
 app.register(authPlugin);
 
-app.setErrorHandler((_error, _request, reply) => {
-	reply.status(500).send({ ok: false });
-});
-
 app.get("/health", async (_request, reply) => {
 	const startTime = Date.now();
 	const health = {
@@ -358,7 +354,142 @@ app.get(
 );
 
 app.get(
-	"/data/flights/:callsign",
+	"/search/airline",
+	{
+		schema: {
+			querystring: {
+				type: "object",
+				properties: { q: { type: "string", minLength: 3 } },
+				required: ["q"],
+			},
+		},
+	},
+	async (request) => {
+		const { q: query } = request.query as { q?: string };
+		if (!query || query.length < 1) {
+			throw app.httpErrors.badRequest({ error: "Query parameter 'q' is required" });
+		}
+
+		const [livePilots, offlinePilots] = await Promise.all([
+			prisma.pilot.findMany({
+				where: {
+					callsign: { contains: query.toUpperCase() },
+					live: true,
+				},
+				orderBy: {
+					callsign: "asc",
+				},
+				select: {
+					id: true,
+					callsign: true,
+					flight_plan: true,
+					aircraft: true,
+					live: true,
+				},
+				take: 10,
+			}),
+
+			prisma.pilot.findMany({
+				where: {
+					callsign: { contains: query.toUpperCase() },
+					live: false,
+				},
+				orderBy: {
+					callsign: "asc",
+				},
+				distinct: ["callsign"],
+				select: {
+					id: true,
+					callsign: true,
+					flight_plan: true,
+					aircraft: true,
+					live: true,
+				},
+				take: 10,
+			}),
+		]);
+
+		return {
+			live: livePilots,
+			offline: offlinePilots,
+		};
+	},
+);
+
+app.get(
+	"/search/route",
+	{
+		schema: {
+			querystring: {
+				type: "object",
+				properties: { q: { type: "string", minLength: 3 } },
+				required: ["q"],
+			},
+		},
+	},
+	async (request) => {
+		const { q: query } = request.query as { q?: string };
+		if (!query || query.length < 1) {
+			throw app.httpErrors.badRequest({ error: "Query parameter 'q' is required" });
+		}
+
+		const icaos = query.split("-");
+		if (icaos.length !== 2) {
+			throw app.httpErrors.badRequest({ error: "Query parameter 'q' must be in the format DEP-ARR" });
+		}
+
+		const whereClause: Prisma.PilotWhereInput = {
+			AND: [{ dep_icao: icaos[0].toUpperCase() }, { arr_icao: icaos[1].toUpperCase() }],
+		};
+
+		const [livePilots, offlinePilots] = await Promise.all([
+			prisma.pilot.findMany({
+				where: {
+					...whereClause,
+					live: true,
+				},
+				orderBy: {
+					callsign: "asc",
+				},
+				select: {
+					id: true,
+					callsign: true,
+					flight_plan: true,
+					aircraft: true,
+					live: true,
+				},
+				take: 10,
+			}),
+
+			prisma.pilot.findMany({
+				where: {
+					...whereClause,
+					live: false,
+				},
+				orderBy: {
+					callsign: "asc",
+				},
+				distinct: ["callsign"],
+				select: {
+					id: true,
+					callsign: true,
+					flight_plan: true,
+					aircraft: true,
+					live: true,
+				},
+				take: 10,
+			}),
+		]);
+
+		return {
+			live: livePilots,
+			offline: offlinePilots,
+		};
+	},
+);
+
+app.get(
+	"/data/flights/callsign/:callsign",
 	{
 		schema: {
 			params: {
@@ -382,6 +513,54 @@ app.get(
 		return await prisma.pilot.findMany({
 			where: {
 				callsign,
+			},
+			orderBy: {
+				sched_off_block: "desc",
+			},
+			take: Number(limit || 20),
+			...(cursor && {
+				skip: 1,
+				cursor: {
+					id: cursor,
+				},
+			}),
+			select: {
+				id: true,
+				callsign: true,
+				aircraft: true,
+				flight_plan: true,
+				times: true,
+				live: true,
+			},
+		});
+	},
+);
+
+app.get(
+	"/data/flights/registration/:registration",
+	{
+		schema: {
+			params: {
+				type: "object",
+				properties: { registration: { type: "string", minLength: 3 } },
+				required: ["registration"],
+			},
+			querystring: {
+				type: "object",
+				properties: {
+					limit: { type: "string", pattern: "^[0-9]+$" },
+					cursor: { type: "string" },
+				},
+			},
+		},
+	},
+	async (request) => {
+		const { registration } = request.params as { registration: string };
+		const { limit, cursor } = request.query as { limit?: string; cursor?: string };
+
+		return await prisma.pilot.findMany({
+			where: {
+				ac_reg: registration,
 			},
 			orderBy: {
 				sched_off_block: "desc",
@@ -473,7 +652,7 @@ app.get(
 			select: { settings: true },
 		});
 		if (!user) {
-			throw app.httpErrors.notFound("User not found");
+			throw app.httpErrors.notFound({ error: "User not found" });
 		}
 		return { settings: user.settings || {} };
 	},

@@ -115,7 +115,8 @@ export async function rdsSetMultiple<T>(
 export async function rdsGetSingle(key: string): Promise<any> {
 	try {
 		const data = await client.get(key);
-		return data ? JSON.parse(data) : null;
+		if (!data) return null;
+		return JSON.parse(data);
 	} catch (err) {
 		console.error(`Failed to get key ${key}:`, err);
 		throw err;

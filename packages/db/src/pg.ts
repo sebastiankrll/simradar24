@@ -78,14 +78,14 @@ async function pgUpsertPilotsBatch(pilots: PilotLong[]): Promise<void> {
 			continue;
 		}
 
-		const baseIdx = idx * 28;
+		const baseIdx = idx * 29;
 		values.push(`(
 			$${baseIdx + 1}, $${baseIdx + 2}, $${baseIdx + 3}, $${baseIdx + 4}, $${baseIdx + 5},
 			$${baseIdx + 6}, $${baseIdx + 7}, $${baseIdx + 8}, $${baseIdx + 9}, $${baseIdx + 10},
 			$${baseIdx + 11}, $${baseIdx + 12}, $${baseIdx + 13}, $${baseIdx + 14}, $${baseIdx + 15},
 			$${baseIdx + 16}, $${baseIdx + 17}, $${baseIdx + 18}, $${baseIdx + 19}, $${baseIdx + 20},
 			$${baseIdx + 21}, $${baseIdx + 22}, $${baseIdx + 23}, $${baseIdx + 24}, $${baseIdx + 25}, $${baseIdx + 26},
-			$${baseIdx + 27}, $${baseIdx + 28}
+			$${baseIdx + 27}, $${baseIdx + 28}, $${baseIdx + 29}
 		)`);
 
 		params.push(
@@ -114,10 +114,11 @@ async function pgUpsertPilotsBatch(pilots: PilotLong[]): Promise<void> {
 			p.last_update,
 			p.live,
 			// ---- Indexes ----
-			p.times?.sched_off_block || null,
-			p.times?.sched_on_block || null,
-			p.flight_plan?.departure.icao || null,
-			p.flight_plan?.arrival.icao || null,
+			p.times.sched_off_block || null,
+			p.times.sched_on_block || null,
+			p.flight_plan.departure.icao || null,
+			p.flight_plan.arrival.icao || null,
+			p.flight_plan.ac_reg || null,
 		);
 
 		idx++;
@@ -130,7 +131,7 @@ async function pgUpsertPilotsBatch(pilots: PilotLong[]): Promise<void> {
 			transponder, frequency,
 			name, server, pilot_rating, military_rating, qnh_i_hg,
 			qnh_mb, flight_plan, times, logon_time, last_update, live,
-			sched_off_block, sched_on_block, dep_icao, arr_icao
+			sched_off_block, sched_on_block, dep_icao, arr_icao, ac_reg
 		)
 		VALUES ${values.join(",")}
 		ON CONFLICT (id) DO UPDATE SET
@@ -160,7 +161,8 @@ async function pgUpsertPilotsBatch(pilots: PilotLong[]): Promise<void> {
 			sched_off_block = EXCLUDED.sched_off_block,
 			sched_on_block = EXCLUDED.sched_on_block,
 			dep_icao = EXCLUDED.dep_icao,
-			arr_icao = EXCLUDED.arr_icao
+			arr_icao = EXCLUDED.arr_icao,
+            ac_reg = EXCLUDED.ac_reg
 	`;
 
 	try {

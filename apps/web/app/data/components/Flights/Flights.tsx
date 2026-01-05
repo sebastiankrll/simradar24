@@ -18,10 +18,14 @@ import { convertTime } from "@/utils/helpers";
 
 const LIMIT = 20;
 
-export default function Flights({ children, callsign }: { children: React.ReactNode; callsign: string }) {
+function getQueryKey(callsign?: string, registration?: string): readonly [string, string] {
+	return ["flights-page", callsign || registration || ""];
+}
+
+export default function Flights({ children, callsign, registration }: { children: React.ReactNode; callsign?: string; registration?: string }) {
 	const { data } = useInfiniteQuery<PilotLong[], Error, InfiniteData<PilotLong[]>, readonly [string, string], string | null>({
-		queryKey: ["flights-page", callsign],
-		enabled: !!callsign,
+		queryKey: getQueryKey(callsign, registration),
+		enabled: !!callsign || !!registration,
 		initialPageParam: null,
 
 		queryFn: async ({ pageParam }) => {
@@ -33,7 +37,7 @@ export default function Flights({ children, callsign }: { children: React.ReactN
 				params.set("cursor", pageParam);
 			}
 
-			return fetchApi<PilotLong[]>(`/data/flights/${callsign}?${params.toString()}`);
+			return fetchApi<PilotLong[]>(`/data/flights/${callsign ? "callsign" : "registration"}/${callsign || registration}?${params.toString()}`);
 		},
 
 		getNextPageParam: (lastPage) => {
@@ -51,10 +55,11 @@ export default function Flights({ children, callsign }: { children: React.ReactN
 
 	return (
 		<div id="flights-page">
-			<h1>Flight history of {callsign}</h1>
+			<h1>Flight history for {callsign || registration}</h1>
 			<table>
 				<colgroup>
 					<col />
+					{registration && <col />}
 					<col />
 					<col />
 					<col />
@@ -69,6 +74,7 @@ export default function Flights({ children, callsign }: { children: React.ReactN
 				<thead>
 					<tr>
 						<th>Date</th>
+						{registration && <th>Callsign</th>}
 						<th>Departure</th>
 						<th>Arrival</th>
 						<th>Aircraft</th>
@@ -85,7 +91,7 @@ export default function Flights({ children, callsign }: { children: React.ReactN
 					{data?.pages.map((page, i) => (
 						<Fragment key={i}>
 							{page.map((p) => (
-								<Row key={p.id} pilot={p} />
+								<Row key={p.id} pilot={p} registration={registration} />
 							))}
 						</Fragment>
 					))}
@@ -96,7 +102,7 @@ export default function Flights({ children, callsign }: { children: React.ReactN
 	);
 }
 
-function Row({ pilot }: { pilot: PilotLong }) {
+function Row({ pilot, registration }: { pilot: PilotLong; registration?: string }) {
 	const { timeFormat, timeZone } = useSettingsStore();
 	const router = useRouter();
 
@@ -126,6 +132,11 @@ function Row({ pilot }: { pilot: PilotLong }) {
 	return (
 		<tr>
 			<td>{getDay(pilot.times?.sched_off_block)}</td>
+			{registration && (
+				<td>
+					<a href={`/data/flights/${pilot.callsign}`}>{pilot.callsign}</a>
+				</td>
+			)}
 			<Airport airport={data.departure} />
 			<Airport airport={data.arrival} />
 			<td>

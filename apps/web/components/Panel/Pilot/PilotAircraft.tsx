@@ -9,15 +9,15 @@ export function PilotAircraft({ pilot }: { pilot: PilotLong }) {
 	const [aircraft, setAircraft] = useState<StaticAircraft | null>(null);
 
 	useEffect(() => {
-		const registration = pilot?.flight_plan?.ac_reg;
+		const registration = pilot.flight_plan?.ac_reg;
 		if (!registration) {
 			setAircraft(null);
 			return;
 		}
-		async () => {
+		(async () => {
 			const aircraft = await getCachedAircraft(registration);
 			setAircraft(aircraft);
-		};
+		})();
 	}, [pilot]);
 
 	const acType = `${aircraft?.manufacturerName || ""} ${aircraft?.model || ""}`;

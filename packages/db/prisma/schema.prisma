@@ -37,13 +37,15 @@ model Pilot {
     sched_on_block  DateTime?
     dep_icao        String?
     arr_icao        String?
+    ac_reg          String?
 
     trackpoint Trackpoint?
 
-    @@index([live, callsign, last_update], map: "pilots_live_callsign_last_idx")
-    @@index([callsign, last_update], map: "pilots_callsign_last_idx")
-    @@index([dep_icao, sched_off_block, id], map: "pilots_dep_idx")
-    @@index([arr_icao, sched_on_block, id], map: "pilots_arr_idx")
+    @@index([live, last_update], map: "pilots_live_last_idx") // cleanup
+    @@index([callsign, sched_off_block, id], map: "pilots_callsign_sched_idx") // data by callsign queries
+    @@index([ac_reg, sched_off_block, id], map: "pilots_acreg_sched_idx") // data by registration queries
+    @@index([dep_icao, sched_off_block, id], map: "pilots_dep_idx") // airport flights page
+    @@index([arr_icao, sched_on_block, id], map: "pilots_arr_idx") // airport flights page
 }
 
 model Trackpoint {

@@ -10,8 +10,8 @@ export function PilotAirport({ airport }: { airport: StaticAirport | null }) {
 
 	return (
 		<button className="panel-pilot-airport" type="button" onClick={onClick}>
-			<div className="panel-pilot-airport-iata">{airport?.iata ?? "N/A"}</div>
-			<div className="panel-pilot-airport-name">{airport?.name ?? "Not available"}</div>
+			<p className="panel-pilot-airport-iata">{airport?.iata ?? "N/A"}</p>
+			<p className="panel-pilot-airport-name">{airport?.name ?? "Not available"}</p>
 		</button>
 	);
 }

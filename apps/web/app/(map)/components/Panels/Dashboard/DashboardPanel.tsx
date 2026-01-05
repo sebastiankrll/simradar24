@@ -67,7 +67,7 @@ export default function DashboardPanel() {
 					type="button"
 					onClick={() => toggleSection("history")}
 				>
-					<p>Last 24 hours</p>
+					<p>Last 7 days</p>
 					<Icon name="arrow-down" />
 				</button>
 				<div ref={historyRef} className={`panel-sub-container accordion${openSection.includes("history") ? " open" : ""}`}>
