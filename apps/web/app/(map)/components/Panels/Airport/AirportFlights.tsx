@@ -176,7 +176,7 @@ function ListItem({
 				<p>{(dir === "dep" ? data.arrival : data.departure)?.name || "Unknown Airport"}</p>
 				<p>{`${(dir === "dep" ? data.arrival : data.departure)?.id ? `${(dir === "dep" ? data.arrival : data.departure)?.id} / ` : ""}${(dir === "dep" ? data.arrival : data.departure)?.iata || "N/A"}`}</p>
 				<p>
-					<span className={pilot.live ? "green" : "grey"}>Live</span>
+					<span className={`live-tag ${pilot.live ? "live" : "off"}`}>{pilot.live ? "Live" : "Off"}</span>
 					{pilot.callsign}
 				</p>
 				<p>{pilot.aircraft}</p>

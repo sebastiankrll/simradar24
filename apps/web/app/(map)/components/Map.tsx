@@ -4,13 +4,11 @@ import { useEffect } from "react";
 import "./Map.css";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { ToastContainer } from "react-toastify";
 import Clock from "@/components/Footer/Clock";
 import Footer from "@/components/Footer/Footer";
 import Metrics from "@/components/Footer/Metrics";
 import { useSettingsStore } from "@/storage/zustand";
 import { setSunLayerSettings } from "../../../components/Map/sunLayer";
-import { MessageBoxCloseButton } from "../../../components/MessageBox/MessageBox";
 import BasePanel from "../../../components/Panel/BasePanel";
 import { setDataLayersSettings } from "../lib/dataLayers";
 import { onClick, onMoveEnd, onPointerMove, setNavigator } from "../lib/events";
@@ -80,7 +78,6 @@ export default function OMap({ children }: { children?: React.ReactNode }) {
 
 	return (
 		<>
-			<ToastContainer closeButton={MessageBoxCloseButton} icon={false} theme="colored" />
 			<Initializer />
 			<BasePanel>{children}</BasePanel>
 			<Controls />

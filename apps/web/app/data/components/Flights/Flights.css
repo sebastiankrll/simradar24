@@ -7,6 +7,19 @@
 	gap: 1rem;
 }
 
+#flights-page .live-tag {
+	padding: 1px 4px;
+}
+
+#flights-page a {
+	color: var(--color-green);
+	font-size: var(--font-size-normal);
+}
+
+#flights-page a:hover {
+	color: var(--color-hover);
+}
+
 #map-wrapper {
 	position: absolute;
 	inset: 0;
@@ -27,12 +40,21 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	gap: 4px;
 }
 
 .flights-page-buttons button {
 	width: 100%;
 	height: 100%;
 	background-color: var(--color-green);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.flights-page-buttons button:hover {
+	background-color: var(--color-hover);
+	color: white;
 }
 
 .flights-page-buttons use {
@@ -74,6 +96,11 @@
 	color: white;
 }
 
+.replay-button:hover {
+	background-color: var(--color-hover);
+	color: white;
+}
+
 .replay-button.active {
 	background: var(--color-blue);
 }
@@ -88,4 +115,12 @@
 
 #replay-close {
 	background: var(--color-red);
+}
+
+#replay-close:hover {
+	background-color: white;
+}
+
+#replay-close:hover use {
+	color: var(--color-red);
 }

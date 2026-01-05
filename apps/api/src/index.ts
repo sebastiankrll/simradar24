@@ -399,6 +399,7 @@ app.get(
 				aircraft: true,
 				flight_plan: true,
 				times: true,
+				live: true,
 			},
 		});
 	},

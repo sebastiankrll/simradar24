@@ -8,6 +8,9 @@ import { type InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Fragment } from "react/jsx-runtime";
+import { toast } from "react-toastify";
+import MessageBox from "@/components/MessageBox/MessageBox";
+import { getDelayColorFromDates } from "@/components/Panel/utils";
 import { getCachedAirport } from "@/storage/cache";
 import { useSettingsStore } from "@/storage/zustand";
 import { fetchApi } from "@/utils/api";
@@ -50,6 +53,19 @@ export default function Flights({ children, callsign }: { children: React.ReactN
 		<div id="flights-page">
 			<h1>Flight history of {callsign}</h1>
 			<table>
+				<colgroup>
+					<col />
+					<col />
+					<col />
+					<col />
+					<col />
+					<col width={70} />
+					<col width={70} />
+					<col width={70} />
+					<col width={70} />
+					<col width={70} />
+					<col width={100} />
+				</colgroup>
 				<thead>
 					<tr>
 						<th>Date</th>
@@ -57,11 +73,12 @@ export default function Flights({ children, callsign }: { children: React.ReactN
 						<th>Arrival</th>
 						<th>Aircraft</th>
 						<th>Flight Time</th>
+						<th>Status</th>
 						<th>STD</th>
 						<th>ATD</th>
 						<th>STA</th>
 						<th>ATA</th>
-						<th>View</th>
+						<th></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -83,6 +100,14 @@ function Row({ pilot }: { pilot: PilotLong }) {
 	const { timeFormat, timeZone } = useSettingsStore();
 	const router = useRouter();
 
+	const [shared, setShared] = useState(false);
+	const onShareClick = () => {
+		navigator.clipboard.writeText(`${window.location.origin}/data/flights/${pilot.callsign}/${pilot.id}`);
+		setShared(true);
+		toast.info(MessageBox, { data: { title: "Copied", message: `The link to the replay has been copied to your clipboard.` } });
+		setTimeout(() => setShared(false), 2000);
+	};
+
 	const [data, setData] = useState<{ departure: StaticAirport | null; arrival: StaticAirport | null }>({
 		departure: null,
 		arrival: null,
@@ -101,23 +126,43 @@ function Row({ pilot }: { pilot: PilotLong }) {
 	return (
 		<tr>
 			<td>{getDay(pilot.times?.sched_off_block)}</td>
-			<td>{pilot.flight_plan?.departure.icao || "N/A"}</td>
-			<td>{pilot.flight_plan?.arrival.icao || "N/A"}</td>
-			<td>{pilot.aircraft}</td>
+			<Airport airport={data.departure} />
+			<Airport airport={data.arrival} />
+			<td>
+				{pilot.aircraft}&nbsp;&nbsp;
+				<a href={`/data/aircrafts/${pilot.flight_plan?.ac_reg}`}>{pilot.flight_plan?.ac_reg || "N/A"}</a>
+			</td>
 			<td>{calculateFlightTime(pilot.times?.off_block, pilot.times?.on_block)}</td>
+			<td>
+				<div className={`live-tag ${pilot.live ? "live" : "off"}`}>{pilot.live ? "LIVE" : "OFF"}</div>
+			</td>
 			<td>{convertTime(pilot.times?.sched_off_block, timeFormat, timeZone, false, data.departure?.timezone)}</td>
 			<td>{convertTime(pilot.times?.off_block, timeFormat, timeZone, false, data.departure?.timezone)}</td>
 			<td>{convertTime(pilot.times?.sched_on_block, timeFormat, timeZone, false, data.arrival?.timezone)}</td>
-			<td>{convertTime(pilot.times?.on_block, timeFormat, timeZone, false, data.arrival?.timezone)}</td>
+			<td>
+				{convertTime(pilot.times?.on_block, timeFormat, timeZone, false, data.arrival?.timezone)}
+				<span className={`delay-indicator ${getDelayColorFromDates(pilot.times?.sched_on_block, pilot.times?.on_block) ?? ""}`}></span>
+			</td>
 			<td>
 				<div className="flights-page-buttons">
-					<button type="button" onClick={() => router.push(`/data/flights/${pilot.callsign}/${pilot.id}`)}>
+					<button type="button" onClick={() => onPlayClick(pilot, router)}>
 						<Icon name="external-link" size={24} />
+					</button>
+					<button type="button" onClick={() => onShareClick()}>
+						<Icon name={shared ? "select" : "share-android"} size={24} />
 					</button>
 				</div>
 			</td>
 		</tr>
 	);
+}
+
+function onPlayClick(pilot: PilotLong, router: ReturnType<typeof useRouter>) {
+	if (pilot.live) {
+		window.location.href = `/pilot/${pilot.id}`;
+	} else {
+		router.push(`/data/flights/${pilot.callsign}/${pilot.id}`);
+	}
 }
 
 function calculateFlightTime(off_block: string | Date | undefined, on_block: string | Date | undefined): string {
@@ -140,5 +185,15 @@ function getDay(time: string | Date | undefined): string {
 	const month = date.toLocaleString("default", { month: "short" });
 	const year = date.getFullYear();
 
-	return `${day} ${month} ${year.toString().slice(-2)}`;
+	return `${day} ${month} ${year}`;
+}
+
+function Airport({ airport }: { airport: StaticAirport | null }) {
+	if (!airport) return <td>N/A</td>;
+	return (
+		<td>
+			{airport.city}&nbsp;&nbsp;
+			<a href={`/airport/${airport.id}`}>{airport.id}</a>
+		</td>
+	);
 }
