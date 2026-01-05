@@ -395,6 +395,7 @@ app.get(
 			}),
 			select: {
 				id: true,
+				callsign: true,
 				aircraft: true,
 				flight_plan: true,
 				times: true,

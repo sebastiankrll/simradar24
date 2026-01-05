@@ -1,3 +1,4 @@
+import { useRouter } from "next/navigation";
 import type { SyntheticEvent } from "react";
 import Icon from "@/components/Icon/Icon";
 import { RangeSwitch } from "@/components/Input/Input";
@@ -7,7 +8,6 @@ import { REPLAY_SPEEDS } from "./Replay";
 export function ReplayControl({
 	progress,
 	setProgress,
-	setOpen,
 	setSpeedIndex,
 	speedIndex,
 	setPlaying,
@@ -19,7 +19,6 @@ export function ReplayControl({
 }: {
 	progress: number;
 	setProgress: React.Dispatch<React.SetStateAction<number>>;
-	setOpen: React.Dispatch<React.SetStateAction<string | null>>;
 	setSpeedIndex: React.Dispatch<React.SetStateAction<number>>;
 	speedIndex: number;
 	setPlaying: React.Dispatch<React.SetStateAction<boolean>>;
@@ -29,6 +28,8 @@ export function ReplayControl({
 	follow: boolean;
 	max: number;
 }) {
+	const router = useRouter();
+
 	return (
 		<div id="replay-control">
 			<button type="button" className="replay-button" onClick={() => setPlaying((prev) => !prev)}>
@@ -59,7 +60,7 @@ export function ReplayControl({
 			<button type="button" className="replay-button" onClick={() => onDownload()}>
 				<Icon name="download" size={24} />
 			</button>
-			<button type="button" className="replay-button" id="replay-close" onClick={() => setOpen(null)}>
+			<button type="button" className="replay-button" id="replay-close" onClick={() => router.back()}>
 				<Icon name="cancel" size={24} />
 			</button>
 		</div>

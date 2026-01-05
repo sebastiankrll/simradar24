@@ -5,19 +5,17 @@ import "./Flights.css";
 import type { StaticAirport } from "@sr24/types/db";
 import type { PilotLong } from "@sr24/types/interface";
 import { type InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Fragment } from "react/jsx-runtime";
 import { getCachedAirport } from "@/storage/cache";
 import { useSettingsStore } from "@/storage/zustand";
 import { fetchApi } from "@/utils/api";
 import { convertTime } from "@/utils/helpers";
-import { Replay } from "./Replay";
 
 const LIMIT = 20;
 
-export default function Flights({ callsign }: { callsign: string }) {
-	const [open, setOpen] = useState<string | null>(null);
-
+export default function Flights({ children, callsign }: { children: React.ReactNode; callsign: string }) {
 	const { data } = useInfiniteQuery<PilotLong[], Error, InfiniteData<PilotLong[]>, readonly [string, string], string | null>({
 		queryKey: ["flights-page", callsign],
 		enabled: !!callsign,
@@ -70,19 +68,20 @@ export default function Flights({ callsign }: { callsign: string }) {
 					{data?.pages.map((page, i) => (
 						<Fragment key={i}>
 							{page.map((p) => (
-								<Row key={p.id} pilot={p} setOpen={setOpen} />
+								<Row key={p.id} pilot={p} />
 							))}
 						</Fragment>
 					))}
 				</tbody>
 			</table>
-			{open && <Replay id={open} setOpen={setOpen} />}
+			{children}
 		</div>
 	);
 }
 
-function Row({ pilot, setOpen }: { pilot: PilotLong; setOpen: React.Dispatch<React.SetStateAction<string | null>> }) {
+function Row({ pilot }: { pilot: PilotLong }) {
 	const { timeFormat, timeZone } = useSettingsStore();
+	const router = useRouter();
 
 	const [data, setData] = useState<{ departure: StaticAirport | null; arrival: StaticAirport | null }>({
 		departure: null,
@@ -112,7 +111,7 @@ function Row({ pilot, setOpen }: { pilot: PilotLong; setOpen: React.Dispatch<Rea
 			<td>{convertTime(pilot.times?.on_block, timeFormat, timeZone, false, data.arrival?.timezone)}</td>
 			<td>
 				<div className="flights-page-buttons">
-					<button type="button" onClick={() => setOpen(pilot.id)}>
+					<button type="button" onClick={() => router.push(`/data/flights/${pilot.callsign}/${pilot.id}`)}>
 						<Icon name="external-link" size={24} />
 					</button>
 				</div>

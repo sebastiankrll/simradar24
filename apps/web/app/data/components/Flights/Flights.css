@@ -15,6 +15,7 @@
 	justify-content: left;
 	padding: 1rem;
 	gap: 1rem;
+	background: var(--color-bg);
 }
 
 #map {

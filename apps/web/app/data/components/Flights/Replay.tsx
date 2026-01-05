@@ -1,3 +1,5 @@
+"use client";
+
 import type { DeltaTrackPoint, PilotLong, TrackPoint } from "@sr24/types/interface";
 import { toLonLat } from "ol/proj";
 import { useEffect, useState } from "react";
@@ -17,7 +19,7 @@ interface ApiData {
 
 export const REPLAY_SPEEDS = [1, 2, 4, 8, 16];
 
-export function Replay({ id, setOpen }: { id: string; setOpen: React.Dispatch<React.SetStateAction<string | null>> }) {
+export function Replay({ id }: { id: string }) {
 	const { data, isLoading } = useSWR<ApiData>(`/data/pilot/${id}`, fetchApi, {
 		revalidateIfStale: false,
 		revalidateOnFocus: false,
@@ -75,7 +77,6 @@ export function Replay({ id, setOpen }: { id: string; setOpen: React.Dispatch<Re
 			<ReplayControl
 				progress={progress}
 				setProgress={setProgress}
-				setOpen={setOpen}
 				setSpeedIndex={setSpeedIndex}
 				speedIndex={speedIndex}
 				setPlaying={setPlaying}
