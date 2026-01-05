@@ -8,6 +8,7 @@ import flightStatusSprite from "@/assets/images/sprites/flightStatusSprite.png";
 import Icon from "@/components/Icon/Icon";
 import { PilotAircraft } from "@/components/Panel/Pilot/PilotAircraft";
 import { PilotAirport } from "@/components/Panel/Pilot/PilotAirport";
+import { PilotCharts } from "@/components/Panel/Pilot/PilotCharts";
 import { PilotFlightplan } from "@/components/Panel/Pilot/PilotFlightplan";
 import { PilotMisc } from "@/components/Panel/Pilot/PilotMisc";
 import { PilotTelemetry } from "@/components/Panel/Pilot/PilotTelemetry";
@@ -23,7 +24,7 @@ interface PilotPanelStatic {
 }
 type AccordionSection = "info" | "charts" | "pilot" | null;
 
-export default function ReplayPanel({ pilot, trackPoint }: { pilot: PilotLong; trackPoint: TrackPoint }) {
+export default function ReplayPanel({ pilot, trackPoints, index }: { pilot: PilotLong; trackPoints: Required<TrackPoint>[]; index: number }) {
 	const lastIdRef = useRef<string | null>(null);
 
 	const [staticData, setStaticData] = useState<PilotPanelStatic>({
@@ -93,18 +94,18 @@ export default function ReplayPanel({ pilot, trackPoint }: { pilot: PilotLong; t
 				</button>
 				<PilotFlightplan pilot={pilot} data={staticData} openSection={openSection} ref={infoRef} />
 				<PilotAircraft pilot={pilot} />
-				{/* <button className={`panel-container-header${openSection === "charts" ? " open" : ""}`} type="button" onClick={() => toggleSection("charts")}>
+				<button className={`panel-container-header${openSection === "charts" ? " open" : ""}`} type="button" onClick={() => toggleSection("charts")}>
 					<p>Speed & Altitude Graph</p>
 					<Icon name="arrow-down" />
 				</button>
-				<PilotCharts trackPoints={trackPoints} openSection={openSection} ref={chartsRef} /> */}
-				<PilotTelemetry pilot={pilot} trackPoint={trackPoint} />
+				<PilotCharts trackPoints={trackPoints} openSection={openSection} ref={chartsRef} />
+				<PilotTelemetry pilot={pilot} trackPoint={trackPoints[index]} />
 				<button className={`panel-container-header${openSection === "pilot" ? " open" : ""}`} type="button" onClick={() => toggleSection("pilot")}>
 					<p>Pilot Information</p>
 					<Icon name="arrow-down" />
 				</button>
 				<PilotUser pilot={pilot} openSection={openSection} ref={userRef} />
-				<PilotMisc pilot={pilot} trackPoint={trackPoint} />
+				<PilotMisc pilot={pilot} trackPoint={trackPoints[index]} />
 			</div>
 		</div>
 	);

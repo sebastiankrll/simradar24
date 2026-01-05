@@ -200,8 +200,8 @@ export function setDataLayersSettings(airportMarkerSize: number, planeMarkerSize
 	pilotShadowLayer.updateStyleVariables({ size: planeSize });
 }
 
-export function updatePilot(trackPoint: Required<TrackPoint>): void {
-	if (!pilotFeature) return;
+export function updatePilot(trackPoint: Required<TrackPoint> | undefined): void {
+	if (!pilotFeature || !trackPoint) return;
 
 	pilotFeature.getGeometry()?.setCoordinates(trackPoint.coordinates);
 	pilotFeature.setProperties({

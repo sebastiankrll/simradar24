@@ -44,14 +44,8 @@ export function Replay({ id, setOpen }: { id: string; setOpen: React.Dispatch<Re
 		if (!playing) return;
 		if (trackPoints.length === 0) return;
 
-		const n = trackPoints.length;
-		const startTime = trackPoints[0].timestamp;
-		const endTime = trackPoints[n - 1].timestamp;
-		const totalTime = endTime - startTime;
-		const avgInterval = totalTime / (n - 1);
-		const intervalMs = avgInterval / REPLAY_SPEEDS[speedIndex];
-
-		const maxIndex = n - 1;
+		const intervalMs = 15000 / REPLAY_SPEEDS[speedIndex];
+		const maxIndex = trackPoints.length - 1;
 
 		const interval = setInterval(() => {
 			setProgress((prev) => {
@@ -64,7 +58,7 @@ export function Replay({ id, setOpen }: { id: string; setOpen: React.Dispatch<Re
 		}, intervalMs);
 
 		return () => clearInterval(interval);
-	}, [playing, speedIndex, trackPoints]);
+	}, [playing, speedIndex, trackPoints.length]);
 
 	if (!data || isLoading) {
 		return <Spinner />;
@@ -73,7 +67,7 @@ export function Replay({ id, setOpen }: { id: string; setOpen: React.Dispatch<Re
 	return (
 		<div id="map-wrapper">
 			<ReplayMap />
-			<ReplayPanel pilot={data.pilot} trackPoint={trackPoints[progress]} />
+			<ReplayPanel pilot={data.pilot} trackPoints={trackPoints} index={progress} />
 			<ReplayControl
 				progress={progress}
 				setProgress={setProgress}

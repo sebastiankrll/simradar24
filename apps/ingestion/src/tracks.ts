@@ -2,8 +2,12 @@ import { encodeTrackPoint } from "@sr24/db/buffer";
 import type { PilotLong, TrackPoint } from "@sr24/types/interface";
 import { fromLonLat } from "./utils/helpers.js";
 
+let cached = new Map<string, Required<TrackPoint>>();
+
 export function mapTrackPoints(pilots: PilotLong[]): Map<string, Buffer> {
 	const trackPoints: Map<string, Buffer> = new Map();
+	const newCached = new Map<string, Required<TrackPoint>>();
+
 	for (const pilot of pilots) {
 		const trackPoint: Required<TrackPoint> = {
 			coordinates: fromLonLat([pilot.longitude, pilot.latitude]),
@@ -15,10 +19,30 @@ export function mapTrackPoints(pilots: PilotLong[]): Map<string, Buffer> {
 			color: getTrackPointColor(pilot.altitude_agl, pilot.altitude_ms),
 			timestamp: pilot.last_update.getTime(),
 		};
+		const cachedPoint = cached.get(pilot.id);
+		if (cachedPoint && !isChanged(cachedPoint, trackPoint)) {
+			continue;
+		}
+
+		newCached.set(pilot.id, trackPoint);
 		const encoded = encodeTrackPoint(trackPoint);
 		trackPoints.set(pilot.id, encoded);
 	}
+
+	cached = newCached;
 	return trackPoints;
+}
+
+function isChanged(a: Required<TrackPoint>, b: Required<TrackPoint>): boolean {
+	return (
+		a.coordinates[0] !== b.coordinates[0] ||
+		a.coordinates[1] !== b.coordinates[1] ||
+		a.altitude_ms !== b.altitude_ms ||
+		a.altitude_agl !== b.altitude_agl ||
+		a.groundspeed !== b.groundspeed ||
+		a.vertical_speed !== b.vertical_speed ||
+		a.heading !== b.heading
+	);
 }
 
 function roundAltitude(altitude: number): number {
