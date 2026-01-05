@@ -7,6 +7,23 @@
 	gap: 1rem;
 }
 
+#flights-page-pagination {
+    background: var(--color-blue);
+    color: white;
+    margin: 0 auto;
+    padding: 4px 8px;
+}
+
+#flights-page-pagination:disabled {
+    background: var(--color-dark-grey);
+    color: var(--color-main-text);
+    cursor: not-allowed;
+}
+
+#flights-page-pagination:hover:not(:disabled) {
+    background: var(--color-hover);
+}
+
 #flights-page .live-tag {
 	padding: 1px 4px;
 }

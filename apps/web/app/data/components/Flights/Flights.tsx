@@ -15,6 +15,7 @@ import { getCachedAirport } from "@/storage/cache";
 import { useSettingsStore } from "@/storage/zustand";
 import { fetchApi } from "@/utils/api";
 import { convertTime } from "@/utils/helpers";
+import Spinner from "@/components/Spinner/Spinner";
 
 const LIMIT = 20;
 
@@ -23,7 +24,13 @@ function getQueryKey(callsign?: string, registration?: string): readonly [string
 }
 
 export default function Flights({ children, callsign, registration }: { children: React.ReactNode; callsign?: string; registration?: string }) {
-	const { data } = useInfiniteQuery<PilotLong[], Error, InfiniteData<PilotLong[]>, readonly [string, string], string | null>({
+	const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery<
+		PilotLong[],
+		Error,
+		InfiniteData<PilotLong[]>,
+		readonly [string, string],
+		string | null
+	>({
 		queryKey: getQueryKey(callsign, registration),
 		enabled: !!callsign || !!registration,
 		initialPageParam: null,
@@ -97,6 +104,10 @@ export default function Flights({ children, callsign, registration }: { children
 					))}
 				</tbody>
 			</table>
+			<button id="flights-page-pagination" type="button" onClick={() => fetchNextPage()} disabled={!hasNextPage || isFetchingNextPage}>
+				{isFetchingNextPage ? "Loading ..." : hasNextPage ? "Load more flights" : "No more flights"}
+			</button>
+			{isLoading && <Spinner />}
 			{children}
 		</div>
 	);
