@@ -123,6 +123,7 @@ async function initAirports(pilot: PilotLong): Promise<void> {
 		feature.setId(`airport_${a.id}`);
 		return feature;
 	});
+	airportSource.clear();
 	airportSource.addFeatures(features);
 
 	extent = airports.reduce(
@@ -160,6 +161,8 @@ function initPilot(pilot: PilotLong, trackPoints: Required<TrackPoint>[]): void 
 		heading: trackPoints[0].heading,
 	});
 	pilotFeature.setId(`pilot_${pilot.id}`);
+
+	pilotSource.clear();
 	pilotSource.addFeature(pilotFeature);
 }
 
@@ -186,6 +189,7 @@ function initTrackPoints(trackPoints: Required<TrackPoint>[]): void {
 		trackFeatures.push(trackFeature);
 	}
 
+	trackSource.clear();
 	trackSource.addFeatures(trackFeatures);
 }
 
