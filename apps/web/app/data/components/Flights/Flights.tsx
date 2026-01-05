@@ -61,7 +61,7 @@ export default function Flights({ children, callsign }: { children: React.ReactN
 						<th>ATD</th>
 						<th>STA</th>
 						<th>ATA</th>
-						<th></th>
+						<th>View</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -138,6 +138,7 @@ function getDay(time: string | Date | undefined): string {
 	const date = new Date(time);
 	const day = date.getDate();
 	const month = date.toLocaleString("default", { month: "short" });
+	const year = date.getFullYear();
 
-	return `${day} ${month}`;
+	return `${day} ${month} ${year.toString().slice(-2)}`;
 }

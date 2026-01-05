@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { initCache } from "@/storage/cache";
 import "./Initializer.css";
 import { usePathname } from "next/navigation";
+import { initCache } from "@/storage/map";
 import type { StatusMap } from "@/types/initializer";
 
 function getInitializerText(status: StatusMap): string {

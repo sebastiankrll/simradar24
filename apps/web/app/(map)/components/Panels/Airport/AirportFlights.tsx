@@ -8,12 +8,13 @@ import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import { setHoveredPilot } from "@/app/(map)/lib/events";
 import { getAirlineIcon } from "@/components/Icon/Icon";
+import { getDelayColorFromDates } from "@/components/Panel/utils";
 import Spinner from "@/components/Spinner/Spinner";
-import { cacheIsInitialized, getCachedAirline, getCachedAirport } from "@/storage/cache";
+import { getCachedAirline, getCachedAirport } from "@/storage/cache";
+import { cacheIsInitialized } from "@/storage/map";
 import { useSettingsStore } from "@/storage/zustand";
 import { fetchApi } from "@/utils/api";
 import { convertTime } from "@/utils/helpers";
-import { getDelayColor } from "../Pilot/PilotTimes";
 
 const LIMIT = 20;
 
@@ -163,7 +164,7 @@ function ListItem({
 			onPointerEnter={() => setHoveredPilot(pilot.id)}
 			onPointerLeave={() => setHoveredPilot(null)}
 		>
-			<div className={`panel-airport-flights-delay ${getDelayColor(schedTime, estTime) ?? ""}`}></div>
+			<div className={`panel-airport-flights-delay ${getDelayColorFromDates(schedTime, estTime) ?? ""}`}></div>
 			<div className="panel-airport-flights-times">
 				<p>{convertTime(schedTime, timeFormat, timeZone, false, dir === "dep" ? data.departure?.timezone : data.arrival?.timezone)}</p>
 				<p>{convertTime(estTime, timeFormat, timeZone, false, dir === "dep" ? data.departure?.timezone : data.arrival?.timezone)}</p>

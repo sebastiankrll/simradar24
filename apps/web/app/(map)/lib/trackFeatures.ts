@@ -5,7 +5,7 @@ import { LineString, type Point } from "ol/geom";
 import Stroke from "ol/style/Stroke";
 import Style from "ol/style/Style";
 import { getStroke } from "@/components/Map/trackFeatures";
-import { fetchTrackPoints } from "@/storage/cache";
+import { getCachedTrackPoints } from "@/storage/cache";
 import { pilotMainSource, trackSource } from "./dataLayers";
 
 let pilotId: string | null = null;
@@ -18,7 +18,7 @@ let pilotFeature: Feature<Point> | null = null;
 
 export async function initTrackFeatures(id: string | null): Promise<void> {
 	if (!id) return;
-	const trackPoints = await fetchTrackPoints(id.replace("pilot_", ""));
+	const trackPoints = await getCachedTrackPoints(id.replace("pilot_", ""));
 	const trackFeatures: Feature<LineString>[] = [];
 
 	for (lastIndex = 0; lastIndex < trackPoints.length - 1; lastIndex++) {

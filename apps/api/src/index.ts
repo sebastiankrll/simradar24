@@ -384,7 +384,7 @@ app.get(
 				callsign,
 			},
 			orderBy: {
-				last_update: "desc",
+				sched_off_block: "desc",
 			},
 			take: Number(limit || 20),
 			...(cursor && {

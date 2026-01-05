@@ -3,7 +3,7 @@
 import type { StaticAirline, StaticAirport } from "@sr24/types/db";
 import type { PilotLong, TrackPoint, WsDelta } from "@sr24/types/interface";
 import { useEffect, useRef, useState } from "react";
-import { cacheIsInitialized, fetchTrackPoints, getCachedAirline, getCachedAirport } from "@/storage/cache";
+import { getCachedAirline, getCachedAirport, getCachedTrackPoints } from "@/storage/cache";
 import "@/components/Panel/Pilot/PilotPanel.css";
 import useSWR from "swr";
 import { followPilotOnMap, resetMap, showRouteOnMap } from "@/app/(map)/lib/events";
@@ -22,6 +22,7 @@ import { PilotTitle } from "@/components/Panel/Pilot/PilotTitle";
 import { PilotUser } from "@/components/Panel/Pilot/PilotUser";
 import { getSpriteOffset, setHeight } from "@/components/Panel/utils";
 import Spinner from "@/components/Spinner/Spinner";
+import { cacheIsInitialized } from "@/storage/map";
 import { fetchApi } from "@/utils/api";
 import { wsClient } from "@/utils/ws";
 
@@ -99,7 +100,7 @@ export default function PilotPanel({ id }: { id: string }) {
 				getCachedAirline(airlineCode || ""),
 				getCachedAirport(pilotData.flight_plan?.departure.icao || ""),
 				getCachedAirport(pilotData.flight_plan?.arrival.icao || ""),
-				fetchTrackPoints(pilotData.id),
+				getCachedTrackPoints(pilotData.id),
 			]).then(([airline, departure, arrival, trackPoints]) => {
 				setStaticData({ airline, departure, arrival });
 				setTrackPoints(trackPoints);

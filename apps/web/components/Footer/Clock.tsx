@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 
-function getTime(time: Date): string {
+function getTime(time: Date | null): string {
+	if (!time) return "--:--";
+
 	const hours = time.getUTCHours();
 	const minutes = time.getUTCMinutes();
 
@@ -13,20 +15,20 @@ function getTime(time: Date): string {
 }
 
 export default function Clock() {
-	const [time, setTime] = useState(new Date());
+	const [time, setTime] = useState<Date | null>(null);
 
 	useEffect(() => {
+		setTime(new Date());
+
 		const interval = setInterval(() => {
 			setTime(new Date());
 		}, 1000);
 
-		return () => {
-			clearInterval(interval);
-		};
+		return () => clearInterval(interval);
 	}, []);
 
 	return (
-		<div id="footer-clock" suppressHydrationWarning>
+		<div id="footer-clock">
 			{getTime(time)}
 			<span>UTC</span>
 		</div>

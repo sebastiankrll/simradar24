@@ -2,23 +2,7 @@ import type { StaticAirport } from "@sr24/types/db";
 import type { PilotLong } from "@sr24/types/interface";
 import { useSettingsStore } from "@/storage/zustand";
 import { convertTime } from "@/utils/helpers";
-
-export function getDelayColor(scheduled: string | Date | undefined, actual: string | Date | undefined) {
-	if (!scheduled || !actual) {
-		return null;
-	}
-	const scheduledDate = new Date(scheduled);
-	const actualDate = new Date(actual);
-	const delayMinutes = (actualDate.getTime() - scheduledDate.getTime()) / 60000;
-	if (delayMinutes >= 30) {
-		return "red";
-	} else if (delayMinutes >= 15) {
-		return "yellow";
-	} else if (delayMinutes > 0) {
-		return "green";
-	}
-	return "green";
-}
+import { getDelayColorFromDates } from "../utils";
 
 function getTimeStatus(times: PilotLong["times"]): { off: boolean; on: boolean } {
 	if (!times) {
@@ -51,7 +35,7 @@ export function PilotTimes({ pilot, departure, arrival }: { pilot: PilotLong; de
 			<p className="panel-pilot-time-desc">{timeStatus.off ? "ACT" : "EST"}</p>
 			<p className="panel-pilot-time-desc">{timeStatus.on ? "ACT" : "EST"}</p>
 			<p className="panel-pilot-arrival-status">
-				<span className={`delay-indicator ${getDelayColor(pilot.times?.sched_on_block, pilot.times?.on_block) ?? ""}`}></span>
+				<span className={`delay-indicator ${getDelayColorFromDates(pilot.times?.sched_on_block, pilot.times?.on_block) ?? ""}`}></span>
 				{convertTime(pilot.times?.on_block, timeFormat, timeZone, false, arrival?.timezone)}
 			</p>
 		</div>
