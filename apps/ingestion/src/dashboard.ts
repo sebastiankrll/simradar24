@@ -6,6 +6,7 @@ import axios from "axios";
 const VATSIM_EVENT_URL = "https://my.vatsim.net/api/v2/events/latest";
 const VATSIM_EVENT_INTERVAL = 60 * 60 * 1000;
 const VATSIM_HISTORY_INTERVAL = 10 * 60 * 1000;
+const MAX_HISTORY_HOURS = 24 * 7;
 
 let events: VatsimEvent[] = [];
 let history: DashboardHistory[] = [];
@@ -123,13 +124,17 @@ async function getDashboardHistory(vatsimData: VatsimData, controllersLong: Cont
 	if (history.length === 0) {
 		history = (await rdsGetSingle("dashboard:history")) || [];
 	}
-	if (lastHistoryUpdateTimestamp && Date.now() - lastHistoryUpdateTimestamp.getTime() < VATSIM_HISTORY_INTERVAL) {
+
+	const now = Date.now();
+	if (lastHistoryUpdateTimestamp && now - lastHistoryUpdateTimestamp.getTime() < VATSIM_HISTORY_INTERVAL) {
 		return history;
 	}
 	lastHistoryUpdateTimestamp = new Date();
 
 	history.push({ t: new Date(), v: { pilots: vatsimData.pilots.length, controllers: controllersLong.length } });
-	rdsSetSingle("dashboard:history", history);
+	const cutoff = now - MAX_HISTORY_HOURS * 60 * 60 * 1000;
+	history = history.filter((entry) => entry.t.getTime() >= cutoff);
 
+	rdsSetSingle("dashboard:history", history);
 	return history;
 }
