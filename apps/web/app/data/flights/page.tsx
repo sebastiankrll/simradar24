@@ -1,3 +1,7 @@
+import { Placeholder } from "../components/Placeholder";
+
 export default async function Page() {
-	return <p>Flights data page will go here.</p>;
+	return (
+		<Placeholder text="In the future you will find detailed stats about flights here, like flight counts, popular routes, or flights by aircraft type." />
+	);
 }
