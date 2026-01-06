@@ -3,11 +3,6 @@ body,
 html {
 	margin: 0;
 	padding: 0;
-	font-optical-sizing: auto;
-	font-weight: var(--font-weight-normal);
-	font-style: normal;
-	color: var(--color-main-text);
-	font-family: inherit;
 }
 
 body,
@@ -16,6 +11,10 @@ html {
 	display: flex;
 	flex-flow: column;
 	background-color: var(--color-bg);
+	font-optical-sizing: auto;
+	font-weight: var(--font-weight-normal);
+	font-style: normal;
+	color: var(--color-main-text);
 }
 
 :root {
@@ -52,6 +51,12 @@ html {
 	--color-box-shadow: rgb(39, 40, 46);
 	--color-glass-bg: rgba(80, 80, 80, 0.3);
 	--color-hover: rgb(105, 124, 165);
+	--color-green: #11b995;
+}
+
+button,
+input {
+	font-family: inherit;
 }
 
 button {
@@ -71,7 +76,7 @@ fieldset {
 	margin: 0;
 }
 
-section {
+main {
 	padding: 5.5rem 2rem 3.5rem 2rem;
 	flex: 1;
 	display: flex;
@@ -99,6 +104,10 @@ select option:checked {
 
 select option:hover {
 	background: var(--color-hover);
+}
+
+code {
+	color: var(--color-orange);
 }
 
 .scrollable {
@@ -167,6 +176,55 @@ tr:hover {
 
 td {
 	padding: 2px 4px;
-	align-items: center;
+	vertical-align: middle;
 	gap: 2px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	position: relative;
+}
+
+.live-tag {
+	padding: 0px 2px;
+	color: white;
+	text-transform: uppercase;
+	width: fit-content;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.live-tag.live {
+	background-color: var(--color-green);
+}
+
+.live-tag.off {
+	background-color: var(--color-dark-grey);
+}
+
+.live-tag.pre {
+	background-color: var(--color-magenta);
+}
+
+.delay-indicator {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	border: 1px solid var(--color-border);
+	position: absolute;
+	left: -10px;
+	top: 50%;
+	transform: translateY(-50%);
+	background: rgb(141, 141, 141);
+}
+
+.delay-indicator.green {
+	background-color: var(--color-green);
+}
+
+.delay-indicator.yellow {
+	background-color: var(--color-yellow);
+}
+
+.delay-indicator.red {
+	background-color: var(--color-red);
 }

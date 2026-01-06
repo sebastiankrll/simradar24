@@ -2,7 +2,7 @@
 
 import type { DashboardData } from "@sr24/types/interface";
 import { useEffect, useRef, useState } from "react";
-import { setHeight } from "../height";
+import { setHeight } from "../../../../../components/Panel/utils";
 import { DashboardEvents } from "./DashboardEvents";
 import { DashboardHistory } from "./DashboardHistory";
 import { DashboardStats } from "./DashboardStats";
@@ -33,7 +33,7 @@ function getStoredOpenSections(): string[] {
 }
 
 export default function DashboardPanel() {
-	const { data, isLoading } = useSWR<DashboardData>("/data/dashboard", fetchApi, { refreshInterval: 60_000 });
+	const { data, isLoading } = useSWR<DashboardData>("/map/dashboard", fetchApi, { refreshInterval: 60_000 });
 
 	const historyRef = useRef<HTMLDivElement>(null);
 	const statsRef = useRef<HTMLDivElement>(null);
@@ -67,7 +67,7 @@ export default function DashboardPanel() {
 					type="button"
 					onClick={() => toggleSection("history")}
 				>
-					<p>Last 24 hours</p>
+					<p>Last 7 days</p>
 					<Icon name="arrow-down" />
 				</button>
 				<div ref={historyRef} className={`panel-sub-container accordion${openSection.includes("history") ? " open" : ""}`}>

@@ -29,7 +29,7 @@ export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; ai
 				<div className="overlay-live pilot">
 					<div className="overlay-live-item">
 						<span>ALT</span>
-						{convertAltitude(Math.round(data.altitude_ms / 250) * 250, altitudeUnit, false)}
+						{convertAltitude(Math.round(data.altitude_ms / 250) * 250, altitudeUnit)}
 					</div>
 					<div className="overlay-live-item">
 						<span>FPM</span>
@@ -37,7 +37,7 @@ export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; ai
 					</div>
 					<div className="overlay-live-item">
 						<span>GS</span>
-						{convertSpeed(data.groundspeed, speedUnit, false)}
+						{convertSpeed(data.groundspeed, speedUnit)}
 					</div>
 					<div className="overlay-live-item">
 						<span>HDG</span>
@@ -61,7 +61,6 @@ export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; ai
 				</div>
 			)}
 			{planeOverlay === "callsign" && <div className="overlay-main-wrapper minimal">{data.callsign}</div>}
-			<div className="overlay-anchor"></div>
 		</div>
 	);
 }
@@ -164,7 +163,6 @@ export function AirportOverlay({
 					</div>
 				</div>
 			</div>
-			<div className="overlay-anchor"></div>
 		</div>
 	);
 }
@@ -222,7 +220,6 @@ export function SectorOverlay({ cached, merged }: { cached: SimAwareTraconFeatur
 				</div>
 				<div className="overlay-misc"></div>
 			</div>
-			<div className="overlay-anchor"></div>
 		</div>
 	);
 }

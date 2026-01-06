@@ -1,94 +1,8 @@
-import type { FIRFeature, SimAwareTraconFeature, StaticAirline, StaticAirport } from "@sr24/types/db";
-import type { AirportShort, ControllerMerged, InitialData, TrackPoint, WsDelta } from "@sr24/types/interface";
-import { initAirportFeatures } from "@/app/(map)/lib/airportFeatures";
-import { initControllerFeatures, updateControllerFeatures } from "@/app/(map)/lib/controllerFeatures";
-import { setFeatures } from "@/app/(map)/lib/dataLayers";
-import { setClickedFeature, updateOverlays } from "@/app/(map)/lib/events";
-import { getMapView } from "@/app/(map)/lib/init";
-import { initPilotFeatures, updatePilotFeatures } from "@/app/(map)/lib/pilotFeatures";
-import { updateTrackFeatures } from "@/app/(map)/lib/trackFeatures";
-import type { StatusSetter } from "@/types/initializer";
+import type { FIRFeature, SimAwareTraconFeature, StaticAircraft, StaticAirline, StaticAirport } from "@sr24/types/db";
+import type { DeltaTrackPoint, TrackPoint } from "@sr24/types/interface";
+import { decodeTrackPoints } from "@/components/Map/trackFeatures";
 import { fetchApi } from "@/utils/api";
-import { wsClient } from "@/utils/ws";
-import { dxGetAirline, dxGetAirport, dxGetFirs, dxGetTracons, dxInitDatabases } from "./dexie";
-
-let airportsShort: Required<AirportShort>[] = [];
-let controllersMerged: ControllerMerged[] = [];
-let initialized = false;
-
-export async function initCache(setStatus: StatusSetter, pathname: string): Promise<void> {
-	if (initialized) {
-		setClickedFeature(pathname);
-		return;
-	}
-
-	const dbInitPromise = dxInitDatabases(setStatus);
-	const dataFetchPromise = fetchApi<InitialData>("/data/init");
-	const [_, data] = await Promise.all([dbInitPromise, dataFetchPromise]);
-	setStatus?.((prev) => ({ ...prev, cache: true }));
-
-	await initAirportFeatures();
-	await initControllerFeatures(data);
-	initPilotFeatures(data);
-
-	airportsShort = data.airports;
-	controllersMerged = data.controllers;
-
-	const view = getMapView();
-	if (view) {
-		setFeatures(view.calculateExtent(), view.getZoom() || 5);
-	}
-	setStatus?.((prev) => ({ ...prev, map: true }));
-
-	const handleMessage = (delta: WsDelta) => {
-		updateCache(delta);
-	};
-	wsClient.addListener(handleMessage);
-
-	setClickedFeature(pathname);
-	initialized = true;
-}
-
-export function cacheIsInitialized(): boolean {
-	return initialized;
-}
-
-async function updateCache(delta: WsDelta): Promise<void> {
-	updatePilotFeatures(delta.pilots);
-	updateControllerFeatures(delta.controllers);
-	updateTrackFeatures(delta.pilots);
-
-	airportsShort = [
-		...delta.airports.added,
-		...delta.airports.updated.map((a) => {
-			const existing = airportsShort.find((ap) => ap.icao === a.icao);
-			return { ...existing, ...(a as Required<AirportShort>) };
-		}),
-	];
-
-	controllersMerged = [
-		...delta.controllers.added,
-		...delta.controllers.updated.map((c) => {
-			const existing = controllersMerged.find((cm) => cm.id === c.id);
-			const controllers = c.controllers.map((ctl) => {
-				const existingCtl = existing?.controllers.find((e) => e.callsign === ctl.callsign);
-				return { ...existingCtl, ...ctl };
-			});
-
-			return { ...c, controllers };
-		}),
-	];
-
-	updateOverlays();
-}
-
-export function getAirportShort(id: string): Required<AirportShort> | null {
-	return airportsShort.find((a) => a.icao === id) || null;
-}
-
-export function getControllerMerged(id: string): ControllerMerged | null {
-	return controllersMerged.find((c) => c.id === id) || null;
-}
+import { dxGetAirline, dxGetAirport, dxGetFirs, dxGetTracons } from "./dexie";
 
 const cachedAirports: Map<string, StaticAirport> = new Map();
 
@@ -116,6 +30,20 @@ export async function getCachedAirline(id: string): Promise<StaticAirline | null
 	}
 
 	return airline || null;
+}
+
+const cachedAircrafts: Map<string, StaticAircraft> = new Map();
+
+export async function getCachedAircraft(registration: string): Promise<StaticAircraft | null> {
+	const cached = cachedAircrafts.get(registration);
+	if (cached) return cached;
+
+	const aircraft = await fetchApi<StaticAircraft>(`/data/aircraft/${registration}`);
+	if (aircraft) {
+		cachedAircrafts.set(registration, aircraft);
+	}
+
+	return aircraft || null;
 }
 
 const cachedTracons: Map<string, SimAwareTraconFeature> = new Map();
@@ -151,7 +79,7 @@ export async function getCachedFir(id: string): Promise<FIRFeature | null> {
 const cachedTrackPoints = new Map<string, TrackPoint[]>();
 const pendingTrackPoints = new Map<string, Promise<TrackPoint[]>>();
 
-export async function fetchTrackPoints(id: string): Promise<TrackPoint[]> {
+export async function getCachedTrackPoints(id: string): Promise<TrackPoint[]> {
 	const cached = cachedTrackPoints.get(id);
 	if (cached) {
 		return cached;
@@ -162,8 +90,9 @@ export async function fetchTrackPoints(id: string): Promise<TrackPoint[]> {
 		return inFlight;
 	}
 
-	const promise = fetchApi<TrackPoint[]>(`/data/track/${id}`)
-		.then((data) => {
+	const promise = fetchApi<(TrackPoint | DeltaTrackPoint)[]>(`/map/pilot/${id}/track`)
+		.then((masked) => {
+			const data = decodeTrackPoints(masked);
 			cachedTrackPoints.set(id, data);
 			pendingTrackPoints.delete(id);
 			return data;
@@ -179,26 +108,4 @@ export async function fetchTrackPoints(id: string): Promise<TrackPoint[]> {
 
 export function clearCachedTrackPoints(): void {
 	cachedTrackPoints.clear();
-}
-
-export function getControllersApiRequest(id: string, type: "airport" | "sector"): string | null {
-	const airportIds = controllersMerged.filter((c) => c.id === `airport_${id}`).map((c) => c.controllers.map((ctl) => ctl.callsign));
-	const traconIds = controllersMerged.filter((c) => c.id === `tracon_${id}`).map((c) => c.controllers.map((ctl) => ctl.callsign));
-	const firIds = controllersMerged.filter((c) => c.id === `fir_${id}`).map((c) => c.controllers.map((ctl) => ctl.callsign));
-
-	if (airportIds.length === 0 && type === "airport") {
-		return null;
-	}
-	if (traconIds.length === 0 && firIds.length === 0 && type === "sector") {
-		return null;
-	}
-
-	if (type === "airport") {
-		return `/data/controllers/${airportIds.flat().join(",")}${traconIds.length > 0 ? "," : ""}${traconIds.flat().join(",")}`;
-	}
-	if (type === "sector" && firIds.length > 0) {
-		return `/data/controllers/${firIds.flat().join(",")}`;
-	} else {
-		return `/data/controllers/${traconIds.flat().join(",")}`;
-	}
 }

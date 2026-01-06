@@ -1,5 +1,6 @@
 import type { AirportLong } from "@sr24/types/interface";
 import { CloudQuantity, Descriptive, type IMetar, Intensity, type IWind, Phenomenon } from "metar-taf-parser";
+import { getDelayColorFromNumber } from "@/components/Panel/utils";
 import { useSettingsStore } from "@/storage/zustand";
 import { convertSpeed, convertTemperature } from "@/utils/helpers";
 
@@ -94,8 +95,8 @@ function getWind(wind: IWind | undefined, windUnit: "knots" | "kmh" | "mph" | "m
 		factor = 0.539957;
 	}
 
-	const speed = convertSpeed(wind.speed * factor, windUnit, false);
-	const gust = convertSpeed((wind.gust || 0) * factor, windUnit, false);
+	const speed = convertSpeed(wind.speed * factor, windUnit);
+	const gust = convertSpeed((wind.gust || 0) * factor, windUnit);
 
 	let shortUnit = "KT";
 	if (windUnit === "kmh") {
@@ -110,17 +111,6 @@ function getWind(wind: IWind | undefined, windUnit: "knots" | "kmh" | "mph" | "m
 		return `${wind.degrees}° / ${speed}${wind.gust ? `G${gust}` : ""} ${shortUnit}`;
 	}
 	return `${wind.direction} / ${speed}${wind.gust ? `G${gust}` : ""} ${shortUnit}`;
-}
-
-export function getDelayColor(avgDelay: number) {
-	if (avgDelay >= 60) {
-		return "red";
-	} else if (avgDelay >= 30) {
-		return "yellow";
-	} else if (avgDelay > 0) {
-		return "green";
-	}
-	return "green";
 }
 
 export function AirportStatus({ airport, parsedMetar }: { airport: AirportLong | undefined; parsedMetar: IMetar | null }) {
@@ -158,7 +148,7 @@ export function AirportStatus({ airport, parsedMetar }: { airport: AirportLong |
 				<div className="panel-airport-status-item">
 					<p>Avg. Delay</p>
 					<p>
-						<span className={`delay-indicator ${getDelayColor(avgDelay) ?? ""}`}></span>
+						<span className={`delay-indicator ${getDelayColorFromNumber(avgDelay) ?? ""}`}></span>
 						{`${avgDelay} min`}
 					</p>
 				</div>

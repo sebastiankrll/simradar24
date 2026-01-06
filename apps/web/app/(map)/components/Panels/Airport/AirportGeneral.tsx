@@ -7,10 +7,11 @@ import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import Icon from "@/components/Icon/Icon";
 import Spinner from "@/components/Spinner/Spinner";
-import { cacheIsInitialized, getCachedAirport, getCachedTracon, getControllersApiRequest } from "@/storage/cache";
+import { getCachedAirport, getCachedTracon } from "@/storage/cache";
+import { cacheIsInitialized, getControllersApiRequest } from "@/storage/map";
 import { fetchApi } from "@/utils/api";
-import { setHeight } from "../height";
-import NotFoundPanel from "../NotFound";
+import NotFoundPanel from "../../../../../components/Panel/NotFound";
+import { setHeight } from "../../../../../components/Panel/utils";
 import { ControllerInfo } from "../shared/ControllerInfo";
 import { AirportConnections } from "./AirportConnections";
 import { AirportStatus } from "./AirportStatus";
@@ -28,11 +29,11 @@ interface WeatherResponse {
 }
 
 export function AirportGeneral({ icao }: { icao: string }) {
-	const { data: airportData, isLoading } = useSWR<AirportLong>(`/data/airport/${icao}`, fetchApi, {
+	const { data: airportData, isLoading } = useSWR<AirportLong>(`/map/airport/${icao}`, fetchApi, {
 		refreshInterval: 60_000,
 		shouldRetryOnError: false,
 	});
-	const { data: weatherData } = useSWR<WeatherResponse>(`/data/weather/${icao}`, fetchApi, {
+	const { data: weatherData } = useSWR<WeatherResponse>(`/map/airport/${icao}/weather`, fetchApi, {
 		refreshInterval: 5 * 60_000,
 		shouldRetryOnError: false,
 	});

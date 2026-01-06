@@ -8,12 +8,13 @@ import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import { setHoveredPilot } from "@/app/(map)/lib/events";
 import { getAirlineIcon } from "@/components/Icon/Icon";
+import { getDelayColorFromDates } from "@/components/Panel/utils";
 import Spinner from "@/components/Spinner/Spinner";
-import { cacheIsInitialized, getCachedAirline, getCachedAirport } from "@/storage/cache";
+import { getCachedAirline, getCachedAirport } from "@/storage/cache";
+import { cacheIsInitialized } from "@/storage/map";
 import { useSettingsStore } from "@/storage/zustand";
 import { fetchApi } from "@/utils/api";
 import { convertTime } from "@/utils/helpers";
-import { getDelayColor } from "../Pilot/PilotTimes";
 
 const LIMIT = 20;
 
@@ -58,7 +59,7 @@ function List({ icao, dir }: { icao: string; dir: "dep" | "arr" }) {
 				if (pageParam.backwards) params.set("backwards", "true");
 			}
 
-			return await fetchApi<PilotLong[]>(`/data/airport/${icao.toUpperCase()}/flights?${params.toString()}`);
+			return await fetchApi<PilotLong[]>(`/map/airport/${icao.toUpperCase()}/pilots?${params.toString()}`);
 		},
 		initialPageParam: {},
 		getNextPageParam: (lastPage) => {
@@ -163,7 +164,7 @@ function ListItem({
 			onPointerEnter={() => setHoveredPilot(pilot.id)}
 			onPointerLeave={() => setHoveredPilot(null)}
 		>
-			<div className={`panel-airport-flights-delay ${getDelayColor(schedTime, estTime) ?? ""}`}></div>
+			<div className={`panel-airport-flights-delay ${getDelayColorFromDates(schedTime, estTime) ?? ""}`}></div>
 			<div className="panel-airport-flights-times">
 				<p>{convertTime(schedTime, timeFormat, timeZone, false, dir === "dep" ? data.departure?.timezone : data.arrival?.timezone)}</p>
 				<p>{convertTime(estTime, timeFormat, timeZone, false, dir === "dep" ? data.departure?.timezone : data.arrival?.timezone)}</p>
@@ -175,7 +176,7 @@ function ListItem({
 				<p>{(dir === "dep" ? data.arrival : data.departure)?.name || "Unknown Airport"}</p>
 				<p>{`${(dir === "dep" ? data.arrival : data.departure)?.id ? `${(dir === "dep" ? data.arrival : data.departure)?.id} / ` : ""}${(dir === "dep" ? data.arrival : data.departure)?.iata || "N/A"}`}</p>
 				<p>
-					<span className={pilot.live ? "green" : "grey"}>Live</span>
+					<span className={`live-tag ${pilot.live}`}>{pilot.live}</span>
 					{pilot.callsign}
 				</p>
 				<p>{pilot.aircraft}</p>

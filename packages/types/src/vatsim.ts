@@ -85,7 +85,7 @@ interface VatsimServers {
 	is_sweatbox: boolean;
 }
 
-interface VatsimPrefile {
+export interface VatsimPrefile {
 	cid: number;
 	name: string;
 	callsign: string;

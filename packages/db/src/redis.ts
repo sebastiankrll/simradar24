@@ -1,4 +1,6 @@
-import { createClient } from "redis";
+import type { DeltaTrackPoint, TrackPoint } from "@sr24/types/interface";
+import { createClient, RESP_TYPES } from "redis";
+import { decodeTrackpoints } from "./buffer.js";
 
 const BATCH_SIZE = 1000;
 
@@ -8,22 +10,23 @@ const client = createClient({
 	database: Number(process.env.REDIS_DB) || 0,
 })
 	.on("error", (err) => console.log("Redis Client Error", err))
-	.on("connect", () => console.log("✅ Connected to Redis"));
+	.on("connect", () => console.log("✅ Connected to Redis (normal)"));
 
-export async function rdsConnect(retries = 5, delayMs = 2000): Promise<void> {
-	for (let i = 0; i < retries; i++) {
-		try {
-			await client.connect();
-			return;
-		} catch (_err) {
-			console.log(`Attempt ${i + 1} failed. Retrying in ${delayMs}ms...`);
-			await new Promise((res) => setTimeout(res, delayMs));
-		}
-	}
-	throw new Error("Failed to connect to the database after multiple attempts");
+const bufferClient = createClient({
+	url: `redis://${process.env.REDIS_HOST || "localhost"}:${process.env.REDIS_PORT || 6379}`,
+	password: process.env.NODE_ENV === "production" ? process.env.REDIS_PASSWORD : undefined,
+	database: Number(process.env.REDIS_DB) || 0,
+})
+	.withTypeMapping({ [RESP_TYPES.BLOB_STRING]: Buffer })
+	.on("error", (err) => console.log("Redis Client Error", err))
+	.on("connect", () => console.log("✅ Connected to Redis (buffer)"));
+
+await client.connect();
+
+export async function rdsConnectBufferClient(): Promise<void> {
+	await bufferClient.connect();
 }
 
-// Health check
 export async function rdsHealthCheck(): Promise<boolean> {
 	try {
 		await client.ping();
@@ -34,7 +37,6 @@ export async function rdsHealthCheck(): Promise<boolean> {
 	}
 }
 
-// Graceful shutdown
 export async function rdsShutdown(): Promise<void> {
 	client.destroy();
 	console.log("Redis connection closed");
@@ -113,7 +115,8 @@ export async function rdsSetMultiple<T>(
 export async function rdsGetSingle(key: string): Promise<any> {
 	try {
 		const data = await client.get(key);
-		return data ? JSON.parse(data) : null;
+		if (!data) return null;
+		return JSON.parse(data);
 	} catch (err) {
 		console.error(`Failed to get key ${key}:`, err);
 		throw err;
@@ -134,52 +137,37 @@ export async function rdsGetMultiple(keyPrefix: string, keys: string[]): Promise
 	}
 }
 
-export async function rdsSetMultipleTimeSeries<T>(
-	items: T[],
-	keyPrefix: string,
-	keyExtractor: KeyExtractor<T>,
-	ttlSeconds: number | null = null,
-): Promise<void> {
-	if (items.length === 0) return;
-
+export async function rdsSetTrackpoints(trackpoints: Map<string, Buffer>): Promise<void> {
+	if (trackpoints.size === 0) return;
 	const timestamp = Date.now();
 
 	try {
-		for (let i = 0; i < items.length; i += BATCH_SIZE) {
-			const batch = items.slice(i, i + BATCH_SIZE);
-			const pipeline = client.multi();
+		const pipeline = bufferClient.multi();
 
-			for (const item of batch) {
-				const key = `${keyPrefix}:${keyExtractor(item)}`;
-				pipeline.zAdd(key, { score: timestamp, value: JSON.stringify(item) });
-				if (ttlSeconds) {
-					pipeline.expire(key, ttlSeconds);
-				}
-			}
-
-			await pipeline.exec();
+		for (const [id, buffer] of trackpoints) {
+			const key = `trackpoint:${id}`;
+			pipeline.zAdd(key, { score: timestamp, value: buffer });
+			pipeline.expire(key, 12 * 60 * 60);
 		}
-		// console.log(`✅ ${totalSet} items set in ${activeSetName || keyPrefix}.`);
+
+		await pipeline.exec();
 	} catch (err) {
-		console.error(`Failed to set multiple items in ${keyPrefix}:`, err);
+		console.error(`Failed to set multiple trackpoints:`, err);
 		throw err;
 	}
 }
 
-export async function rdsGetTimeSeries(key: string): Promise<any[]> {
+export async function rdsGetTrackPoints(id: string): Promise<(TrackPoint | DeltaTrackPoint)[]>;
+export async function rdsGetTrackPoints(id: string, buffer: true): Promise<Buffer[]>;
+export async function rdsGetTrackPoints(id: string, buffer?: boolean): Promise<(TrackPoint | DeltaTrackPoint)[] | Buffer[]> {
 	try {
-		const members = await client.ZRANGE(key, 0, -1);
-		return members
-			.map((m) => {
-				try {
-					return JSON.parse(m);
-				} catch {
-					return null;
-				}
-			})
-			.filter((item) => item !== null) as any[];
+		const buffers: Buffer[] = await bufferClient.zRange(`trackpoint:${id}`, 0, -1);
+		if (buffers.length === 0) return [];
+		if (buffer) return buffers;
+
+		return decodeTrackpoints(buffers);
 	} catch (err) {
-		console.error(`Failed to get time series for key ${key}:`, err);
+		console.error(`Failed to get trackpoints for id ${id}:`, err);
 		throw err;
 	}
 }

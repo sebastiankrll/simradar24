@@ -1,6 +1,6 @@
 import type { AirportLong } from "@sr24/types/interface";
 import Icon from "@/components/Icon/Icon";
-import { getDelayColor } from "./AirportStatus";
+import { getDelayColorFromNumber } from "@/components/Panel/utils";
 
 export function AirportConnections({ airport }: { airport: AirportLong | undefined }) {
 	return (
@@ -22,7 +22,7 @@ export function AirportConnections({ airport }: { airport: AirportLong | undefin
 					<div className="panel-data-item">
 						<p>Avg. Delay</p>
 						<p>
-							<span className={`delay-indicator ${airport ? getDelayColor(airport.dep_traffic.average_delay) : ""}`}></span>
+							<span className={`delay-indicator ${airport ? getDelayColorFromNumber(airport.dep_traffic.average_delay) : ""}`}></span>
 							{`${airport?.dep_traffic.average_delay || 0} min`}
 						</p>
 					</div>
@@ -48,7 +48,7 @@ export function AirportConnections({ airport }: { airport: AirportLong | undefin
 					<div className="panel-data-item">
 						<p>Avg. Delay</p>
 						<p>
-							<span className={`delay-indicator ${airport ? getDelayColor(airport.arr_traffic.average_delay) : ""}`}></span>
+							<span className={`delay-indicator ${airport ? getDelayColorFromNumber(airport.arr_traffic.average_delay) : ""}`}></span>
 							{`${airport?.arr_traffic.average_delay || 0} min`}
 						</p>
 					</div>

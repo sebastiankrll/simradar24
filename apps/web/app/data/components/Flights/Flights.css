@@ -1,4 +1,5 @@
 #flights-page {
+	position: relative;
 	display: flex;
 	flex-flow: column;
 	flex: 1;
@@ -6,28 +7,152 @@
 	gap: 1rem;
 }
 
+#flights-page-aircraft {
+	display: flex;
+	flex-flow: column;
+	gap: 1rem;
+	margin-bottom: 1rem;
+}
+
+#flights-page-pagination {
+	background: var(--color-blue);
+	color: white;
+	margin: 0 auto;
+	padding: 4px 8px;
+}
+
+#flights-page-pagination:disabled {
+	background: var(--color-dark-grey);
+	color: var(--color-main-text);
+	cursor: not-allowed;
+}
+
+#flights-page-pagination:hover:not(:disabled) {
+	background: var(--color-hover);
+}
+
+#flights-page .live-tag {
+	padding: 1px 4px;
+}
+
+#flights-page a,
+#flights-aircraft a {
+	color: var(--color-green);
+	font-size: var(--font-size-normal);
+}
+
+#flights-page a:hover,
+#flights-aircraft a:hover {
+	color: var(--color-hover);
+}
+
+#map-wrapper {
+	position: fixed;
+	inset: 0;
+	display: flex;
+	align-items: start;
+	justify-content: left;
+	padding: 4.5rem 1rem 2.5rem 1rem;
+	gap: 1rem;
+	background: var(--color-bg);
+}
+
 #map {
 	position: absolute;
-	top: 0;
-	right: 0;
-	bottom: 0;
-	left: 50%;
-	background: red;
+	inset: 0;
 }
 
 .flights-page-buttons {
 	display: flex;
-	gap: 2px;
 	align-items: center;
-	justify-content: space-around;
+	justify-content: center;
+	gap: 4px;
 }
 
 .flights-page-buttons button {
+	width: 100%;
 	height: 24px;
-	width: 24px;
 	background-color: var(--color-green);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.flights-page-buttons button:hover:not(:disabled) {
+	background-color: var(--color-hover);
+	color: white;
+}
+
+.flights-page-buttons button:disabled {
+	background: var(--color-dark-grey);
+	color: var(--color-main-text);
+	cursor: not-allowed;
 }
 
 .flights-page-buttons use {
 	color: white;
+}
+
+#pilot-replay-panel {
+	position: relative;
+	display: flex;
+	flex-flow: column;
+	gap: 12px;
+	background: var(--color-glass-bg);
+	backdrop-filter: blur(5px);
+	border: 1px solid var(--color-border);
+	width: 20rem;
+	max-height: 100%;
+}
+
+#replay-control {
+	background: var(--color-glass-bg);
+	backdrop-filter: blur(5px);
+	border: 1px solid var(--color-border);
+	height: 32px;
+	flex: 1;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px;
+	box-sizing: border-box;
+}
+
+.replay-button {
+	height: 100%;
+	background: var(--color-green);
+	aspect-ratio: 1 / 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: white;
+}
+
+.replay-button:hover {
+	background-color: var(--color-hover);
+	color: white;
+}
+
+.replay-button.active {
+	background: var(--color-blue);
+}
+
+.replay-button use {
+	color: white;
+}
+
+#replay-speed {
+	width: 3rem;
+}
+
+#replay-close {
+	background: var(--color-red);
+}
+
+#replay-close:hover {
+	background-color: white;
+}
+
+#replay-close:hover use {
+	color: var(--color-red);
 }

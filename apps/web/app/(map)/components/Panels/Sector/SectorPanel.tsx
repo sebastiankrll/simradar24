@@ -7,10 +7,11 @@ import useSWR from "swr";
 import { resetMap } from "@/app/(map)/lib/events";
 import Icon from "@/components/Icon/Icon";
 import Spinner from "@/components/Spinner/Spinner";
-import { cacheIsInitialized, getCachedFir, getCachedTracon, getControllersApiRequest } from "@/storage/cache";
+import { getCachedFir, getCachedTracon } from "@/storage/cache";
+import { cacheIsInitialized, getControllersApiRequest } from "@/storage/map";
 import { fetchApi } from "@/utils/api";
-import { setHeight } from "../height";
-import NotFoundPanel from "../NotFound";
+import NotFoundPanel from "../../../../../components/Panel/NotFound";
+import { setHeight } from "../../../../../components/Panel/utils";
 import { ControllerInfo } from "../shared/ControllerInfo";
 import { SectorTitle } from "./SectorTitle";
 

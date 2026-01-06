@@ -2,7 +2,7 @@ import "./Policy.css";
 
 export default function Page() {
 	return (
-		<section id="policy">
+		<main id="policy">
 			<div className="policy-item" id="policy-legal">
 				<h1>Impressum</h1>
 				<p>
@@ -350,6 +350,6 @@ export default function Page() {
 					.
 				</p>
 			</div>
-		</section>
+		</main>
 	);
 }

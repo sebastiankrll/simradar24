@@ -1,10 +1,10 @@
 import { Map as OlMap, View } from "ol";
 import { fromLonLat, transformExtent } from "ol/proj";
+import { initBaseLayer, setBaseLayerTheme } from "@/components/Map/baseLayer";
+import { initSunLayer, setSunLayerTheme } from "@/components/Map/sunLayer";
 import { useFiltersStore } from "@/storage/zustand";
-import { initBaseLayer, setBaseLayerTheme } from "./baseLayer";
 import { initDataLayers, setDataLayersTheme } from "./dataLayers";
 import { applyMapFilters } from "./filters";
-import { initSunLayer, setSunLayerTheme } from "./sunLayer";
 
 let map: OlMap | null = null;
 

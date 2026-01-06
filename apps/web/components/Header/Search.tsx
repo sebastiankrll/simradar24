@@ -1,6 +1,7 @@
 "use client";
 
 import type { StaticAirline, StaticAirport } from "@sr24/types/db";
+import type { PilotLong } from "@sr24/types/interface";
 import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -12,18 +13,9 @@ import { fetchApi } from "@/utils/api";
 import Icon, { getAirlineIcon } from "../Icon/Icon";
 import Spinner from "../Spinner/Spinner";
 
-interface Pilot {
-	pilot_id: string;
-	callsign: string;
-	dep_icao: string | undefined;
-	arr_icao: string | undefined;
-	aircraft: string;
-	live: boolean;
-}
-
 type PilotResult = {
-	live: Pilot[];
-	offline: Pilot[];
+	live: PilotLong[];
+	offline: PilotLong[];
 };
 
 type QueryResult = {
@@ -32,8 +24,8 @@ type QueryResult = {
 	pilots: PilotResult;
 };
 
-async function fetchPilots(query: string): Promise<PilotResult> {
-	const pilots = await fetchApi<PilotResult>(`/search/flights?q=${encodeURIComponent(query)}`);
+async function fetchPilots(query: string, path?: string): Promise<PilotResult> {
+	const pilots = await fetchApi<PilotResult>(`/search${path ? `/${path}` : ""}?q=${encodeURIComponent(query)}`);
 	return pilots;
 }
 
@@ -46,9 +38,15 @@ export default function Search() {
 	const { data, isLoading } = useQuery<QueryResult>({
 		queryKey: ["search", debounced],
 		queryFn: async () => {
-			if (debounced[0].startsWith("flights:")) {
+			if (debounced[0].startsWith("airline:")) {
 				const query = debounced[0].split(":")[1] || "";
-				const pilots = await fetchPilots(query);
+				const pilots = await fetchPilots(query, "airline");
+				return { airlines: [], airports: [], pilots: pilots };
+			}
+			if (debounced[0].startsWith("route:")) {
+				const route = debounced[0].split(":")[1] || "";
+				const query = route.replace(" ", "");
+				const pilots = await fetchPilots(query, "route");
 				return { airlines: [], airports: [], pilots: pilots };
 			}
 			const [airlines, airports, pilots] = await Promise.all([
@@ -89,7 +87,7 @@ export default function Search() {
 			{searchValue.length > 0 && (
 				<div id="header-search-results" className="scrollable">
 					{isLoading && <Spinner relative />}
-					{searchValue.length < 3 && <p>Type at least 3 characters to search.</p>}
+					{searchValue.length < 3 && <Placeholder />}
 					{data?.airlines.length === 0 && data?.airports.length === 0 && data?.pilots.live.length === 0 && data?.pilots.offline.length === 0 && (
 						<p>No results found.</p>
 					)}
@@ -106,12 +104,12 @@ export default function Search() {
 
 					{data?.pilots.live && data?.pilots.live.length > 0 && <div className="header-search-separator">Live Flights</div>}
 					{data?.pilots.live.map((pilot) => (
-						<PilotResult key={pilot.pilot_id} pilot={pilot} setValue={setSearchValue} />
+						<PilotResult key={pilot.id} pilot={pilot} setValue={setSearchValue} />
 					))}
 
 					{data?.pilots.offline && data?.pilots.offline.length > 0 && <div className="header-search-separator">Recent Or Scheduled Flights</div>}
 					{data?.pilots.offline.map((pilot) => (
-						<PilotResult key={pilot.pilot_id} pilot={pilot} recent setValue={setSearchValue} />
+						<PilotResult key={pilot.id} pilot={pilot} recent setValue={setSearchValue} />
 					))}
 				</div>
 			)}
@@ -119,9 +117,25 @@ export default function Search() {
 	);
 }
 
+function Placeholder() {
+	return (
+		<div id="header-search-placeholder">
+			<p>Type at least 3 characters to search.</p>
+			<p>
+				<strong>Advanced search:</strong>
+				<br />
+				Use <code>airline:&lt;code&gt;</code> to search for flights by airline code. E.g., <code>airline:AAL</code> for American Airlines flights.
+				<br />
+				Use <code>route:&lt;ICAO&gt;-&lt;ICAO&gt;</code> to search for flights by route. E.g., <code>route:KLAX-KJFK</code> for flights from Los
+				Angeles to New York.
+			</p>
+		</div>
+	);
+}
+
 function AirlineResult({ airline, setValue }: { airline: StaticAirline; setValue: (value: string) => void }) {
 	return (
-		<button className="search-item" type="button" onClick={() => setValue(`flights:${airline.id}`)}>
+		<button className="search-item" type="button" onClick={() => setValue(`airline:${airline.id}`)}>
 			<div className="search-icon" style={{ backgroundColor: airline.color?.[0] ?? "" }}>
 				{getAirlineIcon(airline)}
 			</div>
@@ -171,7 +185,7 @@ function AirportResult({ airport, setValue }: { airport: StaticAirport; setValue
 	);
 }
 
-function PilotResult({ pilot, recent = false, setValue }: { pilot: Pilot; recent?: boolean; setValue: (value: string) => void }) {
+function PilotResult({ pilot, recent = false, setValue }: { pilot: PilotLong; recent?: boolean; setValue: (value: string) => void }) {
 	const [airline, setAirline] = useState<StaticAirline | null>(null);
 	const router = useRouter();
 	const pathname = usePathname();
@@ -199,14 +213,14 @@ function PilotResult({ pilot, recent = false, setValue }: { pilot: Pilot; recent
 					return;
 				}
 				if (pathname.startsWith("/data") && !recent) {
-					window.location.href = `/pilot/${pilot.pilot_id}`;
+					window.location.href = `/pilot/${pilot.id}`;
 					return;
 				}
 				if (!pathname.startsWith("/data") && recent) {
 					window.location.href = `/data/flights/${pilot.callsign}`;
 					return;
 				}
-				router.push(`/pilot/${pilot.pilot_id}`);
+				router.push(`/pilot/${pilot.id}`);
 			}}
 		>
 			<div className="search-icon" style={{ backgroundColor: airline?.color?.[0] ?? "" }}>
@@ -215,15 +229,13 @@ function PilotResult({ pilot, recent = false, setValue }: { pilot: Pilot; recent
 			<div className="search-info pilot">
 				<div className="search-title">{flightNumber}</div>
 				<div style={{ textAlign: "right", fontSize: "var(--font-size-small)" }}>
-					{recent ? null : `${pilot.dep_icao ?? "N/A"} \u2013 ${pilot.arr_icao ?? "N/A"}`}
+					{recent ? null : `${pilot.flight_plan?.departure.icao ?? "N/A"} \u2013 ${pilot.flight_plan?.arrival.icao ?? "N/A"}`}
 				</div>
 				<div className="search-tags">
 					<span style={{ background: "var(--color-red)" }} className="bg">
 						{pilot.callsign}
 					</span>
-					<span style={{ background: pilot.live ? "var(--color-green)" : "var(--color-dark-grey)" }} className="bg">
-						Live
-					</span>
+					<span className={`live-tag ${pilot.live}`}>{pilot.live}</span>
 				</div>
 				<div style={{ textAlign: "right", fontSize: "var(--font-size-small)" }}>{!recent && pilot.aircraft}</div>
 			</div>

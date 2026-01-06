@@ -71,7 +71,9 @@ export function convertDistance(km: number, unit: "km" | "miles" | "nm", withUni
 	}
 }
 
-export function convertSpeed(knots: number, unit: "knots" | "kmh" | "mph" | "ms", withUnit: boolean = true): string | number {
+export function convertSpeed(knots: number, unit: "knots" | "kmh" | "mph" | "ms"): number;
+export function convertSpeed(knots: number, unit: "knots" | "kmh" | "mph" | "ms", withUnit: true): string;
+export function convertSpeed(knots: number, unit: "knots" | "kmh" | "mph" | "ms", withUnit?: boolean): string | number {
 	switch (unit) {
 		case "knots":
 			return withUnit ? `${Math.round(knots)} kt` : Math.round(knots);
@@ -86,7 +88,9 @@ export function convertSpeed(knots: number, unit: "knots" | "kmh" | "mph" | "ms"
 	}
 }
 
-export function convertAltitude(feet: number, unit: "feet" | "meters", withUnit: boolean = true): string | number {
+export function convertAltitude(feet: number, unit: "feet" | "meters"): number;
+export function convertAltitude(feet: number, unit: "feet" | "meters", withUnit: true): string;
+export function convertAltitude(feet: number, unit: "feet" | "meters", withUnit?: boolean): string | number {
 	switch (unit) {
 		case "feet":
 			return withUnit ? `${Math.round(feet).toLocaleString()} ft` : Math.round(feet);

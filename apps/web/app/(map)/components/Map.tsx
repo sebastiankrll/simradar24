@@ -4,17 +4,18 @@ import { useEffect } from "react";
 import "./Map.css";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { ToastContainer } from "react-toastify";
+import Clock from "@/components/Footer/Clock";
+import Footer from "@/components/Footer/Footer";
+import Metrics from "@/components/Footer/Metrics";
 import { useSettingsStore } from "@/storage/zustand";
-import { MessageBoxCloseButton } from "../../../components/MessageBox/MessageBox";
+import { setSunLayerSettings } from "../../../components/Map/sunLayer";
+import BasePanel from "../../../components/Panel/BasePanel";
 import { setDataLayersSettings } from "../lib/dataLayers";
 import { onClick, onMoveEnd, onPointerMove, setNavigator } from "../lib/events";
 import { getMap, initMap, setMapTheme } from "../lib/init";
 import { animatePilotFeatures } from "../lib/pilotFeatures";
-import { setSunLayerSettings } from "../lib/sunLayer";
 import Controls from "./Controls";
 import Initializer from "./Initializer";
-import BasePanel from "./Panels/BasePanel";
 
 export default function OMap({ children }: { children?: React.ReactNode }) {
 	const router = useRouter();
@@ -77,11 +78,16 @@ export default function OMap({ children }: { children?: React.ReactNode }) {
 
 	return (
 		<>
-			<ToastContainer closeButton={MessageBoxCloseButton} icon={false} theme="colored" />
 			<Initializer />
 			<BasePanel>{children}</BasePanel>
 			<Controls />
 			<div id="map" />
+			<Footer>
+				<div className="footer-item" id="footer-main">
+					<Metrics />
+					<Clock />
+				</div>
+			</Footer>
 		</>
 	);
 }

@@ -1,7 +1,7 @@
 import { MapLibreLayer } from "@geoblocks/ol-maplibre-layer";
 import type { StyleSpecification } from "maplibre-gl";
-import styleDark from "./positron_dark.json";
-import styleLight from "./positron_light.json";
+import styleDark from "../../app/(map)/lib/positron_dark.json";
+import styleLight from "../../app/(map)/lib/positron_light.json";
 
 const mbLayer = new MapLibreLayer({
 	mapLibreOptions: {

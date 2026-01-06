@@ -1,22 +1,38 @@
 import type { VatsimEvent } from "./vatsim";
 
 export interface TrackPoint {
-	id: string;
-	latitude: number;
-	longitude: number;
-	altitude_agl: number;
+	coordinates: [number, number];
 	altitude_ms: number;
+	altitude_agl?: number;
 	groundspeed: number;
-	vertical_speed: number;
-	heading: number;
-	timestamp: Date;
+	vertical_speed?: number;
+	heading?: number;
+	color: string;
+	timestamp: number;
+}
+
+export interface DecodedTrackPoint {
+	x: number;
+	y: number;
+	alt_msl: number;
+	alt_agl: number;
+	gs: number;
+	vs: number;
+	hdg: number;
+	color: number;
+	ts: number;
+}
+
+export interface DeltaTrackPoint {
+	m: number;
+	v: number[];
+	t: number;
 }
 
 export interface PilotShort {
 	id: string;
 	callsign?: string;
-	latitude?: number;
-	longitude?: number;
+	coordinates?: [number, number];
 	altitude_agl?: number;
 	altitude_ms?: number;
 	groundspeed?: number;
@@ -34,8 +50,8 @@ export interface PilotLong {
 	id: string;
 	cid: string;
 	callsign: string;
-	latitude: number;
 	longitude: number;
+	latitude: number;
 	altitude_agl: number;
 	altitude_ms: number;
 	groundspeed: number;
@@ -53,8 +69,8 @@ export interface PilotLong {
 	flight_plan: PilotFlightPlan | null;
 	times: PilotTimes | null;
 	logon_time: Date;
-	timestamp: Date;
-	live: boolean;
+	last_update: Date;
+	live: "pre" | "live" | "off";
 }
 
 export interface PilotFlightPlan {

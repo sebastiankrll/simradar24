@@ -1,7 +1,11 @@
-import type { PilotLong } from "@sr24/types/interface";
+import type { PilotLong, TrackPoint } from "@sr24/types/interface";
+import type { Coordinate } from "ol/coordinate";
+import { toLonLat } from "ol/proj";
 import Icon from "@/components/Icon/Icon";
 
-export function PilotMisc({ pilot }: { pilot: PilotLong }) {
+export function PilotMisc({ pilot, trackPoint }: { pilot: PilotLong; trackPoint?: TrackPoint }) {
+	const coordinates: Coordinate = trackPoint ? toLonLat(trackPoint.coordinates) : [pilot.latitude, pilot.longitude];
+
 	return (
 		<div className="panel-sub-container sep">
 			<div className="panel-section-title">
@@ -18,11 +22,11 @@ export function PilotMisc({ pilot }: { pilot: PilotLong }) {
 				</div>
 				<div className="panel-data-item">
 					<p>Latitude</p>
-					<p>{pilot.latitude}</p>
+					<p>{coordinates[1].toFixed(6)}</p>
 				</div>
 				<div className="panel-data-item">
 					<p>Longitude</p>
-					<p>{pilot.longitude}</p>
+					<p>{coordinates[0].toFixed(6)}</p>
 				</div>
 			</div>
 		</div>

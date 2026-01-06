@@ -136,11 +136,14 @@ header {
 	background-color: var(--color-bg);
 	border: 1px solid var(--color-border);
 	box-shadow: var(--box-shadow);
-	z-index: 10;
+	z-index: 9999;
 	width: 100%;
 }
 
-#header-search-results p {
+#header-search-placeholder {
+	display: flex;
+	flex-flow: column;
+	gap: 10px;
 	padding: 4px;
 	font-size: var(--font-size-normal);
 }

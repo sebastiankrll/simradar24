@@ -2,25 +2,23 @@ import type { PilotDelta } from "@sr24/types/interface";
 import { Feature } from "ol";
 import type { Coordinate } from "ol/coordinate";
 import { LineString, type Point } from "ol/geom";
-import { fromLonLat } from "ol/proj";
 import Stroke from "ol/style/Stroke";
 import Style from "ol/style/Style";
-import { fetchTrackPoints } from "@/storage/cache";
+import { getStroke } from "@/components/Map/trackFeatures";
+import { getCachedTrackPoints } from "@/storage/cache";
 import { pilotMainSource, trackSource } from "./dataLayers";
-
-const STALE_MS = 60 * 1000;
 
 let pilotId: string | null = null;
 let lastIndex = 0;
 let lastCoords: Coordinate = [0, 0];
 let lastStroke: Stroke | undefined;
-let lastTimestamp = 0;
+let lastAltitudeAgl: number | undefined;
 let animatedTrackFeature: Feature<LineString> | null = null;
 let pilotFeature: Feature<Point> | null = null;
 
 export async function initTrackFeatures(id: string | null): Promise<void> {
 	if (!id) return;
-	const trackPoints = await fetchTrackPoints(id.replace("pilot_", ""));
+	const trackPoints = await getCachedTrackPoints(id.replace("pilot_", ""));
 	const trackFeatures: Feature<LineString>[] = [];
 
 	for (lastIndex = 0; lastIndex < trackPoints.length - 1; lastIndex++) {
@@ -28,25 +26,23 @@ export async function initTrackFeatures(id: string | null): Promise<void> {
 		const end = trackPoints[lastIndex + 1];
 
 		const trackFeature = new Feature({
-			geometry: new LineString(
-				[
-					[start.longitude, start.latitude],
-					[end.longitude, end.latitude],
-				].map((coord) => fromLonLat(coord)),
-			),
+			geometry: new LineString([start.coordinates, end.coordinates]),
 			type: "track",
 		});
-		const stroke = getTrackSegmentColor(end.altitude_agl, end.altitude_ms);
-		const style = new Style({ stroke: stroke });
+		const stroke = getStroke(start, end);
 
-		trackFeature.setStyle(style);
+		trackFeature.setStyle(
+			new Style({
+				stroke: stroke,
+			}),
+		);
 		trackFeature.setId(`track_${id}_${lastIndex}`);
 		trackFeatures.push(trackFeature);
 
 		if (lastIndex === trackPoints.length - 2) {
-			lastCoords = fromLonLat([end.longitude, end.latitude]);
-			lastStroke = stroke;
+			lastCoords = end.coordinates;
 			animatedTrackFeature = trackFeature;
+			lastStroke = stroke;
 		}
 	}
 
@@ -55,7 +51,6 @@ export async function initTrackFeatures(id: string | null): Promise<void> {
 
 	pilotId = id;
 	pilotFeature = pilotMainSource.getFeatureById(id) as Feature<Point>;
-	lastTimestamp = Date.now();
 }
 
 export async function updateTrackFeatures(delta: PilotDelta): Promise<void> {
@@ -63,12 +58,7 @@ export async function updateTrackFeatures(delta: PilotDelta): Promise<void> {
 
 	const pilot = delta.updated.find((p) => `pilot_${p.id}` === pilotId);
 	if (!pilotId || !pilot) return;
-	if (pilot.latitude === undefined || pilot.longitude === undefined) return;
-
-	if (Date.now() - (lastTimestamp || 0) > STALE_MS) {
-		await initTrackFeatures(pilotId);
-		return;
-	}
+	if (!pilot.coordinates) return;
 
 	if (animatedTrackFeature) {
 		const geom = animatedTrackFeature.getGeometry() as LineString;
@@ -79,32 +69,31 @@ export async function updateTrackFeatures(delta: PilotDelta): Promise<void> {
 	}
 
 	const trackFeature = new Feature({
-		geometry: new LineString([lastCoords, fromLonLat([pilot.longitude, pilot.latitude])]),
+		geometry: new LineString([lastCoords, pilot.coordinates]),
 		type: "track",
 	});
+	const stroke = pilot.altitude_ms
+		? new Stroke({
+				color: getTrackPointColor(pilot.altitude_agl || lastAltitudeAgl, pilot.altitude_ms),
+				width: 3,
+			})
+		: lastStroke;
 
-	const stroke =
-		pilot.altitude_agl !== undefined && pilot.altitude_ms !== undefined ? getTrackSegmentColor(pilot.altitude_agl, pilot.altitude_ms) : lastStroke;
 	const style = new Style({ stroke: stroke });
-
 	trackFeature.setStyle(style);
 	trackFeature.setId(`track_${pilot.id}_${++lastIndex}`);
-
 	trackSource.addFeature(trackFeature);
 
-	lastCoords = fromLonLat([pilot.longitude, pilot.latitude]);
+	lastCoords = pilot.coordinates;
 	lastStroke = stroke;
+	lastAltitudeAgl = pilot.altitude_agl;
 	pilotFeature = pilotMainSource.getFeatureById(`pilot_${pilot.id}`) as Feature<Point>;
-	lastTimestamp = Date.now();
 	animatedTrackFeature = trackFeature;
 }
 
-function getTrackSegmentColor(altitude_agl: number, altitude_ms: number): Stroke {
-	if (altitude_agl < 50) {
-		return new Stroke({
-			color: "rgb(77, 95, 131)",
-			width: 3,
-		});
+function getTrackPointColor(altitude_agl: number | undefined, altitude_ms: number): string {
+	if (altitude_agl !== undefined && altitude_agl < 50) {
+		return "#4d5f83";
 	}
 
 	const degrees = (300 / 50000) * altitude_ms + 60;
@@ -134,11 +123,9 @@ function getTrackSegmentColor(altitude_agl: number, altitude_ms: number): Stroke
 	for (let i = 0; i < 3; i++) {
 		resultRGB[i] = Math.round(lowerBound.rgb[i] + interpolationFactor * (upperBound.rgb[i] - lowerBound.rgb[i]));
 	}
+	const hexString = `#${resultRGB.map((c) => c.toString(16).padStart(2, "0")).join("")}`;
 
-	return new Stroke({
-		color: `rgb(${resultRGB[0]}, ${resultRGB[1]}, ${resultRGB[2]})`,
-		width: 3,
-	});
+	return hexString;
 }
 
 export function animateTrackFeatures(): void {

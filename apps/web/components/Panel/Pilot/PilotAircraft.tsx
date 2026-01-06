@@ -1,9 +1,25 @@
 import type { StaticAircraft } from "@sr24/types/db";
 import type { PilotLong } from "@sr24/types/interface";
+import { useEffect, useState } from "react";
 import FlagSprite from "@/assets/images/sprites/flagSprite42.png";
 import Icon from "@/components/Icon/Icon";
+import { getCachedAircraft } from "@/storage/cache";
 
-export function PilotAircraft({ pilot, aircraft }: { pilot: PilotLong; aircraft: StaticAircraft | undefined }) {
+export function PilotAircraft({ pilot }: { pilot: PilotLong }) {
+	const [aircraft, setAircraft] = useState<StaticAircraft | null>(null);
+
+	useEffect(() => {
+		const registration = pilot.flight_plan?.ac_reg;
+		if (!registration) {
+			setAircraft(null);
+			return;
+		}
+		(async () => {
+			const aircraft = await getCachedAircraft(registration);
+			setAircraft(aircraft);
+		})();
+	}, [pilot]);
+
 	const acType = `${aircraft?.manufacturerName || ""} ${aircraft?.model || ""}`;
 	return (
 		<div className="panel-sub-container sep">
