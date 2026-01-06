@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { rdsGetMultiple, rdsGetSingle } from "@sr24/db/redis";
 import type { StaticAirport } from "@sr24/types/db";
 import type { PilotDelta, PilotFlightPlan, PilotLong, PilotShort, PilotTimes } from "@sr24/types/interface";
-import type { VatsimData, VatsimPilot, VatsimPilotFlightPlan } from "@sr24/types/vatsim";
+import type { VatsimData, VatsimPilot, VatsimPilotFlightPlan, VatsimPrefile } from "@sr24/types/vatsim";
 import { fromLonLat, haversineDistance } from "./utils/helpers.js";
 
 const TAXI_TIME_MS = 5 * 60 * 1000;
@@ -81,7 +81,7 @@ export async function mapPilots(vatsimData: VatsimData): Promise<PilotLong[]> {
 	added = [];
 	updated = [];
 
-	await Promise.all(
+	await Promise.all([
 		vatsimData.pilots.map(async (pilot) => {
 			const id = getPilotId(pilot);
 			const cachedPilot = cached.find((c) => c.id === id);
@@ -124,7 +124,7 @@ export async function mapPilots(vatsimData: VatsimData): Promise<PilotLong[]> {
 					flight_plan: await mapPilotFlightPlan(pilot.flight_plan),
 					logon_time: new Date(pilot.logon_time),
 					times: null,
-					live: true,
+					live: "live",
 					...updatedFields,
 				};
 				added.push(getPilotShort(pilotLong) as Required<PilotShort>);
@@ -136,12 +136,54 @@ export async function mapPilots(vatsimData: VatsimData): Promise<PilotLong[]> {
 			newPilotsLong.push(pilotLong);
 			newCached.push(pilotLong);
 		}),
-	);
+		vatsimData.prefiles.map(async (prefile) => {
+			const id = getPilotId(prefile);
+			const cachedPilot = cached.find((c) => c.id === id);
+
+			if (cachedPilot?.last_update.getTime() === new Date(prefile.last_updated).getTime()) {
+				newPilotsLong.push(cachedPilot);
+				newCached.push(cachedPilot);
+				return;
+			}
+
+			const pilotLong: PilotLong = {
+				id: id,
+				cid: String(prefile.cid),
+				callsign: prefile.callsign,
+				longitude: 0,
+				latitude: 0,
+				altitude_agl: 0,
+				altitude_ms: 0,
+				groundspeed: 0,
+				vertical_speed: 0,
+				heading: 0,
+				aircraft: prefile.flight_plan?.aircraft_short || "A320",
+				transponder: "2000",
+				frequency: 122800,
+				name: prefile.name,
+				server: "N/A",
+				pilot_rating: "NEW",
+				military_rating: "M0",
+				qnh_i_hg: 29.92,
+				qnh_mb: 1013,
+				flight_plan: await mapPilotFlightPlan(prefile.flight_plan),
+				times: null,
+				logon_time: new Date(prefile.last_updated),
+				last_update: new Date(prefile.last_updated),
+				live: "pre",
+			};
+
+			pilotLong.times = mapPilotTimes(pilotLong, cachedPilot, prefile, true);
+
+			newPilotsLong.push(pilotLong);
+			newCached.push(pilotLong);
+		}),
+	]);
 
 	for (const p of cached) {
 		const stillOnline = newPilotsLong.some((b) => b.id === p.id);
 		if (!stillOnline) {
-			p.live = false;
+			p.live = "off";
 			newPilotsLong.push(p);
 		}
 	}
@@ -150,7 +192,7 @@ export async function mapPilots(vatsimData: VatsimData): Promise<PilotLong[]> {
 	return newPilotsLong;
 }
 
-function getPilotId(pilot: VatsimPilot): string {
+function getPilotId(pilot: VatsimPilot | VatsimPrefile): string {
 	const base = `${pilot.cid}_${pilot.callsign}`;
 
 	const plan = pilot.flight_plan;
@@ -285,14 +327,19 @@ async function extractAircraftRegistration(remarks: string): Promise<string | nu
 	return reg;
 }
 
-function mapPilotTimes(current: PilotLong, cache: PilotLong | undefined, vatsimPilot: VatsimPilot): PilotTimes | null {
+function mapPilotTimes(
+	current: PilotLong,
+	cache: PilotLong | undefined,
+	vatsimPilot: VatsimPilot | VatsimPrefile,
+	prefile?: boolean,
+): PilotTimes | null {
 	if (!vatsimPilot.flight_plan?.deptime) return null;
 
 	const sched_off_block = parseStrToDate(vatsimPilot.flight_plan.deptime);
 	const enrouteTimeMs = parseStrToSeconds(vatsimPilot.flight_plan.enroute_time) * 1000;
 	const sched_on_block = new Date(sched_off_block.getTime() + enrouteTimeMs + TAXI_TIME_MS * 2);
 
-	if (!cache?.times) {
+	if (!cache?.times || prefile) {
 		return {
 			sched_off_block: roundDateTo5Min(sched_off_block),
 			off_block: sched_off_block,

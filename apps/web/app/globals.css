@@ -201,6 +201,10 @@ td {
 	background-color: var(--color-dark-grey);
 }
 
+.live-tag.pre {
+	background-color: var(--color-magenta);
+}
+
 .delay-indicator {
 	width: 6px;
 	height: 6px;

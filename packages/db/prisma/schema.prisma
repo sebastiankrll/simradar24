@@ -7,8 +7,14 @@ datasource db {
     provider = "postgresql"
 }
 
+enum PilotLiveStatus {
+    pre
+    live
+    off
+}
+
 model Pilot {
-    id              String   @id @db.Char(10)
+    id              String          @id @db.Char(10)
     cid             String
     callsign        String
     latitude        Float
@@ -19,7 +25,7 @@ model Pilot {
     vertical_speed  Int
     heading         Int
     aircraft        String
-    transponder     String   @db.Char(4)
+    transponder     String          @db.Char(4)
     frequency       Int
     name            String
     server          String
@@ -30,8 +36,8 @@ model Pilot {
     flight_plan     Json?
     times           Json?
     logon_time      DateTime
-    last_update     DateTime @default(now())
-    live            Boolean  @default(false)
+    last_update     DateTime        @default(now())
+    live            PilotLiveStatus @default(off)
 
     sched_off_block DateTime?
     sched_on_block  DateTime?

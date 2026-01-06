@@ -78,9 +78,15 @@
 	justify-content: center;
 }
 
-.flights-page-buttons button:hover {
+.flights-page-buttons button:hover:not(:disabled) {
 	background-color: var(--color-hover);
 	color: white;
+}
+
+.flights-page-buttons button:disabled {
+	background: var(--color-dark-grey);
+	color: var(--color-main-text);
+	cursor: not-allowed;
 }
 
 .flights-page-buttons use {

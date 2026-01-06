@@ -41,7 +41,7 @@ export async function pgUpsertPilots(pilots: PilotLong[]): Promise<void> {
 	const transactions = [];
 
 	for (const p of pilots) {
-		if (p.live || !p.flight_plan || !p.times) continue;
+		if (p.live === "live" || !p.flight_plan || !p.times) continue;
 
 		try {
 			const buffers: Buffer[] = await rdsGetTrackPoints(p.id, true);
@@ -177,13 +177,16 @@ export async function pgDeleteStalePilots(): Promise<void> {
 	try {
 		await prisma.pilot.deleteMany({
 			where: {
-				last_update: { lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+				OR: [
+					{ last_update: { lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
+					{ live: "pre", last_update: { lt: new Date(Date.now() - 3 * 60 * 60 * 1000) } },
+				],
 			},
 		});
 
 		const pilots = await prisma.pilot.findMany({
 			where: {
-				live: true,
+				live: "live",
 				last_update: { lt: new Date(Date.now() - 120 * 1000) },
 			},
 			select: { id: true },
@@ -196,7 +199,7 @@ export async function pgDeleteStalePilots(): Promise<void> {
 				id: { in: pilots.map((p) => p.id) },
 			},
 			data: {
-				live: false,
+				live: "off",
 			},
 		});
 

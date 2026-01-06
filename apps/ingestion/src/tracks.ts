@@ -9,6 +9,8 @@ export function mapTrackPoints(pilots: PilotLong[]): Map<string, Buffer> {
 	const newCached = new Map<string, Required<TrackPoint>>();
 
 	for (const pilot of pilots) {
+		if (pilot.live === "pre") continue;
+
 		const trackPoint: Required<TrackPoint> = {
 			coordinates: fromLonLat([pilot.longitude, pilot.latitude]),
 			altitude_ms: roundAltitude(pilot.altitude_ms),
@@ -19,12 +21,13 @@ export function mapTrackPoints(pilots: PilotLong[]): Map<string, Buffer> {
 			color: getTrackPointColor(pilot.altitude_agl, pilot.altitude_ms),
 			timestamp: pilot.last_update.getTime(),
 		};
+		newCached.set(pilot.id, trackPoint);
+
 		const cachedPoint = cached.get(pilot.id);
-		if (cachedPoint && !isChanged(cachedPoint, trackPoint) && pilot.live) {
+		if (cachedPoint && !isChanged(cachedPoint, trackPoint) && pilot.live === "live") {
 			continue;
 		}
 
-		newCached.set(pilot.id, trackPoint);
 		const encoded = encodeTrackPoint(trackPoint);
 		trackPoints.set(pilot.id, encoded);
 	}

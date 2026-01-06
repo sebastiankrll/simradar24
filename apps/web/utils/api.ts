@@ -4,7 +4,7 @@ interface ApiError {
 	error?: any;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
 	const isAbsolute = /^https?:\/\//i.test(endpoint);

@@ -160,7 +160,7 @@ function Row({ pilot, registration }: { pilot: PilotLong; registration?: string 
 			</td>
 			<td>{calculateFlightTime(pilot.times?.off_block, pilot.times?.on_block)}</td>
 			<td>
-				<div className={`live-tag ${pilot.live ? "live" : "off"}`}>{pilot.live ? "LIVE" : "OFF"}</div>
+				<div className={`live-tag ${pilot.live}`}>{pilot.live}</div>
 			</td>
 			<td>{convertTime(pilot.times?.sched_off_block, timeFormat, timeZone, false, data.departure?.timezone)}</td>
 			<td>{convertTime(pilot.times?.off_block, timeFormat, timeZone, false, data.departure?.timezone)}</td>
@@ -171,8 +171,8 @@ function Row({ pilot, registration }: { pilot: PilotLong; registration?: string 
 			</td>
 			<td>
 				<div className="flights-page-buttons">
-					<button type="button" onClick={() => onPlayClick(pilot, router, registration)}>
-						{pilot.live ? "Live" : <Icon name="play" size={24} />}
+					<button type="button" onClick={() => onPlayClick(pilot, router, registration)} disabled={pilot.live === "pre"}>
+						{pilot.live === "live" ? "Live" : <Icon name="play" size={24} />}
 					</button>
 					<button type="button" onClick={() => onShareClick()}>
 						<Icon name={shared ? "select" : "share-android"} size={24} />
@@ -184,9 +184,9 @@ function Row({ pilot, registration }: { pilot: PilotLong; registration?: string 
 }
 
 function onPlayClick(pilot: PilotLong, router: ReturnType<typeof useRouter>, registration?: string) {
-	if (pilot.live) {
+	if (pilot.live === "live") {
 		window.location.href = `/pilot/${pilot.id}`;
-	} else {
+	} else if (pilot.live === "off") {
 		router.push(`/data/${registration ? "aircrafts" : "flights"}/${registration || pilot.callsign}/${pilot.id}`);
 	}
 }

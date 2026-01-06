@@ -70,7 +70,7 @@ export interface PilotLong {
 	times: PilotTimes | null;
 	logon_time: Date;
 	last_update: Date;
-	live: boolean;
+	live: "pre" | "live" | "off";
 }
 
 export interface PilotFlightPlan {

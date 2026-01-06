@@ -235,7 +235,7 @@ function PilotResult({ pilot, recent = false, setValue }: { pilot: PilotLong; re
 					<span style={{ background: "var(--color-red)" }} className="bg">
 						{pilot.callsign}
 					</span>
-					<span className={`live-tag ${pilot.live ? "live" : "off"}`}>{pilot.live ? "Live" : "Off"}</span>
+					<span className={`live-tag ${pilot.live}`}>{pilot.live}</span>
 				</div>
 				<div style={{ textAlign: "right", fontSize: "var(--font-size-small)" }}>{!recent && pilot.aircraft}</div>
 			</div>

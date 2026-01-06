@@ -311,7 +311,7 @@ app.get(
 			prisma.pilot.findMany({
 				where: {
 					...whereClause,
-					live: true,
+					live: "live",
 				},
 				orderBy: {
 					callsign: "asc",
@@ -329,7 +329,9 @@ app.get(
 			prisma.pilot.findMany({
 				where: {
 					...whereClause,
-					live: false,
+					live: {
+						in: ["off", "pre"],
+					},
 				},
 				orderBy: {
 					callsign: "asc",
@@ -374,7 +376,7 @@ app.get(
 			prisma.pilot.findMany({
 				where: {
 					callsign: { contains: query.toUpperCase() },
-					live: true,
+					live: "live",
 				},
 				orderBy: {
 					callsign: "asc",
@@ -392,7 +394,9 @@ app.get(
 			prisma.pilot.findMany({
 				where: {
 					callsign: { contains: query.toUpperCase() },
-					live: false,
+					live: {
+						in: ["off", "pre"],
+					},
 				},
 				orderBy: {
 					callsign: "asc",
@@ -446,7 +450,7 @@ app.get(
 			prisma.pilot.findMany({
 				where: {
 					...whereClause,
-					live: true,
+					live: "live",
 				},
 				orderBy: {
 					callsign: "asc",
@@ -464,7 +468,9 @@ app.get(
 			prisma.pilot.findMany({
 				where: {
 					...whereClause,
-					live: false,
+					live: {
+						in: ["off", "pre"],
+					},
 				},
 				orderBy: {
 					callsign: "asc",
