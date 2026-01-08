@@ -36,22 +36,28 @@ db.version(1).stores({
 	manifest: "key",
 });
 
-export async function dxInitDatabases(setStatus: StatusSetter): Promise<void> {
-	const lastCheck = localStorage.getItem("dbLastCheck");
+let initPromise: Promise<void> | null = null;
+
+export function dxEnsureInitialized(setStatus?: StatusSetter): Promise<void> {
+	if (!initPromise) {
+		initPromise = dxInitDatabases(setStatus).catch((err) => {
+			initPromise = null;
+			throw err;
+		});
+	}
+	return initPromise;
+}
+
+export function dxDatabaseIsStale(): boolean {
+	const lastCheck = localStorage.getItem("simradar21-db");
 	const now = Date.now();
 	if (lastCheck && now - parseInt(lastCheck, 10) < 12 * 60 * 60 * 1000) {
-		setStatus?.((prev) => ({
-			...prev,
-			airports: true,
-			firs: true,
-			tracons: true,
-			airlines: true,
-			aircrafts: true,
-		}));
-		return;
+		return false;
 	}
-	localStorage.setItem("dbLastCheck", now.toString());
+	return true;
+}
 
+async function dxInitDatabases(setStatus?: StatusSetter): Promise<void> {
 	const latestManifest = await fetchApi<StaticVersions>(`${R2_BUCKET_URL}/manifest.json`, {
 		cache: "no-store",
 	});
@@ -108,6 +114,7 @@ export async function dxInitDatabases(setStatus: StatusSetter): Promise<void> {
 	setStatus?.((prev) => ({ ...prev, aircrafts: true }));
 
 	await db.manifest.put({ key: "databaseVersions", versions: latestManifest });
+	localStorage.setItem("simradar21-db", Date.now().toString());
 }
 
 async function storeData<T, K extends keyof T>(data: T[], db: EntityTable<T, K>): Promise<void> {

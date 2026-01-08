@@ -104,7 +104,7 @@ export const useSettingsStore = create<SettingState>()(
 			resetSettings: () => set({ ...defaultSettings }),
 		}),
 		{
-			name: "user-settings",
+			name: "simradar21-user-settings",
 		},
 	),
 );
@@ -143,7 +143,7 @@ export const useFiltersStore = create<FilterState>()(
 				}),
 		}),
 		{
-			name: "user-filters",
+			name: "simradar21-user-filters",
 		},
 	),
 );

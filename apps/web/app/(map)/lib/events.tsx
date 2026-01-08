@@ -29,7 +29,7 @@ export function onMoveEnd(evt: BaseEvent | Event): void {
 	const zoom = view.getZoom() || 2;
 
 	setFeatures(extent, zoom);
-	localStorage.setItem("mapView", JSON.stringify({ center, zoom }));
+	localStorage.setItem("simradar21-map-view", JSON.stringify({ center, zoom }));
 }
 
 let clickedFeature: Feature<Point> | null = null;

@@ -9,7 +9,7 @@ import { applyMapFilters } from "./filters";
 let map: OlMap | null = null;
 
 export function initMap(): OlMap {
-	const savedView = localStorage.getItem("mapView");
+	const savedView = localStorage.getItem("simradar21-map-view");
 	const initialCenter = [0, 0];
 	const initialZoom = 2;
 

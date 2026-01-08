@@ -2,11 +2,13 @@ import type { FIRFeature, SimAwareTraconFeature, StaticAircraft, StaticAirline, 
 import type { DeltaTrackPoint, TrackPoint } from "@sr24/types/interface";
 import { decodeTrackPoints } from "@/components/Map/trackFeatures";
 import { fetchApi } from "@/utils/api";
-import { dxGetAirline, dxGetAirport, dxGetFirs, dxGetTracons } from "./dexie";
+import { dxEnsureInitialized, dxGetAirline, dxGetAirport, dxGetFirs, dxGetTracons } from "./dexie";
 
 const cachedAirports: Map<string, StaticAirport> = new Map();
 
 export async function getCachedAirport(id: string): Promise<StaticAirport | null> {
+	await dxEnsureInitialized();
+
 	const cached = cachedAirports.get(id);
 	if (cached) return cached;
 
@@ -21,6 +23,8 @@ export async function getCachedAirport(id: string): Promise<StaticAirport | null
 const cachedAirlines: Map<string, StaticAirline> = new Map();
 
 export async function getCachedAirline(id: string): Promise<StaticAirline | null> {
+	await dxEnsureInitialized();
+
 	const cached = cachedAirlines.get(id);
 	if (cached) return cached;
 
@@ -49,6 +53,8 @@ export async function getCachedAircraft(registration: string): Promise<StaticAir
 const cachedTracons: Map<string, SimAwareTraconFeature> = new Map();
 
 export async function getCachedTracon(id: string): Promise<SimAwareTraconFeature | null> {
+	await dxEnsureInitialized();
+
 	const cached = cachedTracons.get(id);
 	if (cached) return cached;
 
@@ -64,6 +70,8 @@ export async function getCachedTracon(id: string): Promise<SimAwareTraconFeature
 const cachedFirs: Map<string, FIRFeature> = new Map();
 
 export async function getCachedFir(id: string): Promise<FIRFeature | null> {
+	await dxEnsureInitialized();
+
 	const cached = cachedFirs.get(id);
 	if (cached) return cached;
 
