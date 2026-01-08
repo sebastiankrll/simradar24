@@ -25,8 +25,8 @@ html {
 	--color-dark-grey: rgb(214, 218, 226);
 	--color-border: rgb(189, 193, 206);
 	--color-box-shadow: rgb(193, 194, 202);
-	--color-blue: #2f4de4;
-	--color-green: #11b18f;
+	--color-blue: #2140dd;
+	--color-green: #2dbf7b;
 	--color-red: #ea5979;
 	--color-yellow: rgb(255, 244, 43);
 	--color-orange: #ff8a2b;
@@ -43,7 +43,7 @@ html {
 }
 
 [data-theme="dark"] {
-	--color-bg: rgb(21, 27, 39);
+	--color-bg: #040d21;
 	--color-main-text: rgb(221, 225, 235);
 	--color-dark-grey: rgb(56, 64, 82);
 	--color-light-grey: rgb(37, 43, 54);
@@ -51,7 +51,6 @@ html {
 	--color-box-shadow: rgb(39, 40, 46);
 	--color-glass-bg: rgba(80, 80, 80, 0.3);
 	--color-hover: rgb(105, 124, 165);
-	--color-green: #11b995;
 }
 
 button,
@@ -63,6 +62,10 @@ button {
 	border: none;
 	background-color: transparent;
 	cursor: pointer;
+}
+
+button:disabled {
+	cursor: default;
 }
 
 a {

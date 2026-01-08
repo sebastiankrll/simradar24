@@ -24,9 +24,7 @@ const VatsimProvider: OAuthConfig<VatsimProfile> = {
 	type: "oauth",
 	authorization: {
 		url: `https://${VATSIM_AUTH_URL}/oauth/authorize`,
-		params: {
-			scope: "full_name",
-		},
+		params: { scope: "full_name" },
 	},
 	token: `https://${VATSIM_AUTH_URL}/oauth/token`,
 	userinfo: `https://${VATSIM_AUTH_URL}/api/user`,
@@ -35,7 +33,6 @@ const VatsimProvider: OAuthConfig<VatsimProfile> = {
 	profile(profile) {
 		return {
 			id: profile.data.cid.toString(),
-			cid: profile.data.cid,
 			name: profile.data.personal.name_full,
 		};
 	},
@@ -47,8 +44,9 @@ const NavigraphProvider: OAuthConfig<NavigraphProfile> = {
 	type: "oauth",
 	authorization: {
 		url: `https://${NAVIGRAPH_AUTH_URL}/connect/authorize`,
-		params: { scope: "openid" },
+		params: { scope: "openid fmsdata offline_access", response_type: "code" },
 	},
+	checks: ["pkce", "state"],
 	token: `https://${NAVIGRAPH_AUTH_URL}/connect/token`,
 	userinfo: `https://${NAVIGRAPH_AUTH_URL}/connect/userinfo`,
 	clientId: process.env.NAVIGRAPH_CLIENT_ID || "",
@@ -56,7 +54,6 @@ const NavigraphProvider: OAuthConfig<NavigraphProfile> = {
 	profile(profile) {
 		return {
 			id: profile.sub.toString(),
-			userId: profile.sub,
 			name: profile.name,
 		};
 	},
@@ -71,22 +68,71 @@ export const authOptions: NextAuthOptions = {
 
 	callbacks: {
 		async jwt({ token, account, profile }) {
-			// Block Navigraph if no VATSIM identity exists yet
-			if (account?.provider === "navigraph" && !token.vatsim) {
-				return token;
-			}
-
 			if (account?.provider === "vatsim" && profile?.data) {
-				token.vatsim = {
-					cid: profile.data.cid,
+				return {
+					...token,
+					vatsim: {
+						cid: profile.data.cid,
+						name: profile.data.personal.name_full,
+					},
 				};
 			}
 
-			if (account?.provider === "navigraph" && account.access_token) {
-				token.navigraph = {
-					accessToken: account.access_token,
-					refreshToken: account.refresh_token,
+			if (account?.provider === "navigraph") {
+				return {
+					...token,
+					navigraph: {
+						accessToken: account.access_token,
+						refreshToken: account.refresh_token,
+						expiresAt: account.expires_at ? account.expires_at * 1000 : undefined,
+					},
 				};
+			}
+
+			if (token.navigraph) {
+				if (!token.navigraph.expiresAt) {
+					return token;
+				} else if (Date.now() < token.navigraph.expiresAt) {
+					return token;
+				} else {
+					if (!token.navigraph?.refreshToken) throw new TypeError("Missing refresh_token");
+
+					try {
+						const response = await fetch(`https://${NAVIGRAPH_AUTH_URL}/connect/token`, {
+							method: "POST",
+							headers: {
+								"Content-Type": "application/x-www-form-urlencoded",
+							},
+							body: new URLSearchParams({
+								client_id: process.env.NAVIGRAPH_CLIENT_ID || "",
+								client_secret: process.env.NAVIGRAPH_CLIENT_SECRET || "",
+								grant_type: "refresh_token",
+								refresh_token: token.navigraph.refreshToken,
+							}),
+						});
+
+						const tokensOrError = await response.json();
+						if (!response.ok) throw tokensOrError;
+
+						const newTokens = tokensOrError as {
+							access_token: string;
+							expires_in: number;
+							refresh_token?: string;
+						};
+
+						return {
+							...token,
+							navigraph: {
+								accessToken: newTokens.access_token,
+								refreshToken: newTokens.refresh_token || token.navigraph?.refreshToken,
+								expiresAt: Date.now() + newTokens.expires_in * 1000,
+							},
+						};
+					} catch (error) {
+						console.error("Error refreshing access_token", error);
+						return token;
+					}
+				}
 			}
 
 			return token;
@@ -94,6 +140,7 @@ export const authOptions: NextAuthOptions = {
 		async session({ session, token }) {
 			session.vatsim = token.vatsim;
 			session.navigraph = token.navigraph;
+
 			return session;
 		},
 	},

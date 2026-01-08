@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Ubuntu } from "next/font/google";
 import "./globals.css";
 import "@/assets/images/sprites/freakflags.css";
-import Header from "@/components/Header/Header";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
@@ -24,10 +23,7 @@ export default function RootLayout({
 	return (
 		<html lang="en" className={ubuntu.className} suppressHydrationWarning>
 			<body>
-				<Providers>
-					<Header />
-					{children}
-				</Providers>
+				<Providers>{children}</Providers>
 			</body>
 		</html>
 	);

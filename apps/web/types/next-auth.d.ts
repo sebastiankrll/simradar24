@@ -4,10 +4,12 @@ declare module "next-auth" {
 	interface Session {
 		vatsim?: {
 			cid: number;
+			name: string;
 		};
 		navigraph?: {
-			accessToken: string;
+			accessToken?: string;
 			refreshToken?: string;
+			expiresAt?: number;
 		};
 	}
 
@@ -27,10 +29,12 @@ declare module "next-auth/jwt" {
 	interface JWT {
 		vatsim?: {
 			cid: number;
+			name: string;
 		};
 		navigraph?: {
-			accessToken: string;
+			accessToken?: string;
 			refreshToken?: string;
+			expiresAt?: number;
 		};
 	}
 }

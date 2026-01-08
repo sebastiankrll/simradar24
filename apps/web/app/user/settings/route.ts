@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || "";
-const API_URL = process.env.API_URL || "http://localhost:3001/api";
+const API_URL = process.env.API_URL || "http://localhost:3001";
 
 export async function GET(req: NextRequest): Promise<Response> {
 	const token = await getToken({ req });

@@ -3,7 +3,7 @@
 import Search from "./Search";
 import "./Header.css";
 import Image from "next/image";
-import { signIn, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import simradar24Logo from "@/assets/images/logos/Simradar21_Logo.svg";
 import useSettings from "@/hooks/useSettings";
@@ -61,10 +61,10 @@ export default function Header() {
 			>
 				{<Icon name={settings.theme === "dark" ? "light-theme" : "dark-theme"} size={24} />}
 			</button>
-			<button type="button" id="header-user" onClick={() => signIn("vatsim")} aria-label="Sign In/Out">
+			<a href="/auth" id="header-user">
 				<Icon name="user" size={18} offset={-1} />
 				<span style={{ backgroundColor: session ? "var(--color-green)" : "var(--color-red)" }}></span>
-			</button>
+			</a>
 			<button type="button" id="header-nav" aria-label="Navigation" onClick={() => setOpen(!open)}>
 				<Icon name={open ? "cancel" : "off-canvas"} size={24} />
 			</button>

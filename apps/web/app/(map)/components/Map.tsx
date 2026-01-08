@@ -4,9 +4,6 @@ import { useEffect } from "react";
 import "./Map.css";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import Clock from "@/components/Footer/Clock";
-import Footer from "@/components/Footer/Footer";
-import Metrics from "@/components/Footer/Metrics";
 import { useSettingsStore } from "@/storage/zustand";
 import { setSunLayerSettings } from "../../../components/Map/sunLayer";
 import BasePanel from "../../../components/Panel/BasePanel";
@@ -82,12 +79,6 @@ export default function OMap({ children }: { children?: React.ReactNode }) {
 			<BasePanel>{children}</BasePanel>
 			<Controls />
 			<div id="map" />
-			<Footer>
-				<div className="footer-item" id="footer-main">
-					<Metrics />
-					<Clock />
-				</div>
-			</Footer>
 		</>
 	);
 }
