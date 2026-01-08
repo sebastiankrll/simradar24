@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import "./Initializer.css";
-import { usePathname } from "next/navigation";
-import { initCache } from "@/storage/map";
+import { dxDatabaseIsStale, dxEnsureInitialized } from "@/storage/dexie";
 import type { StatusMap } from "@/types/initializer";
 
 function getInitializerText(status: StatusMap): string {
@@ -17,28 +16,28 @@ function getInitializerText(status: StatusMap): string {
 		return "Downloading airline data ...";
 	} else if (!status.aircrafts) {
 		return "Downloading aircraft data ...";
-	} else if (!status.cache) {
-		return "Initializing local cache ...";
-	} else if (!status.map) {
-		return "Setting up map ...";
+	} else if (!status.navigraph) {
+		return "Downloading Navigraph data ...";
 	} else {
 		return "Initialization complete!";
 	}
 }
 
 export default function Initializer() {
-	const [open, setOpen] = useState(true);
-	const [visible, setVisible] = useState(true);
+	const [open, setOpen] = useState(false);
+	const [visible, setVisible] = useState(false);
 	const [status, setStatus] = useState<StatusMap>({});
-	const pathname = usePathname();
 
 	useEffect(() => {
-		initCache(setStatus, pathname);
-		return () => {};
-	}, [pathname]);
+		if (dxDatabaseIsStale()) {
+			setVisible(true);
+			setTimeout(() => setOpen(true), 100);
+			dxEnsureInitialized(setStatus);
+		}
+	}, []);
 
 	useEffect(() => {
-		if (status.airports && status.firs && status.tracons && status.airlines && status.aircrafts && status.cache && status.map) {
+		if (status.airports && status.firs && status.tracons && status.airlines && status.aircrafts) {
 			setOpen(false);
 			setTimeout(() => setVisible(false), 500);
 		}
@@ -50,7 +49,7 @@ export default function Initializer() {
 
 	return (
 		<div id="initializer" className={open ? "open" : ""}>
-			<span id="initializer-progress" style={{ width: `${(Object.keys(status).length / 7) * 100}%` }}></span>
+			<span id="initializer-progress" style={{ width: `${(Object.keys(status).length / 6) * 100}%` }}></span>
 			<p id="initializer-title">Initializing data ...</p>
 			<p id="initializer-disclaimer">This can take up to a minute during the first load.</p>
 			<p id="initializer-text">{getInitializerText(status)}</p>

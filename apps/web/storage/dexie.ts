@@ -36,22 +36,28 @@ db.version(1).stores({
 	manifest: "key",
 });
 
-export async function dxInitDatabases(setStatus: StatusSetter): Promise<void> {
-	const lastCheck = localStorage.getItem("dbLastCheck");
+let initPromise: Promise<void> | null = null;
+
+export function dxEnsureInitialized(setStatus?: StatusSetter): Promise<void> {
+	if (!initPromise) {
+		initPromise = dxInitDatabases(setStatus).catch((err) => {
+			initPromise = null;
+			throw err;
+		});
+	}
+	return initPromise;
+}
+
+export function dxDatabaseIsStale(): boolean {
+	const lastCheck = localStorage.getItem("simradar21-db");
 	const now = Date.now();
 	if (lastCheck && now - parseInt(lastCheck, 10) < 12 * 60 * 60 * 1000) {
-		setStatus?.((prev) => ({
-			...prev,
-			airports: true,
-			firs: true,
-			tracons: true,
-			airlines: true,
-			aircrafts: true,
-		}));
-		return;
+		return false;
 	}
-	localStorage.setItem("dbLastCheck", now.toString());
+	return true;
+}
 
+async function dxInitDatabases(setStatus?: StatusSetter): Promise<void> {
 	const latestManifest = await fetchApi<StaticVersions>(`${R2_BUCKET_URL}/manifest.json`, {
 		cache: "no-store",
 	});
@@ -108,6 +114,7 @@ export async function dxInitDatabases(setStatus: StatusSetter): Promise<void> {
 	setStatus?.((prev) => ({ ...prev, aircrafts: true }));
 
 	await db.manifest.put({ key: "databaseVersions", versions: latestManifest });
+	localStorage.setItem("simradar21-db", Date.now().toString());
 }
 
 async function storeData<T, K extends keyof T>(data: T[], db: EntityTable<T, K>): Promise<void> {
@@ -125,18 +132,22 @@ async function storeData<T, K extends keyof T>(data: T[], db: EntityTable<T, K>)
 }
 
 export async function dxGetAllAirports(): Promise<StaticAirport[]> {
+	await dxEnsureInitialized();
 	return await db.airports.toArray();
 }
 
 export async function dxGetAirport(id: string): Promise<StaticAirport | null> {
+	await dxEnsureInitialized();
 	return (await db.airports.get(id)) || null;
 }
 
 export async function dxGetAirline(id: string): Promise<StaticAirline | null> {
+	await dxEnsureInitialized();
 	return (await db.airlines.get(id)) || null;
 }
 
 export async function dxFindAirlines(query: string, limit: number): Promise<StaticAirline[]> {
+	await dxEnsureInitialized();
 	return await db.airlines
 		.filter((airline) => airline.name.toLowerCase().includes(query.toLowerCase()) || airline.id.toLowerCase().includes(query.toLowerCase()))
 		.limit(limit)
@@ -144,6 +155,7 @@ export async function dxFindAirlines(query: string, limit: number): Promise<Stat
 }
 
 export async function dxFindAircrafts(query: string, limit: number): Promise<StaticAircraftType[]> {
+	await dxEnsureInitialized();
 	return await db.aircrafts
 		.filter((aircraft) => aircraft.name.toLowerCase().includes(query.toLowerCase()) || aircraft.icao.toLowerCase().includes(query.toLowerCase()))
 		.limit(limit)
@@ -151,6 +163,7 @@ export async function dxFindAircrafts(query: string, limit: number): Promise<Sta
 }
 
 export async function dxFindAirports(query: string, limit: number): Promise<StaticAirport[]> {
+	await dxEnsureInitialized();
 	return await db.airports
 		.filter((airport) => airport.name.toLowerCase().includes(query.toLowerCase()) || airport.id.toLowerCase().includes(query.toLowerCase()))
 		.limit(limit)
@@ -158,9 +171,11 @@ export async function dxFindAirports(query: string, limit: number): Promise<Stat
 }
 
 export async function dxGetTracons(ids: string[]): Promise<(DexieFeature | undefined)[]> {
+	await dxEnsureInitialized();
 	return await db.tracons.bulkGet(ids);
 }
 
 export async function dxGetFirs(ids: string[]): Promise<(DexieFeature | undefined)[]> {
+	await dxEnsureInitialized();
 	return await db.firs.bulkGet(ids);
 }

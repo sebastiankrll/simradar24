@@ -6,25 +6,20 @@ import { setClickedFeature, updateOverlays } from "@/app/(map)/lib/events";
 import { getMapView } from "@/app/(map)/lib/init";
 import { initPilotFeatures, updatePilotFeatures } from "@/app/(map)/lib/pilotFeatures";
 import { updateTrackFeatures } from "@/app/(map)/lib/trackFeatures";
-import type { StatusSetter } from "@/types/initializer";
 import { fetchApi } from "@/utils/api";
 import { wsClient } from "@/utils/ws";
-import { dxInitDatabases } from "./dexie";
 
 let airportsShort: Required<AirportShort>[] = [];
 let controllersMerged: ControllerMerged[] = [];
 let initialized = false;
 
-export async function initCache(setStatus: StatusSetter, pathname: string): Promise<void> {
+export async function initMapData(pathname: string): Promise<void> {
 	if (initialized) {
 		setClickedFeature(pathname);
 		return;
 	}
 
-	const dbInitPromise = dxInitDatabases(setStatus);
-	const dataFetchPromise = fetchApi<InitialData>("/map/init");
-	const [_, data] = await Promise.all([dbInitPromise, dataFetchPromise]);
-	setStatus?.((prev) => ({ ...prev, cache: true }));
+	const data = await fetchApi<InitialData>("/map/init");
 
 	await initAirportFeatures();
 	await initControllerFeatures(data);
@@ -37,7 +32,6 @@ export async function initCache(setStatus: StatusSetter, pathname: string): Prom
 	if (view) {
 		setFeatures(view.calculateExtent(), view.getZoom() || 5);
 	}
-	setStatus?.((prev) => ({ ...prev, map: true }));
 
 	const handleMessage = (delta: WsDelta) => {
 		updateCache(delta);
@@ -46,10 +40,6 @@ export async function initCache(setStatus: StatusSetter, pathname: string): Prom
 
 	setClickedFeature(pathname);
 	initialized = true;
-}
-
-export function cacheIsInitialized(): boolean {
-	return initialized;
 }
 
 async function updateCache(delta: WsDelta): Promise<void> {

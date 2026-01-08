@@ -15,14 +15,14 @@ import { fetchApi } from "@/utils/api";
 function storeOpenSections(sections: string[]) {
 	if (typeof window === "undefined") return;
 	try {
-		localStorage.setItem("dashboardOpenSections", JSON.stringify(sections));
+		localStorage.setItem("simradar21_dashboard", JSON.stringify(sections));
 	} catch {}
 }
 
 function getStoredOpenSections(): string[] {
 	if (typeof window === "undefined") return [];
 	try {
-		const stored = localStorage.getItem("dashboardOpenSections");
+		const stored = localStorage.getItem("simradar21_dashboard");
 		if (!stored) return [];
 		const parsed = JSON.parse(stored);
 		if (Array.isArray(parsed) && parsed.every((s) => typeof s === "string")) {

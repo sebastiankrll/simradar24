@@ -22,7 +22,6 @@ import { PilotTitle } from "@/components/Panel/Pilot/PilotTitle";
 import { PilotUser } from "@/components/Panel/Pilot/PilotUser";
 import { getSpriteOffset, setHeight } from "@/components/Panel/utils";
 import Spinner from "@/components/Spinner/Spinner";
-import { cacheIsInitialized } from "@/storage/map";
 import { fetchApi } from "@/utils/api";
 import { wsClient } from "@/utils/ws";
 
@@ -91,11 +90,7 @@ export default function PilotPanel({ id }: { id: string }) {
 		lastIdRef.current = pilotData.id;
 
 		const airlineCode = pilotData.callsign.slice(0, 3).toUpperCase();
-		const loadStaticData = async () => {
-			while (!cacheIsInitialized()) {
-				await new Promise((resolve) => setTimeout(resolve, 50));
-			}
-
+		(async () => {
 			Promise.all([
 				getCachedAirline(airlineCode || ""),
 				getCachedAirport(pilotData.flight_plan?.departure.icao || ""),
@@ -105,9 +100,7 @@ export default function PilotPanel({ id }: { id: string }) {
 				setStaticData({ airline, departure, arrival });
 				setTrackPoints(trackPoints);
 			});
-		};
-
-		loadStaticData();
+		})();
 	}, [pilotData]);
 
 	useEffect(() => {

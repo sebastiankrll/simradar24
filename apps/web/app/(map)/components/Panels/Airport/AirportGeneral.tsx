@@ -8,7 +8,7 @@ import useSWR from "swr";
 import Icon from "@/components/Icon/Icon";
 import Spinner from "@/components/Spinner/Spinner";
 import { getCachedAirport, getCachedTracon } from "@/storage/cache";
-import { cacheIsInitialized, getControllersApiRequest } from "@/storage/map";
+import { getControllersApiRequest } from "@/storage/map";
 import { fetchApi } from "@/utils/api";
 import NotFoundPanel from "../../../../../components/Panel/NotFound";
 import { setHeight } from "../../../../../components/Panel/utils";
@@ -52,17 +52,10 @@ export function AirportGeneral({ icao }: { icao: string }) {
 		if (!icao || lastIcaoRef.current === icao) return;
 		lastIcaoRef.current = icao;
 
-		const loadStaticData = async () => {
-			while (!cacheIsInitialized()) {
-				await new Promise((resolve) => setTimeout(resolve, 50));
-			}
-
+		(async () => {
 			const [airport, tracon] = await Promise.all([getCachedAirport(icao), getCachedTracon(icao)]);
-
 			setStaticData({ airport, tracon });
-		};
-
-		loadStaticData();
+		})();
 	}, [icao]);
 
 	const weatherRef = useRef<HTMLDivElement>(null);

@@ -1,6 +1,7 @@
 "use client";
 
 import "./SettingsPanel.css";
+import { useSession } from "next-auth/react";
 import { type SyntheticEvent, useEffect } from "react";
 import { resetMap } from "@/app/(map)/lib/events";
 import Icon from "@/components/Icon/Icon";
@@ -9,12 +10,15 @@ import { storeUserSettings, useSettingsStore } from "@/storage/zustand";
 
 export default function SettingsPanel() {
 	const { resetSettings } = useSettingsStore();
+	const { data: session } = useSession();
 
 	useEffect(() => {
 		return () => {
-			storeUserSettings();
+			if (session) {
+				storeUserSettings();
+			}
 		};
-	}, []);
+	}, [session]);
 
 	return (
 		<>

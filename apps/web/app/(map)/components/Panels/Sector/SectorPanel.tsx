@@ -8,7 +8,7 @@ import { resetMap } from "@/app/(map)/lib/events";
 import Icon from "@/components/Icon/Icon";
 import Spinner from "@/components/Spinner/Spinner";
 import { getCachedFir, getCachedTracon } from "@/storage/cache";
-import { cacheIsInitialized, getControllersApiRequest } from "@/storage/map";
+import { getControllersApiRequest } from "@/storage/map";
 import { fetchApi } from "@/utils/api";
 import NotFoundPanel from "../../../../../components/Panel/NotFound";
 import { setHeight } from "../../../../../components/Panel/utils";
@@ -35,11 +35,7 @@ export default function SectorPanel({ callsign }: { callsign: string }) {
 		if (!callsign || lastCallsignRef.current === callsign) return;
 		lastCallsignRef.current = callsign;
 
-		const loadStaticData = async () => {
-			while (!cacheIsInitialized()) {
-				await new Promise((resolve) => setTimeout(resolve, 50));
-			}
-
+		(async () => {
 			let feature: SimAwareTraconFeature | FIRFeature | null = null;
 			let type: "tracon" | "fir" | null = null;
 
@@ -53,9 +49,7 @@ export default function SectorPanel({ callsign }: { callsign: string }) {
 				type = null;
 			}
 			setStaticData({ feature, type });
-		};
-
-		loadStaticData();
+		})();
 	}, [callsign]);
 
 	const controllersRef = useRef<HTMLDivElement>(null);
