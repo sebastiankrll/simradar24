@@ -68,6 +68,16 @@
 	height: 24px;
 }
 
+#filter-apply {
+	background: var(--color-green);
+}
+
+#filter-apply:disabled {
+	background: var(--color-dark-grey);
+	color: var(--color-light-grey);
+	cursor: not-allowed;
+}
+
 .filter-input-wrapper {
 	display: flex;
 	flex-flow: column;

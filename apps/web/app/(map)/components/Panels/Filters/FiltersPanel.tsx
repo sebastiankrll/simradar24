@@ -130,7 +130,13 @@ export default function FiltersPanel() {
 
 				<div className="panel-data-separator">Manage filters</div>
 				<div id="filter-actions">
-					<button type="button" className="filter-action" style={{ background: "var(--color-green)" }} onClick={handleSaveAndApply}>
+					<button
+						type="button"
+						className="filter-action"
+						id="filter-apply"
+						onClick={handleSaveAndApply}
+						disabled={Object.keys(filterValues).length === 0}
+					>
 						Save & Apply
 					</button>
 					<button type="button" className="filter-action" style={{ background: "var(--color-red)" }} onClick={handleClearAll}>
