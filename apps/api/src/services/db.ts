@@ -191,17 +191,26 @@ export async function getPilotReplay(id: string) {
 	return { pilot, trackPoints };
 }
 
-export async function getUserSettings(cid: bigint) {
-	return await prisma.user.findUnique({
-		where: { cid },
-		select: { settings: true },
+export async function ensureUser(cid: number | undefined) {
+	return await prisma.user.upsert({
+		where: { id: String(cid) },
+		update: { lastLogin: new Date() },
+		create: {
+			id: String(cid),
+			lastLogin: new Date(),
+		},
 	});
 }
 
-export async function setUserSettings(cid: bigint, settings: any) {
-	return await prisma.user.upsert({
-		where: { cid },
-		update: { settings },
-		create: { cid, settings },
+export async function deleteUser(cid: number | undefined) {
+	return await prisma.user.delete({
+		where: { id: String(cid) },
+	});
+}
+
+export async function patchUser(cid: number | undefined, data: Partial<{ settings: any; filters: any; bookmarks: any }>) {
+	return await prisma.user.update({
+		where: { id: String(cid) },
+		data,
 	});
 }

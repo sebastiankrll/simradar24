@@ -51,10 +51,10 @@ function getSettingValues(): SettingValues {
 
 export async function storeUserSettings(): Promise<void> {
 	try {
-		await fetch("/user/settings", {
-			method: "POST",
+		await fetch("/user", {
+			method: "PATCH",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(getSettingValues()),
+			body: JSON.stringify({ settings: getSettingValues() }),
 		});
 	} catch (err) {
 		console.error("Failed to save settings:", err);
@@ -63,7 +63,7 @@ export async function storeUserSettings(): Promise<void> {
 
 export async function fetchUserSettings(): Promise<void> {
 	try {
-		const res = await fetch("/user/settings", { cache: "no-store" });
+		const res = await fetch("/user/data", { cache: "no-store" });
 		if (!res.ok) {
 			return;
 		}

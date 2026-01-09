@@ -21,39 +21,43 @@
 	left: 8rem;
 }
 
+#auth-close use {
+	color: white;
+}
+
 #auth-logins {
 	display: flex;
 	flex-flow: column;
 	justify-content: center;
-	gap: 1rem;
 	z-index: 1;
 	padding-left: 8rem;
-}
-
-#auth-logins button {
-	font-size: 1rem;
-	width: 240px;
-	height: 50px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	position: relative;
-	gap: 10px;
-}
-
-#auth-logins button span {
-	position: absolute;
-	right: -32px;
-}
-
-#auth-logins button span use {
-	color: var(--color-green);
+	gap: 1rem;
 }
 
 #auth-logins > p {
 	font-size: var(--font-size-normal);
 	color: white;
 	width: 20rem;
+}
+
+.auth-login-button {
+	font-size: 1rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	gap: 10px;
+	width: 240px;
+	height: 50px;
+}
+
+.auth-login-button span {
+	position: absolute;
+	right: -32px;
+}
+
+.auth-login-button span use {
+	color: var(--color-green);
 }
 
 #vatsim-login {
@@ -72,4 +76,26 @@
 	font-size: 3rem;
 	font-weight: var(--font-weight-bold);
 	margin-bottom: 1rem;
+	color: white;
+}
+
+#auth-logouts {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 240px;
+	gap: 5px;
+	color: white;
+}
+
+.auth-logout-button {
+	color: white;
+}
+
+.auth-logout-button:hover {
+	color: var(--color-hover);
+}
+
+#delete-account {
+	color: var(--color-red);
 }

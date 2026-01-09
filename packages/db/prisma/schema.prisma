@@ -60,11 +60,15 @@ model Trackpoint {
     created_at DateTime @default(now())
 
     pilot Pilot @relation(fields: [id], references: [id])
-
-    @@index([id])
 }
 
 model User {
-    cid      BigInt @id
-    settings Json?
+    id           String    @id
+    hasNavigraph Boolean   @default(false)
+    settings     Json?
+    filters      Json?
+    bookmarks    Json?
+    createdAt    DateTime  @default(now())
+    updatedAt    DateTime  @updatedAt
+    lastLogin    DateTime?
 }

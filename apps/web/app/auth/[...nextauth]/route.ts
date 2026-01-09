@@ -1,5 +1,9 @@
+import { sign } from "jsonwebtoken";
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import type { OAuthConfig } from "next-auth/providers/oauth";
+
+const API_URL = process.env.API_URL || "http://localhost:3001";
+const JWT_SECRET = process.env.NEXTAUTH_SECRET || "";
 
 interface VatsimProfile {
 	data: {
@@ -67,6 +71,32 @@ export const authOptions: NextAuthOptions = {
 	},
 
 	callbacks: {
+		async signIn({ profile, account }) {
+			if (account?.provider !== "vatsim" || !profile?.data) return true;
+
+			const cid = profile?.data?.cid;
+			if (!cid) return false;
+
+			const jwtToken = sign({ vatsim: { cid } }, JWT_SECRET, {
+				expiresIn: "5m",
+			});
+
+			try {
+				const response = await fetch(`${API_URL}/user`, {
+					method: "GET",
+					headers: {
+						Authorization: `Bearer ${jwtToken}`,
+					},
+				});
+
+				if (!response.ok) return false;
+			} catch (err) {
+				console.error("Failed to ensure user:", err);
+				return false;
+			}
+
+			return true;
+		},
 		async jwt({ token, account, profile }) {
 			if (account?.provider === "vatsim" && profile?.data) {
 				return {
