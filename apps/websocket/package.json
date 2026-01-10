@@ -16,6 +16,7 @@
 	},
 	"dependencies": {
 		"@sr24/db": "*",
+		"uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.56.0",
 		"ws": "^8.18.3"
 	}
 }

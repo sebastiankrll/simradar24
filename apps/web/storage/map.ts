@@ -7,7 +7,7 @@ import { getMapView } from "@/app/(map)/lib/init";
 import { initPilotFeatures, updatePilotFeatures } from "@/app/(map)/lib/pilotFeatures";
 import { updateTrackFeatures } from "@/app/(map)/lib/trackFeatures";
 import { fetchApi } from "@/utils/api";
-import { wsClient } from "@/utils/ws";
+import { type WsData, type WsPresence, wsClient } from "@/utils/ws";
 
 let airportsShort: Required<AirportShort>[] = [];
 let controllersMerged: ControllerMerged[] = [];
@@ -33,8 +33,10 @@ export async function initMapData(pathname: string): Promise<void> {
 		setFeatures(view.calculateExtent(), view.getZoom() || 5);
 	}
 
-	const handleMessage = (delta: WsDelta) => {
-		updateCache(delta);
+	const handleMessage = (msg: WsData | WsPresence) => {
+		if (msg.t === "delta") {
+			updateCache(msg.data);
+		}
 	};
 	wsClient.addListener(handleMessage);
 

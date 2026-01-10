@@ -1,7 +1,7 @@
 "use client";
 
 import type { StaticAirline, StaticAirport } from "@sr24/types/db";
-import type { PilotLong, TrackPoint, WsDelta } from "@sr24/types/interface";
+import type { PilotLong, TrackPoint } from "@sr24/types/interface";
 import { useEffect, useRef, useState } from "react";
 import { getCachedAirline, getCachedAirport, getCachedTrackPoints } from "@/storage/cache";
 import "@/components/Panel/Pilot/PilotPanel.css";
@@ -23,7 +23,7 @@ import { PilotUser } from "@/components/Panel/Pilot/PilotUser";
 import { getSpriteOffset, setHeight } from "@/components/Panel/utils";
 import Spinner from "@/components/Spinner/Spinner";
 import { fetchApi } from "@/utils/api";
-import { wsClient } from "@/utils/ws";
+import { type WsData, type WsPresence, wsClient } from "@/utils/ws";
 
 export interface PilotPanelStatic {
 	airline: StaticAirline | null;
@@ -104,8 +104,9 @@ export default function PilotPanel({ id }: { id: string }) {
 	}, [pilotData]);
 
 	useEffect(() => {
-		const handleMessage = (delta: WsDelta) => {
-			const updatedPilot = delta.pilots.updated.find((p) => p.id === id);
+		const handleMessage = (msg: WsData | WsPresence) => {
+			if (msg.t !== "delta") return;
+			const updatedPilot = msg.data.pilots.updated.find((p) => p.id === id);
 
 			if (updatedPilot) {
 				mutate((prev) => {

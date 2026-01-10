@@ -1,279 +1,86 @@
-import { createServer } from "node:http";
-import { rdsHealthCheck, rdsShutdown, rdsSub } from "@sr24/db/redis";
-import { WebSocket, WebSocketServer } from "ws";
-
-interface ClientContext {
-	id: string;
-	connectedAt: Date;
-	isAlive: boolean;
-	messagesSent: number;
-	lastMessageTime: Date | null;
-	messagesInWindow: number;
-	windowStartTime: number;
-	isRateLimited: boolean;
-}
-
-const clientContextMap = new Map<WebSocket, ClientContext>();
-
-const CLIENT_RATE_LIMIT = 100;
-const RATE_LIMIT_WINDOW = 60000;
-
-function generateClientId(): string {
-	return `client_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-}
-
-function checkRateLimit(clientContext: ClientContext): boolean {
-	const now = Date.now();
-	const timeSinceWindowStart = now - clientContext.windowStartTime;
-
-	if (timeSinceWindowStart >= RATE_LIMIT_WINDOW) {
-		clientContext.messagesInWindow = 0;
-		clientContext.windowStartTime = now;
-		clientContext.isRateLimited = false;
-		return true;
-	}
-
-	clientContext.messagesInWindow++;
-
-	if (clientContext.messagesInWindow > CLIENT_RATE_LIMIT) {
-		clientContext.isRateLimited = true;
-		return false;
-	}
-
-	return true;
-}
+import uWS from "uWebSockets.js";
+import { deflateRawSync } from "node:zlib";
+import { rdsShutdown, rdsSub } from "@sr24/db/redis";
 
 const PORT = Number(process.env.WS_PORT) || 3002;
-const HOST = process.env.WS_HOST || "localhost";
+const MAX_BACKPRESSURE = 2 * 1024 * 1024;
 
-const setCorsHeaders = (res: any) => {
-	res.setHeader("Access-Control-Allow-Origin", "*");
-	res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-	res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-};
+const clients = new Set<uWS.WebSocket<unknown>>();
+let connectedClients = 0;
+let globalSeq = 0;
 
-const server = createServer((req: any, res: any) => {
-	setCorsHeaders(res);
+const app = uWS.App();
 
-	if (req.method === "OPTIONS") {
-		res.writeHead(204);
-		res.end();
-		return;
-	}
+app.ws("/*", {
+	compression: uWS.DISABLED,
+	maxPayloadLength: 16 * 1024 * 1024,
+	idleTimeout: 30,
 
-	if (req.url === "/health" && req.method === "GET") {
-		res.writeHead(200, { "Content-Type": "application/json" });
-		res.end(JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }));
-	} else if (req.url === "/health/ready" && req.method === "GET") {
-		rdsHealthCheck()
-			.then((isHealthy) => {
-				const status = isHealthy ? 200 : 503;
-				res.writeHead(status, { "Content-Type": "application/json" });
-				res.end(
-					JSON.stringify({
-						status: isHealthy ? "ready" : "not-ready",
-						clients: clientContextMap.size,
-						timestamp: new Date().toISOString(),
-					}),
-				);
-			})
-			.catch((err) => {
-				console.error("Health check error:", err);
-				res.writeHead(503, { "Content-Type": "application/json" });
-				res.end(JSON.stringify({ status: "error", timestamp: new Date().toISOString() }));
-			});
-	} else if (req.url === "/metrics" && req.method === "GET") {
-		const rateLimitedClients = Array.from(clientContextMap.values()).filter((ctx) => ctx.isRateLimited).length;
-		const metrics = {
-			connectedClients: clientContextMap.size,
-			rateLimitedClients,
-			totalMessages: Array.from(clientContextMap.values()).reduce((sum, ctx) => sum + ctx.messagesSent, 0),
-			avgMessagesPerClient:
-				clientContextMap.size > 0
-					? (Array.from(clientContextMap.values()).reduce((sum, ctx) => sum + ctx.messagesSent, 0) / clientContextMap.size).toFixed(2)
-					: 0,
-			timestamp: new Date().toISOString(),
+	open: (ws) => {
+		clients.add(ws);
+		const presence = {
+			t: "presence",
+			c: ++connectedClients,
 		};
-		res.writeHead(200, { "Content-Type": "application/json" });
-		res.end(JSON.stringify(metrics));
-	} else {
-		res.writeHead(404);
-		res.end();
-	}
-});
-
-// Attach WebSocket server to HTTP server
-const wss = new WebSocketServer({
-	server,
-	perMessageDeflate: {
-		zlibDeflateOptions: { level: 3 },
-		zlibInflateOptions: { chunkSize: 16 * 1024 },
-		clientNoContextTakeover: true,
-		serverNoContextTakeover: true,
-		threshold: 1024,
+		const compressedPresence = deflateRawSync(Buffer.from(JSON.stringify(presence)));
+		ws.send(compressedPresence, true);
 	},
-	maxPayload: 1024 * 64,
+
+	message: () => {
+		// No-op: This server only broadcasts messages from Redis
+	},
+
+	drain: (ws) => {
+		console.log(`WebSocket backpressure: ${ws.getBufferedAmount()}`);
+	},
+
+	close: (ws) => {
+		clients.delete(ws);
+		connectedClients--;
+	},
 });
 
-wss.on("connection", (ws: WebSocket, _req: any) => {
-	const clientId = generateClientId();
-	// const clientIp = req.socket.remoteAddress;
-
-	const clientContext: ClientContext = {
-		id: clientId,
-		connectedAt: new Date(),
-		isAlive: true,
-		messagesSent: 0,
-		lastMessageTime: null,
-		messagesInWindow: 0,
-		windowStartTime: Date.now(),
-		isRateLimited: false,
-	};
-
-	clientContextMap.set(ws, clientContext);
-	// console.log(`✅ Client connected: ${clientId} (Total: ${clientContextMap.size})`);
-
-	ws.on("pong", () => {
-		clientContext.isAlive = true;
-	});
-
-	ws.on("error", (error) => {
-		console.error(`❌ WebSocket error for client ${clientId}:`, error.message);
-	});
-
-	ws.on("message", (msg: Buffer) => {
-		try {
-			if (!checkRateLimit(clientContext)) {
-				console.warn(`⚠️  Rate limit exceeded for client ${clientId} (${clientContext.messagesInWindow} messages in window)`);
-				ws.close(1008, "Rate limit exceeded");
-				return;
-			}
-
-			if (msg.length > 1024 * 64) {
-				console.warn(`Message too large from ${clientId}: ${msg.length} bytes`);
-				ws.close(1009, "Message too large");
-				return;
-			}
-
-			if (process.env.NODE_ENV === "development") {
-				// console.log(`📨 Message from ${clientId}:`, msg.toString().substring(0, 100));
-			}
-		} catch (err) {
-			console.error(`Error processing message from ${clientId}:`, err);
+function broadcastDelta(data: Buffer) {
+	for (const ws of clients) {
+		if (ws.getBufferedAmount() > MAX_BACKPRESSURE) {
+			console.warn(`Client too slow, disconnecting (backpressure: ${ws.getBufferedAmount()})`);
+			ws.end(1009, "Too slow");
+			continue;
 		}
-	});
-
-	ws.on("close", () => {
-		clientContextMap.delete(ws);
-		// console.log(`❌ Client disconnected: ${clientId} (Total: ${clientContextMap.size})`);
-	});
-});
-
-const heartbeatInterval = setInterval(() => {
-	wss.clients.forEach((ws) => {
-		const clientContext = clientContextMap.get(ws);
-		if (!clientContext) return;
-
-		if (!clientContext.isAlive) {
-			console.warn(`⏱️  Terminating inactive client: ${clientContext.id}`);
-			clientContextMap.delete(ws);
-			ws.terminate();
-			return;
-		}
-
-		clientContext.isAlive = false;
-		ws.ping();
-	});
-}, 30000);
-
-function sendWsDelta(data: string): void {
-	wss.clients.forEach((client) => {
-		if (client.readyState !== WebSocket.OPEN) return;
-
-		const clientContext = clientContextMap.get(client);
-		if (!clientContext) return;
-
-		try {
-			client.send(data, (err) => {
-				if (err) {
-					console.error(`Failed to send to client ${clientContext.id}:`, err.message);
-				} else {
-					clientContext.messagesSent++;
-					clientContext.lastMessageTime = new Date();
-				}
-			});
-		} catch (err) {
-			console.error(`Error sending to client ${clientContext.id}:`, err);
-		}
-	});
+		ws.send(data, true);
+	}
 }
 
 rdsSub("ws:delta", (message: string) => {
-	try {
-		sendWsDelta(message);
-	} catch (err) {
-		console.error("Error in rdsSubWsDelta callback:", err);
+	const payload = JSON.stringify({
+		t: "delta",
+		s: globalSeq++,
+		c: connectedClients,
+		data: JSON.parse(message),
+	});
+	const compressed = deflateRawSync(Buffer.from(payload));
+	broadcastDelta(compressed);
+});
+
+app.listen(PORT, (token) => {
+	if (token) {
+		console.log(`✅ WebSockets listening on :${PORT}`);
+	} else {
+		console.error("❌ Failed to listen");
 	}
 });
 
-// Error handler for server
-server.on("error", (err: any) => {
-	if (err.code === "EADDRINUSE") {
-		console.error(`❌ Port ${PORT} is already in use`);
-		console.log(`Find and kill the process:`);
-		console.log(`  Windows: netstat -ano | findstr :${PORT}`);
-		console.log(`  Then: taskkill /PID <PID> /F`);
-		process.exit(1);
+// Graceful shutdown
+process.on("SIGINT", async () => {
+	console.log("Shutting down WebSocket server...");
+
+	for (const ws of clients) {
+		ws.end(1001, "Server shutting down");
 	}
-	throw err;
-});
 
-// Start server
-server.listen(PORT, HOST, () => {
-	console.log(`✅ WebSocket server listening on ws://${HOST}:${PORT}`);
-});
+	clients.clear();
+	connectedClients = 0;
 
-const gracefulShutdown = async (signal: string) => {
-	console.log(`\n${signal} signal received: closing WebSocket server`);
-
-	clearInterval(heartbeatInterval);
-
-	wss.clients.forEach((client) => {
-		const clientContext = clientContextMap.get(client);
-		if (clientContext) {
-			console.log(`Closing connection for ${clientContext.id}`);
-		}
-		client.close(1000, "Server shutting down");
-	});
-
-	wss.close(async () => {
-		console.log("WebSocket server closed");
-		try {
-			await rdsShutdown();
-		} catch (err) {
-			console.error("Error shutting down Redis:", err);
-		}
-		server.close(() => {
-			console.log("HTTP server closed");
-			process.exit(0);
-		});
-	});
-
-	setTimeout(() => {
-		console.error("Forced shutdown after timeout");
-		process.exit(1);
-	}, 10000);
-};
-
-process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
-process.on("SIGINT", () => gracefulShutdown("SIGINT"));
-
-process.on("uncaughtException", (err) => {
-	console.error("Uncaught exception:", err);
-	process.exit(1);
-});
-
-process.on("unhandledRejection", (reason, promise) => {
-	console.error("Unhandled rejection at:", promise, "reason:", reason);
-	process.exit(1);
+	await rdsShutdown();
+	process.exit(0);
 });
