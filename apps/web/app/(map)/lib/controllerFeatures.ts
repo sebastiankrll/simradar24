@@ -77,7 +77,7 @@ export async function initControllerFeatures(data: InitialData): Promise<void> {
 	const controllerLabelFeatures: Feature<Point>[] = [];
 	const airportLabelFeatures: Feature<Point>[] = [];
 
-	console.log(data)
+	console.log(data);
 
 	await Promise.all(
 		data.controllers.map(async (c) => {

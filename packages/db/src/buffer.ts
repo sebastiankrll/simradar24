@@ -9,10 +9,10 @@ export function encodeTrackPoint(tp: Required<TrackPoint>): Buffer {
 	buf.writeInt32BE(x, 0);
 	buf.writeInt32BE(y, 4);
 
-	buf.writeInt16BE(tp.altitude_ms / 100, 8);
-	buf.writeInt16BE(tp.altitude_agl / 100, 10);
+	buf.writeInt16BE(limitInt16(tp.altitude_ms / 100), 8);
+	buf.writeInt16BE(limitInt16(tp.altitude_agl / 100), 10);
 
-	buf.writeInt16BE(tp.groundspeed, 12);
+	buf.writeInt16BE(limitInt16(tp.groundspeed), 12);
 	buf.writeInt16BE(limitInt16(tp.vertical_speed), 14);
 	buf.writeUInt16BE(tp.heading, 16);
 

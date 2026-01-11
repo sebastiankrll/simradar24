@@ -110,6 +110,7 @@ header {
 	margin-left: auto;
 	width: 18rem;
 	position: relative;
+	gap: 10px;
 }
 
 #header-search {
@@ -126,6 +127,15 @@ header {
 
 #header-search::placeholder {
 	color: var(--color-light-text);
+}
+
+#header-search-clear {
+	height: 16px;
+	width: 16px;
+}
+
+#header-search-clear:hover use {
+	color: var(--color-red);
 }
 
 #header-search-results {
@@ -151,9 +161,11 @@ header {
 .header-search-separator {
 	background-color: var(--color-dark-grey);
 	padding: 4px;
-	font-size: var(--font-size-small);
-	line-height: var(--font-size-small);
 	text-transform: uppercase;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-size: var(--font-size-small);
 }
 
 .search-item {
