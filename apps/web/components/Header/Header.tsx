@@ -1,6 +1,6 @@
 "use client";
 
-import Search from "./Search";
+import Search from "../Search/Search";
 import "./Header.css";
 import Image from "next/image";
 import { useSession } from "next-auth/react";

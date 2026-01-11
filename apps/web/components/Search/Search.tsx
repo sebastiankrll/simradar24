@@ -9,23 +9,11 @@ import { useDebounce } from "use-debounce";
 import FlagSprite from "@/assets/images/sprites/flagSprite42.png";
 import { getCachedAirline } from "@/storage/cache";
 import { dxFindAirlines, dxFindAirports } from "@/storage/dexie";
-import { fetchApi } from "@/utils/api";
 import Icon, { getAirlineIcon } from "../Icon/Icon";
 import Spinner from "../Spinner/Spinner";
-
-type PilotResult = {
-	live: PilotLong[];
-	offline: PilotLong[];
-};
-
-type QueryResult = {
-	airlines: StaticAirline[];
-	airports: StaticAirport[];
-	pilots: PilotResult;
-};
-
-const SEARCH_HISTORY_KEY = "simradar-search-history";
-const MAX_HISTORY = 10;
+import "./Search.css";
+import { addSearchHistory, clearSearchHistory, fetchPilots, getMatchFields, getPilotMatchFields, getSearchHistory, highlightMatch } from "./helpers";
+import type { QueryResult } from "./types";
 
 export default function Search() {
 	const [searchValue, setSearchValue] = useState("");
@@ -135,7 +123,7 @@ export default function Search() {
 						</div>
 					)}
 					{data?.airlines.map((airline) => (
-						<AirlineResult key={airline.id} airline={airline} setValue={setSearchValue} />
+						<AirlineResult key={airline.id} airline={airline} setValue={setSearchValue} searchValue={searchValue} />
 					))}
 
 					{data?.airports && data?.airports.length > 0 && (
@@ -144,7 +132,7 @@ export default function Search() {
 						</div>
 					)}
 					{data?.airports.map((airport) => (
-						<AirportResult key={airport.id} airport={airport} setValue={setSearchValue} setFocused={setFocused} />
+						<AirportResult key={airport.id} airport={airport} setValue={setSearchValue} setFocused={setFocused} searchValue={searchValue} />
 					))}
 
 					{data?.pilots.live && data?.pilots.live.length > 0 && (
@@ -153,7 +141,7 @@ export default function Search() {
 						</div>
 					)}
 					{data?.pilots.live.map((pilot) => (
-						<PilotResult key={pilot.id} pilot={pilot} setValue={setSearchValue} setFocused={setFocused} />
+						<PilotResult key={pilot.id} pilot={pilot} setValue={setSearchValue} setFocused={setFocused} searchValue={searchValue} />
 					))}
 
 					{data?.pilots.offline && data?.pilots.offline.length > 0 && (
@@ -162,38 +150,12 @@ export default function Search() {
 						</div>
 					)}
 					{data?.pilots.offline.map((pilot) => (
-						<PilotResult key={pilot.id} pilot={pilot} recent setValue={setSearchValue} setFocused={setFocused} />
+						<PilotResult key={pilot.id} pilot={pilot} recent setValue={setSearchValue} setFocused={setFocused} searchValue={searchValue} />
 					))}
 				</div>
 			)}
 		</div>
 	);
-}
-
-async function fetchPilots(query: string, path?: string): Promise<PilotResult> {
-	const pilots = await fetchApi<PilotResult>(`/search${path ? `/${path}` : ""}?q=${encodeURIComponent(query)}`);
-	return pilots;
-}
-
-function getSearchHistory(): string[] {
-	if (typeof window === "undefined") return [];
-	try {
-		return JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) || "[]");
-	} catch {
-		return [];
-	}
-}
-
-function addSearchHistory(value: string) {
-	if (!value.trim()) return;
-
-	const history = getSearchHistory().filter((item) => item.toLowerCase() !== value.toLowerCase());
-	history.unshift(value);
-	localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY)));
-}
-
-function clearSearchHistory() {
-	localStorage.removeItem(SEARCH_HISTORY_KEY);
 }
 
 function Placeholder() {
@@ -219,25 +181,27 @@ function Placeholder() {
 
 function HistoryResult({ value, setValue }: { value: string; setValue: (value: string) => void }) {
 	return (
-		<button className="search-item" type="button" onClick={() => setValue(value)}>
-			<Icon name="history" size={16} />
-			<p>{value}</p>
+		<button className="search-history-item" type="button" onClick={() => setValue(value)}>
+			<Icon name="history" size={18} />
+			{value}
 		</button>
 	);
 }
 
-function AirlineResult({ airline, setValue }: { airline: StaticAirline; setValue: (value: string) => void }) {
+function AirlineResult({ airline, setValue, searchValue }: { airline: StaticAirline; setValue: (value: string) => void; searchValue: string }) {
+	const matchFields = getMatchFields(airline, searchValue);
+
 	return (
 		<button className="search-item" type="button" onClick={() => setValue(`airline:${airline.id}`)}>
 			<div className="search-icon" style={{ backgroundColor: airline.color?.[0] ?? "" }}>
 				{getAirlineIcon(airline)}
 			</div>
 			<div className="search-info">
-				<div className="search-title">{airline.name}</div>
+				<div className="search-title">{matchFields.name ? highlightMatch(airline.name, searchValue) : airline.name}</div>
 				<div className="search-tags">
 					<span
 						style={{ background: "var(--color-red)", padding: "0px 2px", color: "white" }}
-					>{`${airline.id}${airline.iata ? ` / ${airline.iata}` : ""}`}</span>
+					>{`${airline.id}${airline.iata ? ` \u2223 ${airline.iata}` : ""}`}</span>
 					<Icon name="hotline" size={12} />
 					<span>{airline.callsign}</span>
 				</div>
@@ -250,13 +214,17 @@ function AirportResult({
 	airport,
 	setValue,
 	setFocused,
+	searchValue,
 }: {
 	airport: StaticAirport;
 	setValue: (value: string) => void;
 	setFocused: (focused: boolean) => void;
+	searchValue: string;
 }) {
 	const router = useRouter();
 	const pathname = usePathname();
+
+	const matchFields = getMatchFields(airport, searchValue);
 
 	return (
 		<button
@@ -277,7 +245,7 @@ function AirportResult({
 				<div className={`fflag ff-lg fflag-${airport.country}`} style={{ backgroundImage: `url(${FlagSprite.src})` }}></div>
 			</div>
 			<div className="search-info">
-				<div className="search-title">{airport.name}</div>
+				<div className="search-title">{matchFields.name ? highlightMatch(airport.name, searchValue) : airport.name}</div>
 				<div className="search-tags">
 					<span
 						style={{ background: "var(--color-red)", padding: "0px 2px", color: "white" }}
@@ -293,18 +261,17 @@ function PilotResult({
 	recent = false,
 	setValue,
 	setFocused,
+	searchValue,
 }: {
 	pilot: PilotLong;
 	recent?: boolean;
 	setValue: (value: string) => void;
 	setFocused: (focused: boolean) => void;
+	searchValue: string;
 }) {
 	const [airline, setAirline] = useState<StaticAirline | null>(null);
 	const router = useRouter();
 	const pathname = usePathname();
-
-	const callsignNumber = pilot.callsign.slice(3);
-	const flightNumber = airline?.iata ? `${airline.iata}${callsignNumber}` : pilot?.callsign;
 
 	useEffect(() => {
 		const airlineCode = pilot.callsign.slice(0, 3).toUpperCase();
@@ -314,6 +281,10 @@ function PilotResult({
 			setAirline(cached);
 		})();
 	}, [pilot]);
+
+	const matchFields = getPilotMatchFields(pilot, searchValue);
+	const callsignNumber = pilot.callsign.slice(3);
+	const flightNumber = airline?.iata ? `${airline.iata}${callsignNumber}` : pilot?.callsign;
 
 	return (
 		<button
@@ -342,18 +313,34 @@ function PilotResult({
 				{getAirlineIcon(airline)}
 			</div>
 			<div className="search-info pilot">
-				<div className="search-title">{flightNumber}</div>
+				<div className="search-title">{matchFields.callsign ? highlightMatch(pilot.callsign, searchValue) : pilot.callsign}</div>
 				<div style={{ textAlign: "right", fontSize: "var(--font-size-small)" }}>
-					{recent ? null : `${pilot.flight_plan?.departure.icao ?? "N/A"} \u2013 ${pilot.flight_plan?.arrival.icao ?? "N/A"}`}
+					{!recent && (
+						<>
+							{matchFields.departure
+								? highlightMatch(pilot.flight_plan?.departure.icao ?? "N/A", searchValue)
+								: (pilot.flight_plan?.departure.icao ?? "N/A")}
+							&nbsp;&ndash;&nbsp;
+							{matchFields.arrival
+								? highlightMatch(pilot.flight_plan?.arrival.icao ?? "N/A", searchValue)
+								: (pilot.flight_plan?.arrival.icao ?? "N/A")}
+						</>
+					)}
 				</div>
 				<div className="search-tags">
 					<span style={{ background: "var(--color-red)" }} className="bg">
-						{pilot.callsign}
+						{flightNumber}
 					</span>
 					<span className={`live-tag ${pilot.live}`}>{pilot.live}</span>
 				</div>
 				<div style={{ textAlign: "right", fontSize: "var(--font-size-small)" }}>{!recent && pilot.aircraft}</div>
 			</div>
+			{(matchFields.cid || matchFields.name) && (
+				<div className="search-extra">
+					{matchFields.cid && <div>{matchFields.cid ? highlightMatch(pilot.cid.toString(), searchValue) : pilot.cid}</div>}
+					{matchFields.name && <div>{matchFields.name ? highlightMatch(pilot.name, searchValue) : pilot.name}</div>}
+				</div>
+			)}
 		</button>
 	);
 }

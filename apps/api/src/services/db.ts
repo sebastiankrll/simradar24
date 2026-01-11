@@ -55,6 +55,8 @@ async function searchPilots(where: Prisma.PilotWhereInput) {
 			select: {
 				id: true,
 				callsign: true,
+				cid: true,
+				name: true,
 				flight_plan: true,
 				aircraft: true,
 				live: true,
@@ -75,6 +77,8 @@ async function searchPilots(where: Prisma.PilotWhereInput) {
 			distinct: ["callsign"],
 			select: {
 				id: true,
+				cid: true,
+				name: true,
 				callsign: true,
 				flight_plan: true,
 				aircraft: true,
