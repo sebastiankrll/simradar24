@@ -211,6 +211,10 @@ async function mergeControllers(controllersLong: ControllerLong[]): Promise<Cont
 		} else if (c.facility === 5) {
 			// TRACON
 			id = findPrefixMatch(levels, 5);
+			// Fallback for circle tracon controllers
+			if (!id) {
+				id = levels[levels.length - 1];
+			}
 			facility = "tracon";
 		} else {
 			// Airport: simply take the first segment
