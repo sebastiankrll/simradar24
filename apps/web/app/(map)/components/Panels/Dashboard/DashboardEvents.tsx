@@ -1,14 +1,19 @@
 import type { VatsimEvent } from "@sr24/types/vatsim";
+import { useState } from "react";
+import { hideEventAirports, showEventAirports } from "@/app/(map)/lib/airportFeatures";
+import Icon from "@/components/Icon/Icon";
 import { useSettingsStore } from "@/storage/zustand";
 import { convertTime } from "@/utils/helpers";
 
 export function DashboardEvents({ events, ref, openSection }: { events: VatsimEvent[]; ref: React.Ref<HTMLDivElement>; openSection: string[] }) {
+	const [activeEvent, setActiveEvent] = useState<number | null>(null);
+
 	return (
 		<div ref={ref} className={`panel-section-content accordion${openSection.includes("events") ? " open" : ""}`}>
 			<div className="panel-data-separator">Todays events</div>
-			<Events events={events} dayFilter={new Date()} />
+			<Events events={events} dayFilter={new Date()} activeEvent={activeEvent} setActiveEvent={setActiveEvent} />
 			<div className="panel-data-separator">Tomorrows events</div>
-			<Events events={events} dayFilter={new Date(Date.now() + 86400000)} />
+			<Events events={events} dayFilter={new Date(Date.now() + 86400000)} activeEvent={activeEvent} setActiveEvent={setActiveEvent} />
 		</div>
 	);
 }
@@ -23,7 +28,17 @@ function getDurationString(start: string, end: string, timeFormat: "12h" | "24h"
 	return `${startDay}.${startMonth} ${convertTime(startDate, timeFormat, timeZone, false)} - ${convertTime(endDate, timeFormat, timeZone, false)}`;
 }
 
-function Events({ events, dayFilter }: { events: VatsimEvent[]; dayFilter: Date }) {
+function Events({
+	events,
+	dayFilter,
+	activeEvent,
+	setActiveEvent,
+}: {
+	events: VatsimEvent[];
+	dayFilter: Date;
+	activeEvent: number | null;
+	setActiveEvent: React.Dispatch<React.SetStateAction<number | null>>;
+}) {
 	const { timeZone, timeFormat } = useSettingsStore();
 
 	const todaysEvents = events.filter((event) => {
@@ -41,11 +56,33 @@ function Events({ events, dayFilter }: { events: VatsimEvent[]; dayFilter: Date 
 				<p>No events today.</p>
 			) : (
 				todaysEvents.map((event) => (
-					<a key={event.id} className="dashboard-event-item" href={event.link} target="_blank" rel="noreferrer">
-						<p className="dashboard-event-title">{event.name}</p>
-						<p>{event.airports.map((airport) => airport.icao).join(", ")}</p>
-						<p>{getDurationString(event.start_time, event.end_time, timeFormat, timeZone)}</p>
-					</a>
+					<div key={event.id} className={`dashboard-event-item${activeEvent === event.id ? " active" : ""}`}>
+						<div className="dashboard-event-content">
+							<p className="dashboard-event-title">{event.name}</p>
+							<p>{event.airports.map((airport) => airport.icao).join(", ")}</p>
+							<p>{getDurationString(event.start_time, event.end_time, timeFormat, timeZone)}</p>
+						</div>
+						<div className="dashboard-event-buttons">
+							<button
+								type="button"
+								className="dashboard-event-button"
+								onClick={() => {
+									if (activeEvent === event.id) {
+										setActiveEvent(null);
+										hideEventAirports();
+									} else {
+										setActiveEvent(event.id);
+										showEventAirports(event.airports.map((airport) => airport.icao));
+									}
+								}}
+							>
+								<Icon name={activeEvent === event.id ? "cancel" : "tour"} size={24} />
+							</button>
+							<a href={event.link} className="dashboard-event-button" target="_blank" rel="noreferrer">
+								<Icon name="share-android" size={24} />
+							</a>
+						</div>
+					</div>
 				))
 			)}
 		</div>

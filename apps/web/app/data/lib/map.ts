@@ -13,7 +13,7 @@ import { getStroke } from "@/components/Map/trackFeatures";
 import { webglConfig } from "@/components/Map/webglConfig";
 import { getCachedAirport } from "@/storage/cache";
 
-const PADDING = [204, 116, 140, 436];
+const MAP_PADDING = [204, 116, 140, 436];
 
 const airportSource = new VectorSource({
 	useSpatialIndex: false,
@@ -143,7 +143,7 @@ async function initAirports(pilot: PilotLong): Promise<void> {
 	);
 
 	map?.getView().fit(transformExtent(extent, "EPSG:4326", "EPSG:3857"), {
-		padding: PADDING,
+		padding: MAP_PADDING,
 		duration: 1000,
 	});
 }
@@ -221,7 +221,7 @@ export function updatePilot(trackPoint: Required<TrackPoint> | undefined): void 
 export function centerOnRoute(): void {
 	if (!extent) return;
 	map?.getView().fit(transformExtent(extent, "EPSG:4326", "EPSG:3857"), {
-		padding: PADDING,
+		padding: MAP_PADDING,
 		duration: 300,
 	});
 }

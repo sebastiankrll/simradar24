@@ -3,7 +3,7 @@ import type { StyleSpecification } from "maplibre-gl";
 import styleDark from "../../app/(map)/lib/positron_dark.json";
 import styleLight from "../../app/(map)/lib/positron_light.json";
 
-const mbLayer = new MapLibreLayer({
+export const mbLayer = new MapLibreLayer({
 	mapLibreOptions: {
 		style: styleLight as StyleSpecification,
 	},

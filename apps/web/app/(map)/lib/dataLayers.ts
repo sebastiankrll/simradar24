@@ -171,3 +171,27 @@ export function setDataLayersSettings(
 		stroke: `rgba(${traconColor.r}, ${traconColor.g}, ${traconColor.b}, 1)`,
 	});
 }
+
+export function toggleLayerVisibility(layerTypes: string[], visible: boolean): void {
+	layerTypes.forEach((type) => {
+		switch (type) {
+			case "airport":
+				airportMainLayer.setVisible(visible);
+				airportLabelLayer.setVisible(visible);
+				break;
+			case "pilot":
+				pilotMainLayer.setVisible(visible);
+				pilotShadowLayer.setVisible(visible);
+				break;
+			case "controllers":
+				firLayer.setVisible(visible);
+				traconLayer.setVisible(visible);
+				controllerLabelLayer.setVisible(visible);
+				airportLabelLayer.setVisible(visible);
+				break;
+			case "track":
+				trackLayer.setVisible(visible);
+				break;
+		}
+	});
+}

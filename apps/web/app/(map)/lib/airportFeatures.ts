@@ -6,8 +6,8 @@ import RBush from "rbush";
 import { getAirportSize } from "@/components/Map/airportFeatures";
 import { dxGetAllAirports } from "@/storage/dexie";
 import type { AirportProperties } from "@/types/ol";
-import { airportMainSource } from "./dataLayers";
-import { getMapView } from "./init";
+import { airportMainSource, toggleLayerVisibility } from "./dataLayers";
+import { getMapView, MAP_PADDING } from "./init";
 
 interface RBushAirportFeature {
 	minX: number;
@@ -81,12 +81,14 @@ export function setAirportFeatures(extent: Extent, zoom: number): void {
 	const airportsBySize = airportsByExtent.filter((f) => visibleSizes.includes(f.size));
 
 	airportMainSource.clear();
-	airportMainSource.addFeatures(airportsBySize.map((f) => f.feature));
+	if (!eventAirportsActive) {
+		airportMainSource.addFeatures(airportsBySize.map((f) => f.feature));
+	}
 
 	if (highlightedAirports.size > 0) {
 		highlightedAirports.forEach((id) => {
 			const exists = airportsBySize.find((a) => a.feature.getId() === `airport_${id}`);
-			if (!exists) {
+			if (!exists || eventAirportsActive) {
 				const feature = airportMap.get(id);
 				if (feature) {
 					airportMainSource.addFeature(feature);
@@ -123,4 +125,73 @@ export function moveToAirportFeature(id: string): Feature<Point> | null {
 	addHighlightedAirport(id);
 
 	return feature || null;
+}
+
+let eventAirportsActive = false;
+
+export function showEventAirports(ids: string[]): void {
+	const view = getMapView();
+	if (!view) return;
+
+	highlightedAirports.forEach((id) => {
+		const feature = airportMap.get(id);
+		if (feature) {
+			feature.set("clicked", false);
+		}
+	});
+	highlightedAirports.clear();
+
+	const features: Feature<Point>[] = [];
+	ids.forEach((id) => {
+		const feature = airportMap.get(id);
+		if (feature) {
+			features.push(feature);
+			feature.set("clicked", true);
+			highlightedAirports.add(id);
+		}
+	});
+
+	if (features.length === 0) return;
+
+	const extent = features[0].getGeometry()?.getExtent();
+	if (!extent) return;
+
+	features.forEach((feature) => {
+		const geom = feature.getGeometry();
+		if (geom) {
+			const featExtent = geom.getExtent();
+			extent[0] = Math.min(extent[0], featExtent[0]);
+			extent[1] = Math.min(extent[1], featExtent[1]);
+			extent[2] = Math.max(extent[2], featExtent[2]);
+			extent[3] = Math.max(extent[3], featExtent[3]);
+		}
+	});
+
+	eventAirportsActive = true;
+	airportMainSource.clear();
+	airportMainSource.addFeatures(features);
+
+	toggleLayerVisibility(["pilot", "controllers"], false);
+
+	view?.fit(extent, {
+		duration: 200,
+		maxZoom: 12,
+		padding: MAP_PADDING,
+	});
+}
+
+export function hideEventAirports(): void {
+	eventAirportsActive = false;
+	highlightedAirports.forEach((id) => {
+		const feature = airportMap.get(id);
+		if (feature) {
+			feature.set("clicked", false);
+		}
+	});
+	highlightedAirports.clear();
+	toggleLayerVisibility(["pilot", "controllers"], true);
+
+	const view = getMapView();
+	if (!view) return;
+	setAirportFeatures(view.calculateExtent(), view.getZoom() || 0);
 }

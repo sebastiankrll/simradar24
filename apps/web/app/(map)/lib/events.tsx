@@ -11,7 +11,7 @@ import { AirportOverlay, PilotOverlay, SectorOverlay } from "../components/Overl
 import { addHighlightedAirport, clearHighlightedAirport, moveToAirportFeature } from "./airportFeatures";
 import { addHighlightedController, clearHighlightedController, moveToSectorFeature } from "./controllerFeatures";
 import { firSource, pilotMainSource, setFeatures, trackSource, traconSource } from "./dataLayers";
-import { getMap, getMapView } from "./init";
+import { getMap, getMapView, MAP_PADDING } from "./init";
 import { addHighlightedPilot, clearHighlightedPilot, moveToPilotFeature } from "./pilotFeatures";
 import { initTrackFeatures } from "./trackFeatures";
 
@@ -381,7 +381,7 @@ export function showRouteOnMap(departure: StaticAirport | null, arrival: StaticA
 	lastExtent = view?.calculateExtent() || null;
 	view?.fit(extent, {
 		duration: 200,
-		padding: [150, 100, 100, 468],
+		padding: MAP_PADDING,
 	});
 }
 
@@ -398,6 +398,7 @@ export function followPilotOnMap(id: string, toggle: "route" | "follow" | null):
 	if (!toggle && lastExtent) {
 		view?.fit(lastExtent, {
 			duration: 200,
+			padding: MAP_PADDING,
 		});
 		lastExtent = null;
 		return;

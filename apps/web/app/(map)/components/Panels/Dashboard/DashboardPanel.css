@@ -75,12 +75,31 @@
 
 .dashboard-event-item {
 	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 4px;
 }
 
-.dashboard-event-item {
+.dashboard-event-item.active {
+	background: var(--color-red);
+	color: white;
+}
+
+.dashboard-event-buttons {
 	display: flex;
-	flex-flow: column;
-	padding: 4px;
+	gap: 8px;
+}
+
+.dashboard-event-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+}
+
+.dashboard-event-button:hover use {
+	color: var(--color-green);
 }
 
 .dashboard-event-item:hover {

@@ -7,6 +7,7 @@ import { initDataLayers, setDataLayersTheme } from "./dataLayers";
 import { applyMapFilters } from "./filters";
 
 let map: OlMap | null = null;
+export const MAP_PADDING = [204, 116, 140, 436];
 
 export function initMap(): OlMap {
 	const savedView = localStorage.getItem("simradar21-map-view");
