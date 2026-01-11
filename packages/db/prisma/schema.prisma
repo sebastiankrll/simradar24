@@ -59,7 +59,7 @@ model Trackpoint {
     points     Bytes
     created_at DateTime @default(now())
 
-    pilot Pilot @relation(fields: [id], references: [id])
+    pilot Pilot @relation(fields: [id], references: [id], onDelete: Cascade)
 }
 
 model User {

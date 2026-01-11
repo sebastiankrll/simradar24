@@ -81,7 +81,7 @@ export async function mapPilots(vatsimData: VatsimData): Promise<PilotLong[]> {
 	added = [];
 	updated = [];
 
-	await Promise.all([
+	await Promise.all(
 		vatsimData.pilots.map(async (pilot) => {
 			const id = getPilotId(pilot);
 			const cachedPilot = cached.find((c) => c.id === id);
@@ -136,10 +136,15 @@ export async function mapPilots(vatsimData: VatsimData): Promise<PilotLong[]> {
 			newPilotsLong.push(pilotLong);
 			newCached.push(pilotLong);
 		}),
+	);
+	await Promise.all(
 		vatsimData.prefiles.map(async (prefile) => {
 			const id = getPilotId(prefile);
-			const cachedPilot = cached.find((c) => c.id === id);
 
+			const existsLive = newPilotsLong.some((p) => p.id === id);
+			if (existsLive) return;
+
+			const cachedPilot = cached.find((c) => c.id === id);
 			if (cachedPilot?.last_update.getTime() === new Date(prefile.last_updated).getTime()) {
 				newPilotsLong.push(cachedPilot);
 				newCached.push(cachedPilot);
@@ -178,7 +183,7 @@ export async function mapPilots(vatsimData: VatsimData): Promise<PilotLong[]> {
 			newPilotsLong.push(pilotLong);
 			newCached.push(pilotLong);
 		}),
-	]);
+	);
 
 	for (const p of cached) {
 		const stillOnline = newPilotsLong.some((b) => b.id === p.id);

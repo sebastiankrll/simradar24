@@ -97,6 +97,10 @@ export function setMapTheme(theme: boolean): void {
 }
 
 export function initDataLayers(pilot: PilotLong, trackPoints: Required<TrackPoint>[]): void {
+	airportSource.clear();
+	pilotSource.clear();
+	trackSource.clear();
+
 	initAirports(pilot);
 	initPilot(pilot, trackPoints);
 	initTrackPoints(trackPoints);
@@ -123,7 +127,6 @@ async function initAirports(pilot: PilotLong): Promise<void> {
 		feature.setId(`airport_${a.id}`);
 		return feature;
 	});
-	airportSource.clear();
 	airportSource.addFeatures(features);
 
 	extent = airports.reduce(
@@ -162,7 +165,6 @@ function initPilot(pilot: PilotLong, trackPoints: Required<TrackPoint>[]): void 
 	});
 	pilotFeature.setId(`pilot_${pilot.id}`);
 
-	pilotSource.clear();
 	pilotSource.addFeature(pilotFeature);
 }
 
@@ -189,7 +191,6 @@ function initTrackPoints(trackPoints: Required<TrackPoint>[]): void {
 		trackFeatures.push(trackFeature);
 	}
 
-	trackSource.clear();
 	trackSource.addFeatures(trackFeatures);
 }
 
