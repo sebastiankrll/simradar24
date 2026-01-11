@@ -94,8 +94,8 @@ export async function searchPilotsByAll(query: string) {
 	const where: Prisma.PilotWhereInput = {
 		OR: [
 			{ callsign: { contains: query.toUpperCase() } },
-			{ dep_icao: { contains: query.toUpperCase() } },
-			{ arr_icao: { contains: query.toUpperCase() } },
+			{ dep_icao: { startsWith: query.toUpperCase() } },
+			{ arr_icao: { startsWith: query.toUpperCase() } },
 			{ cid: { contains: query } },
 			{ name: { contains: query, mode: "insensitive" } },
 		],
@@ -105,7 +105,7 @@ export async function searchPilotsByAll(query: string) {
 
 export async function searchPilotsByAirline(query: string) {
 	const where: Prisma.PilotWhereInput = {
-		callsign: { contains: query.toUpperCase() },
+		callsign: { startsWith: query.toUpperCase() },
 	};
 	return await searchPilots(where);
 }
@@ -120,7 +120,7 @@ export async function searchPilotsByRoute(dep: string, arr: string) {
 export async function getFlightsByCallsign(callsign: string, limit?: string, cursor?: string) {
 	return await prisma.pilot.findMany({
 		where: {
-			callsign,
+			callsign: { startsWith: callsign.toUpperCase() },
 		},
 		orderBy: {
 			sched_off_block: "desc",

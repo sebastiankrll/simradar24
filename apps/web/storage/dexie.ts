@@ -149,7 +149,7 @@ export async function dxGetAirline(id: string): Promise<StaticAirline | null> {
 export async function dxFindAirlines(query: string, limit: number): Promise<StaticAirline[]> {
 	await dxEnsureInitialized();
 	return await db.airlines
-		.filter((airline) => airline.name.toLowerCase().includes(query.toLowerCase()) || airline.id.toLowerCase().includes(query.toLowerCase()))
+		.filter((airline) => startsAtWord(airline.name, query) || airline.id.toLowerCase().startsWith(query.toLowerCase()))
 		.limit(limit)
 		.toArray();
 }
@@ -157,7 +157,7 @@ export async function dxFindAirlines(query: string, limit: number): Promise<Stat
 export async function dxFindAircrafts(query: string, limit: number): Promise<StaticAircraftType[]> {
 	await dxEnsureInitialized();
 	return await db.aircrafts
-		.filter((aircraft) => aircraft.name.toLowerCase().includes(query.toLowerCase()) || aircraft.icao.toLowerCase().includes(query.toLowerCase()))
+		.filter((aircraft) => startsAtWord(aircraft.name, query) || aircraft.icao.toLowerCase().startsWith(query.toLowerCase()))
 		.limit(limit)
 		.toArray();
 }
@@ -165,9 +165,15 @@ export async function dxFindAircrafts(query: string, limit: number): Promise<Sta
 export async function dxFindAirports(query: string, limit: number): Promise<StaticAirport[]> {
 	await dxEnsureInitialized();
 	return await db.airports
-		.filter((airport) => airport.name.toLowerCase().includes(query.toLowerCase()) || airport.id.toLowerCase().includes(query.toLowerCase()))
+		.filter((airport) => startsAtWord(airport.name, query) || airport.id.toLowerCase().startsWith(query.toLowerCase()))
 		.limit(limit)
 		.toArray();
+}
+
+function startsAtWord(param: string, query: string): boolean {
+	const q = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	const regex = new RegExp(`\\b${q}`, "i");
+	return regex.test(param);
 }
 
 export async function dxGetTracons(ids: string[]): Promise<(DexieFeature | undefined)[]> {
