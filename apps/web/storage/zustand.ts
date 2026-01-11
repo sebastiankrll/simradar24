@@ -147,3 +147,15 @@ export const useFiltersStore = create<FilterState>()(
 		},
 	),
 );
+
+export const useMapVisibilityStore = create<{ isHidden: boolean; setHidden: (value: boolean) => void }>()(
+	persist(
+		(set) => ({
+			isHidden: false,
+			setHidden: (value: boolean) => set({ isHidden: value }),
+		}),
+		{
+			name: "simradar21-map-visibility",
+		},
+	),
+);

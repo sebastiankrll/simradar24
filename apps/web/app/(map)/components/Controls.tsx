@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import "./Controls.css";
 import { useState } from "react";
 import Icon from "@/components/Icon/Icon";
-import { useFiltersStore } from "@/storage/zustand";
+import { useFiltersStore, useMapVisibilityStore } from "@/storage/zustand";
 import { moveViewToCoordinates, zoomView } from "../lib/events";
 
 export default function Controls() {
@@ -12,6 +12,7 @@ export default function Controls() {
 	const [isFullscreen, setIsFullscreen] = useState(false);
 
 	const { active: filterActive } = useFiltersStore();
+	const { isHidden, setHidden } = useMapVisibilityStore();
 
 	const onFullscreen = async () => {
 		try {
@@ -44,8 +45,11 @@ export default function Controls() {
 	};
 
 	return (
-		<div id="map-controls-wrapper">
-			<div className="map-controls">
+		<>
+			<button type="button" className="map-control-item" id="map-control-hide" onClick={() => setHidden(!isHidden)}>
+				<Icon name={isHidden ? "eye" : "eye-crossed"} size={22} />
+			</button>
+			<div id="map-controls" className={isHidden ? "hidden" : ""}>
 				<button type="button" className="map-control-item" onClick={onFullscreen}>
 					<Icon name={isFullscreen ? "resize-decrease" : "resize-increase"} size={22} />
 				</button>
@@ -58,8 +62,9 @@ export default function Controls() {
 				<button type="button" className="map-control-item" onClick={onCenterOnLocation}>
 					<Icon name="poi-contact" size={22} />
 				</button>
-			</div>
-			<div className="map-controls">
+				<button type="button" className="map-control-item" onClick={onCenterOnLocation}>
+					<Icon name="compass" size={22} />
+				</button>
 				<button type="button" className={`map-control-item ${filterActive ? "active" : ""}`} onClick={() => router.push("/filters")}>
 					<Icon name="filter" size={22} />
 				</button>
@@ -67,6 +72,6 @@ export default function Controls() {
 					<Icon name="settings" size={24} offset={1} />
 				</button>
 			</div>
-		</div>
+		</>
 	);
 }

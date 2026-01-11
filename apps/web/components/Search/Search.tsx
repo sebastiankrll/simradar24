@@ -86,9 +86,11 @@ export default function Search() {
 					}
 				}}
 			/>
-			<button type="button" id="header-search-clear" onClick={() => setSearchValue("")}>
-				<Icon name="cancel" size={16} />
-			</button>
+			{searchValue.length > 0 && (
+				<button type="button" id="header-search-clear" onClick={() => setSearchValue("")}>
+					<Icon name="cancel" size={16} />
+				</button>
+			)}
 			{focused && (
 				<div id="header-search-results" className="scrollable">
 					{isLoading && <Spinner relative />}
