@@ -204,3 +204,11 @@ export interface RedisAll {
 	dashboard: DashboardData;
 	init: InitialData;
 }
+
+export interface Booking {
+	id: string;
+	callsign: string;
+	facility: number;
+	start: string;
+	end: string;
+}

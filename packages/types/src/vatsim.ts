@@ -156,3 +156,14 @@ interface VatsimEventRoute {
 	arrival: string;
 	route: string;
 }
+
+export interface VatsimBooking {
+	id: number;
+	callsign: string;
+	cid: number;
+	type: "event" | "exam" | "training" | "booking";
+	start: string;
+	end: string;
+	division: string | null;
+	subdivision: string | null;
+}

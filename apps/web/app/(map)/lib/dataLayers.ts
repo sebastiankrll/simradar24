@@ -5,8 +5,8 @@ import VectorSource from "ol/source/Vector";
 import type { RgbaColor } from "react-colorful";
 import { webglConfig } from "@/components/Map/webglConfig";
 import { setAirportFeatures } from "./airportFeatures";
-import { getControllerLabelStyle } from "./controllerFeatures";
 import { setPilotFeatures } from "./pilotFeatures";
+import { getControllerLabelStyle } from "@/components/Map/controllerFeatures";
 
 export const airportMainSource = new VectorSource({
 	useSpatialIndex: false,

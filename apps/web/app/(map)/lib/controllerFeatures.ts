@@ -1,13 +1,8 @@
-import type { FIRFeature, SimAwareTraconFeature } from "@sr24/types/db";
 import type { ControllerDelta, ControllerMerged, InitialData } from "@sr24/types/interface";
-import Feature, { type FeatureLike } from "ol/Feature";
-import GeoJSON from "ol/format/GeoJSON";
+import Feature from "ol/Feature";
 import { Circle, type MultiPolygon, Point, type Polygon } from "ol/geom";
 import { fromCircle } from "ol/geom/Polygon";
 import { fromLonLat } from "ol/proj";
-import Fill from "ol/style/Fill";
-import Style from "ol/style/Style";
-import Text from "ol/style/Text";
 import { toast } from "react-toastify";
 import { getAirportSize } from "@/components/Map/airportFeatures";
 import MessageBox from "@/components/MessageBox/MessageBox";
@@ -16,54 +11,14 @@ import type { AirportLabelProperties, ControllerLabelProperties } from "@/types/
 import { airportLabelSource, controllerLabelSource, firSource, traconSource } from "./dataLayers";
 import { resetMap } from "./events";
 import { getMapView } from "./init";
+import {
+	createCircleTracon,
+	getAirportLabelStationsOffset,
+	getControllerLabelFeature,
+	readGeoJSONFeature,
+} from "@/components/Map/controllerFeatures";
 
-const styleCache = new Map<string, Style>();
-
-export function getControllerLabelStyle(feature: FeatureLike, resolution: number): Style | undefined {
-	const type = feature.get("type") as "tracon" | "fir";
-
-	if ((type === "tracon" && resolution > 3500) || (type === "fir" && resolution > 6000)) {
-		return;
-	}
-
-	const active = (feature.get("clicked") as boolean) || (feature.get("hovered") as boolean);
-	const label = feature.get("label") as string;
-
-	const key = `${type}_${active}`;
-	const cached = styleCache.get(key);
-	if (cached) {
-		cached.getText()?.setText(label);
-		return cached;
-	}
-
-	const bg = type === "fir" ? new Fill({ color: "rgb(77, 95, 131)" }) : new Fill({ color: "rgb(222, 89, 234)" });
-	const style = new Style({
-		text: new Text({
-			font: "400 11px Ubuntu, sans-serif",
-			fill: new Fill({ color: "white" }),
-			backgroundFill: active ? new Fill({ color: "rgb(234, 89, 121)" }) : bg,
-			padding: [3, 2, 1, 4],
-			textAlign: "center",
-		}),
-	});
-	style.getText()?.setText(label);
-	styleCache.set(key, style);
-
-	return style;
-}
-
-const geoJsonReader = new GeoJSON();
 const controllerSet = new Set<string>();
-
-const readGeoJSONFeature = (geojson: SimAwareTraconFeature | FIRFeature, type: "tracon" | "fir", id: string) => {
-	const feature = geoJsonReader.readFeature(geojson, {
-		featureProjection: "EPSG:3857",
-	}) as Feature<MultiPolygon>;
-
-	feature.setProperties({ type });
-	feature.setId(`sector_${id}`);
-	return feature;
-};
 
 export async function initControllerFeatures(data: InitialData): Promise<void> {
 	controllerSet.clear();
@@ -256,38 +211,12 @@ export async function updateControllerFeatures(delta: ControllerDelta): Promise<
 	}
 }
 
-function getControllerLabelFeature(lon: number, lat: number, label: string, type: "tracon" | "fir"): Feature<Point> {
-	const labelFeature = new Feature({
-		geometry: new Point(fromLonLat([lon, lat])),
-	});
-	const props: ControllerLabelProperties = {
-		type: type,
-		label: label,
-		clicked: false,
-		hovered: false,
-	};
-
-	labelFeature.setProperties(props);
-	labelFeature.setId(`sector_${label}`);
-
-	return labelFeature;
-}
-
-function createCircleTracon(lon: number, lat: number): Polygon {
-	const radiusMeters = 25 * 1852;
-	const center = fromLonLat([lon, lat]);
-	const circle = new Circle(center, radiusMeters);
-	const polygon = fromCircle(circle, 36);
-
-	return polygon;
-}
-
 async function getAirportLabelFeature(controllerMerged: ControllerMerged): Promise<Feature<Point> | null> {
 	const id = stripPrefix(controllerMerged.id);
 	const airport = await getCachedAirport(id);
 	if (!airport) return null;
 
-	const offset = getAirportLabelStationsOffset(controllerMerged);
+	const offset = getAirportLabelStationsOffset(controllerMerged.controllers.map((c) => c.facility));
 	const labelFeature = new Feature({
 		geometry: new Point(fromLonLat([airport.longitude, airport.latitude])),
 	});
@@ -308,29 +237,8 @@ function updateAirportLabel(controllerMerged: ControllerMerged): void {
 	const labelFeature = airportLabelSource.getFeatureById(`sector_${id}`);
 	if (!labelFeature) return;
 
-	const offset = getAirportLabelStationsOffset(controllerMerged);
+	const offset = getAirportLabelStationsOffset(controllerMerged.controllers.map((c) => c.facility));
 	labelFeature.set("offset", offset);
-}
-
-function getAirportLabelStationsOffset(controllerMerged: ControllerMerged): number {
-	const stations = [0, 0, 0, 0];
-	controllerMerged.controllers.forEach((c) => {
-		if (c.facility === -1) {
-			stations[3] = 1;
-		}
-		if (c.facility === 2) {
-			stations[2] = 1;
-		}
-		if (c.facility === 3) {
-			stations[1] = 1;
-		}
-		if (c.facility === 4) {
-			stations[0] = 1;
-		}
-	});
-
-	const mask = (stations[0] << 3) | (stations[1] << 2) | (stations[2] << 1) | stations[3];
-	return (mask - 1) * 36;
 }
 
 export function moveToSectorFeature(id: string): Feature<Point> | null {
