@@ -1,13 +1,13 @@
 "use client";
 
-import useSWR from "swr";
-import BookingsMap from "./BookingsMap";
-import { fetchApi } from "@/utils/api";
+import type { Booking } from "@sr24/types/interface";
 import { useEffect } from "react";
-import { initDataLayers } from "../lib/map";
+import useSWR from "swr";
 import Spinner from "@/components/Spinner/Spinner";
+import { fetchApi } from "@/utils/api";
+import { initDataLayers } from "../lib/map";
 import BookingsControls from "./BookingsControls";
-import { Booking } from "@sr24/types/interface";
+import BookingsMap from "./BookingsMap";
 
 export default function Bookings() {
 	const { data, isLoading } = useSWR<Booking[]>("/data/bookings", fetchApi, {

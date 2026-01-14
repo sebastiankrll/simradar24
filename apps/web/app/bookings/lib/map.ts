@@ -1,12 +1,13 @@
-import { webglConfig } from "@/components/Map/webglConfig";
-import WebGLVectorLayer from "ol/layer/WebGLVector";
-import VectorSource from "ol/source/Vector";
+import type { Booking } from "@sr24/types/interface";
 import { Feature, Map as OlMap, View } from "ol";
-import { initBaseLayer, setBaseLayerTheme } from "@/components/Map/baseLayer";
-import { initSunLayer, setSunLayerTheme } from "@/components/Map/sunLayer";
-import { fromLonLat, transformExtent } from "ol/proj";
-import { Booking } from "@sr24/types/interface";
+import { type MultiPolygon, Point, type Polygon } from "ol/geom";
 import VectorLayer from "ol/layer/Vector";
+import WebGLVectorLayer from "ol/layer/WebGLVector";
+import { fromLonLat, transformExtent } from "ol/proj";
+import VectorSource from "ol/source/Vector";
+import type { RgbaColor } from "react-colorful";
+import { getAirportSize } from "@/components/Map/airportFeatures";
+import { initBaseLayer, setBaseLayerTheme } from "@/components/Map/baseLayer";
 import {
 	createCircleTracon,
 	getAirportLabelStationsOffset,
@@ -14,11 +15,10 @@ import {
 	getControllerLabelStyle,
 	readGeoJSONFeature,
 } from "@/components/Map/controllerFeatures";
-import { RgbaColor } from "react-colorful";
+import { initSunLayer, setSunLayerTheme } from "@/components/Map/sunLayer";
+import { webglConfig } from "@/components/Map/webglConfig";
 import { getCachedAirport, getCachedFir, getCachedTracon } from "@/storage/cache";
-import { MultiPolygon, Point, Polygon } from "ol/geom";
 import { AirportLabelProperties } from "@/types/ol";
-import { getAirportSize } from "@/components/Map/airportFeatures";
 
 const airportMainSource = new VectorSource({
 	useSpatialIndex: false,

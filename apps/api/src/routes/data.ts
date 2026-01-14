@@ -1,8 +1,8 @@
 import { rdsGetSingle } from "@sr24/db/redis";
 import type { FastifyPluginAsync } from "fastify";
 import { getFlightsByCallsign, getFlightsByRegistration, getPilotReplay } from "../services/db.js";
-import { getDataVersions } from "../stores/static.js";
 import { bookingsStore } from "../stores/bookings.js";
+import { getDataVersions } from "../stores/static.js";
 
 const dataRoutes: FastifyPluginAsync = async (app) => {
 	app.get("/static/versions", async () => {

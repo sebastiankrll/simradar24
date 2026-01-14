@@ -5,18 +5,18 @@ import { fromCircle } from "ol/geom/Polygon";
 import { fromLonLat } from "ol/proj";
 import { toast } from "react-toastify";
 import { getAirportSize } from "@/components/Map/airportFeatures";
-import MessageBox from "@/components/MessageBox/MessageBox";
-import { getCachedAirport, getCachedFir, getCachedTracon } from "@/storage/cache";
-import type { AirportLabelProperties, ControllerLabelProperties } from "@/types/ol";
-import { airportLabelSource, controllerLabelSource, firSource, traconSource } from "./dataLayers";
-import { resetMap } from "./events";
-import { getMapView } from "./init";
 import {
 	createCircleTracon,
 	getAirportLabelStationsOffset,
 	getControllerLabelFeature,
 	readGeoJSONFeature,
 } from "@/components/Map/controllerFeatures";
+import MessageBox from "@/components/MessageBox/MessageBox";
+import { getCachedAirport, getCachedFir, getCachedTracon } from "@/storage/cache";
+import type { AirportLabelProperties, ControllerLabelProperties } from "@/types/ol";
+import { airportLabelSource, controllerLabelSource, firSource, traconSource } from "./dataLayers";
+import { resetMap } from "./events";
+import { getMapView } from "./init";
 
 const controllerSet = new Set<string>();
 

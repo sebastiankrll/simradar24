@@ -1,10 +1,10 @@
 "use client";
 
-import { useSettingsStore } from "@/storage/zustand";
 import { useTheme } from "next-themes";
 import { useEffect } from "react";
-import { initMap, setDataLayersSettings, setMapTheme } from "../lib/map";
 import { setSunLayerSettings } from "@/components/Map/sunLayer";
+import { useSettingsStore } from "@/storage/zustand";
+import { initMap, setDataLayersSettings, setMapTheme } from "../lib/map";
 import "./Bookings.css";
 
 export default function BookingsMap() {
