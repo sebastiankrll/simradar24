@@ -22,7 +22,7 @@ export async function init(pathname: string): Promise<void> {
 	const staticAirports = await dxGetAllAirports();
 
 	mapService.setStore({ airports: data.airports, controllers: data.controllers });
-	mapService.setFeatures({ pilots: data.pilots, airports: staticAirports, controllers: data.controllers });
+	await mapService.setFeatures({ pilots: data.pilots, airports: staticAirports, controllers: data.controllers });
 
 	const handleMessage = async (msg: WsData | WsPresence) => {
 		if (msg.t === "delta") {
@@ -30,11 +30,11 @@ export async function init(pathname: string): Promise<void> {
 				console.warn(`Missed WS messages: last seq ${lastMessageSeq}, current seq ${msg.s}`);
 				const data = await fetchApi<InitialData>("/map/init");
 
-				mapService.setFeatures({ pilots: data.pilots, controllers: data.controllers });
+				await mapService.setFeatures({ pilots: data.pilots, controllers: data.controllers });
 				mapService.setStore({ airports: data.airports, controllers: data.controllers });
 			} else {
 				mapService.updateStore({ airports: msg.data.airports, controllers: msg.data.controllers });
-				mapService.updateFeatures({ pilots: msg.data.pilots, controllers: msg.data.controllers });
+				await mapService.updateFeatures({ pilots: msg.data.pilots, controllers: msg.data.controllers });
 			}
 			lastMessageSeq = msg.s;
 		}

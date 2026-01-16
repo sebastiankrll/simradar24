@@ -333,7 +333,7 @@ export class MapService {
 		this.renderFeatures();
 	}
 
-	public setFeatures({
+	public async setFeatures({
 		pilots,
 		airports,
 		controllers,
@@ -345,7 +345,7 @@ export class MapService {
 		controllers?: ControllerMerged[];
 		trackPoints?: TrackPoint[];
 		autoTrackId?: string;
-	}): void {
+	}): Promise<void> {
 		if (pilots) {
 			this.pilotService.setFeatures(pilots);
 		}
@@ -353,7 +353,7 @@ export class MapService {
 			this.airportService.setFeatures(airports);
 		}
 		if (controllers) {
-			this.controllerService.setFeatures(controllers);
+			await this.controllerService.setFeatures(controllers);
 		}
 		if (trackPoints) {
 			this.trackService.setFeatures(trackPoints, autoTrackId);

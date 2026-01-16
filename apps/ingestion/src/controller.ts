@@ -11,6 +11,7 @@ export async function mapControllers(vatsimData: VatsimData, pilotsLong: PilotLo
 	const controllersLong: ControllerLong[] = vatsimData.controllers
 		.map((controller) => {
 			if (controller.facility === 0 && !controller.callsign.includes("OBS")) return null;
+			if (controller.frequency === "199.998") return null;
 			return {
 				callsign: controller.callsign,
 				frequency: parseFrequencyToKHz(controller.frequency),
