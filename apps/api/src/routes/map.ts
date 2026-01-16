@@ -131,25 +131,20 @@ const mapRoutes: FastifyPluginAsync = async (app) => {
 	);
 
 	app.get(
-		"/controller/:callsigns",
+		"/controller/:type/:callsign",
 		{
 			schema: {
 				params: {
 					type: "object",
-					properties: { callsigns: { type: "string", minLength: 4 } },
-					required: ["callsigns"],
+					properties: { type: { type: "string", enum: ["airport", "sector"] }, callsign: { type: "string", minLength: 3 } },
+					required: ["type", "callsign"],
 				},
 			},
 		},
 		async (request) => {
-			const { callsigns } = request.params as { callsigns: string };
-			const callsignArray = callsigns.split(",");
+			const { type, callsign } = request.params as { type: "airport" | "sector"; callsign: string };
 
-			if (callsignArray.length === 0) {
-				throw app.httpErrors.badRequest({ error: "At least one callsign is required" });
-			}
-
-			return callsignArray.map((callsign) => mapStore.controllers.get(callsign) || null).filter((controller) => controller !== null);
+			return mapStore.getControllersByCallsign(callsign, type);
 		},
 	);
 };

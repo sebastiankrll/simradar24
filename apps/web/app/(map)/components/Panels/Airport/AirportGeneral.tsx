@@ -8,15 +8,14 @@ import useSWR from "swr";
 import Icon from "@/components/Icon/Icon";
 import Spinner from "@/components/Spinner/Spinner";
 import { getCachedAirport, getCachedTracon } from "@/storage/cache";
-import { getControllersApiRequest } from "@/storage/map";
 import { fetchApi } from "@/utils/api";
-import { setHeight } from "../../../../../components/Panel/utils";
 import { ControllerInfo } from "../shared/ControllerInfo";
 import NotFoundPanel from "../shared/NotFound";
 import { AirportConnections } from "./AirportConnections";
 import { AirportStatus } from "./AirportStatus";
 import { AirportTitle } from "./AirportTitle";
 import { AirportWeather } from "./AirportWeather";
+import { setHeight } from "@/components/Panel/utils";
 
 export interface AirportPanelStatic {
 	airport: StaticAirport | null;
@@ -37,8 +36,7 @@ export function AirportGeneral({ icao }: { icao: string }) {
 		refreshInterval: 5 * 60_000,
 		shouldRetryOnError: false,
 	});
-	const controllerApiRequest = getControllersApiRequest(icao, "airport");
-	const { data: controllers } = useSWR<ControllerLong[]>(controllerApiRequest, fetchApi, {
+	const { data: controllers } = useSWR<ControllerLong[]>(`/map/controller/airport/${icao}`, fetchApi, {
 		refreshInterval: 60_000,
 		shouldRetryOnError: false,
 	});
