@@ -1,6 +1,6 @@
 import { MapLibreLayer } from "@geoblocks/ol-maplibre-layer";
 import type { StaticAirport } from "@sr24/types/db";
-import type { AirportShort, ControllerMerged, PilotShort } from "@sr24/types/interface";
+import type { AirportDelta, AirportShort, ControllerDelta, ControllerMerged, PilotDelta, PilotShort, TrackPoint } from "@sr24/types/interface";
 import type { StyleSpecification } from "maplibre-gl";
 import { type Feature, type MapBrowserEvent, Map as OlMap, type Overlay, View } from "ol";
 import type BaseEvent from "ol/events/Event";
@@ -11,7 +11,7 @@ import type { SelectOptionType } from "@/components/Select/Select";
 import type { FilterValues, SettingValues } from "@/types/zustand";
 import { AirportService } from "./AirportService";
 import { ControllerService } from "./ControllerService";
-import { createOverlay } from "./overlays";
+import { createOverlay, updateOverlay } from "./overlays";
 import { PilotService } from "./PilotService";
 import styleDark from "./positron_dark.json";
 import styleLight from "./positron_light.json";
@@ -20,10 +20,11 @@ import { TrackService } from "./TrackService";
 
 type Options = {
 	onNavigate?: (href: string) => void;
+	autoTrackPoints?: boolean;
 };
 
 export class MapService {
-	private static readonly MAP_PADDING = [204, 116, 140, 436] as const;
+	private static readonly MAP_PADDING = [204, 116, 140, 436];
 	private options: Options | null = null;
 
 	private map: OlMap | null = null;
@@ -42,11 +43,17 @@ export class MapService {
 	private clickedOverlay: Overlay | null = null;
 
 	private lastExtent: Extent | null = null;
+	private lastSettings: Partial<SettingValues> = {};
 
-	private cachedControllers = new Map<string, ControllerMerged>();
-	private cachedAirports = new Map<string, AirportShort>();
+	private storedControllers = new Map<string, ControllerMerged>();
+	private storedAirports = new Map<string, AirportShort>();
 
-	public init({ options }: { options?: Options }): OlMap {
+	private animationTimestamp = 0;
+	private animationFrame = 0;
+
+	private followInterval: NodeJS.Timeout | null = null;
+
+	public init(options?: Options): OlMap {
 		if (options) {
 			this.options = options;
 		}
@@ -100,7 +107,7 @@ export class MapService {
 		return this.map;
 	}
 
-	public setTheme(theme: "light" | "dark"): void {
+	public setTheme(theme: string | undefined): void {
 		const isDark = theme === "dark";
 		const style = isDark ? (styleDark as StyleSpecification) : (styleLight as StyleSpecification);
 		this.baseLayer?.mapLibreMap?.setStyle(style);
@@ -110,17 +117,48 @@ export class MapService {
 		this.controllerService.setTheme(isDark);
 	}
 
-	public setSettings({ settings }: { settings: Partial<SettingValues> }): void {
-		this.sunService.setSettings(settings.dayNightLayer, settings.dayNightLayerBrightness);
+	public setSettings(settings: Partial<SettingValues>): void {
+		this.sunService.setSettings({ show: settings.dayNightLayer, brightness: settings.dayNightLayerBrightness });
+		this.pilotService.setSettings({ size: settings.planeMarkerSize });
+		this.airportService.setSettings({ show: settings.airportMarkers, size: settings.airportMarkerSize });
+		this.controllerService.setSettings({
+			showSectors: settings.sectorAreas,
+			firColor: settings.firColor,
+			traconColor: settings.traconColor,
+			showAirports: settings.airportMarkers,
+			airportSize: settings.airportMarkerSize,
+		});
+		this.toggleAnimation(settings.animatedPlaneMarkers || false);
+
+		this.lastSettings = settings;
 	}
 
 	public setFilters(filters: Partial<Record<keyof FilterValues, SelectOptionType[] | number[]>>) {
 		this.pilotService.setFilters(filters);
-		this.renderFeatures();
 	}
 
-	public setRotation(rotation: number) {
-		this.map?.getView().setRotation(rotation);
+	public setView({ rotation, zoomStep, center, zoom }: { rotation?: number; zoomStep?: number; center?: [number, number]; zoom?: number }): void {
+		const view = this.map?.getView();
+		if (!view) return;
+
+		const currentZoom = zoom || view.getZoom() || 2;
+
+		if (rotation !== undefined) {
+			view.setRotation(rotation);
+		}
+		if (zoomStep !== undefined) {
+			const newZoom = currentZoom + zoomStep;
+			view.animate({
+				zoom: newZoom,
+				duration: 300,
+			});
+		}
+		if (center !== undefined) {
+			view.setCenter(fromLonLat(center));
+		}
+		if (zoom !== undefined) {
+			view.setZoom(zoom);
+		}
 	}
 
 	public addEventListeners() {
@@ -177,7 +215,7 @@ export class MapService {
 		}
 
 		if (feature && feature !== this.hoveredFeature && feature !== this.clickedFeature) {
-			this.hoveredOverlay = await createOverlay(feature);
+			this.hoveredOverlay = await createOverlay(feature, this.getCachedAirport(feature), this.getCachedController(feature));
 			map?.addOverlay(this.hoveredOverlay);
 		}
 
@@ -211,7 +249,7 @@ export class MapService {
 		}
 
 		if (feature && feature !== this.clickedFeature) {
-			this.clickedOverlay = await createOverlay(feature);
+			this.clickedOverlay = await createOverlay(feature, this.getCachedAirport(feature), this.getCachedController(feature));
 			map?.addOverlay(this.clickedOverlay);
 
 			this.hoveredOverlay && map.removeOverlay(this.hoveredOverlay);
@@ -228,17 +266,18 @@ export class MapService {
 			return;
 		}
 
+		this.unfocusFeatures();
+
 		feature?.set("clicked", true);
 		this.clickedFeature = feature || null;
 
 		this.controllerService.hoverSector(feature, true, "clicked");
 
 		if (!this.clickedFeature) return;
+
 		const type = this.clickedFeature.get("type") as string | undefined;
 		const id = this.clickedFeature.getId()?.toString() || null;
 		if (type === "pilot" && id) {
-			// initTrackFeatures(id);
-
 			const strippedId = id.toString().replace(/^pilot_/, "");
 			this.options?.onNavigate?.(`/pilot/${strippedId}`);
 			this.pilotService.setHighlighted(strippedId);
@@ -255,21 +294,19 @@ export class MapService {
 			this.options?.onNavigate?.(`/sector/${strippedId}`);
 			this.controllerService.setHighlighted(strippedId);
 		}
+
+		this.renderFeatures();
 	};
 
 	private clearMap(): void {
-		// trackSource.clear();
-		// clearCachedTrackPoints();
+		this.trackService.setFeatures([]);
 
 		this.controllerService.hoverSector(this.clickedFeature, false, "clicked");
 		this.pilotService.clearHighlighted();
 		this.airportService.clearHighlighted();
 		this.controllerService.clearHighlighted();
 
-		// if (followInterval) {
-		// 	clearInterval(followInterval);
-		// 	followInterval = null;
-		// }
+		this.unfollowPilot();
 	}
 
 	public resetMap(nav: boolean = true): void {
@@ -292,16 +329,22 @@ export class MapService {
 		if (nav) {
 			this.options?.onNavigate?.(`/`);
 		}
+
+		this.renderFeatures();
 	}
 
 	public setFeatures({
 		pilots,
 		airports,
 		controllers,
+		trackPoints,
+		autoTrackId,
 	}: {
 		pilots?: PilotShort[];
 		airports?: StaticAirport[];
 		controllers?: ControllerMerged[];
+		trackPoints?: TrackPoint[];
+		autoTrackId?: string;
 	}): void {
 		if (pilots) {
 			this.pilotService.setFeatures(pilots);
@@ -312,18 +355,111 @@ export class MapService {
 		if (controllers) {
 			this.controllerService.setFeatures(controllers);
 		}
+		if (trackPoints) {
+			this.trackService.setFeatures(trackPoints, autoTrackId);
+		}
+		this.renderFeatures();
 	}
 
-	public setCache({ airports, controllers }: { airports?: AirportShort[]; controllers?: ControllerMerged[] }): void {
+	public async updateFeatures({
+		pilots,
+		airports,
+		controllers,
+	}: {
+		pilots?: PilotDelta;
+		airports?: StaticAirport[];
+		controllers?: ControllerDelta;
+	}): Promise<void> {
+		let resetNeeded = false;
+
+		if (pilots) {
+			resetNeeded = this.pilotService.updateFeatures(pilots) || resetNeeded;
+		}
+		if (airports) {
+			// resetNeeded = this.airportService.updateFeatures(airports) || resetNeeded;
+		}
+		if (controllers) {
+			resetNeeded = (await this.controllerService.updateFeatures(controllers)) || resetNeeded;
+		}
+
+		if (this.clickedFeature && this.clickedOverlay) {
+			updateOverlay(
+				this.clickedFeature,
+				this.clickedOverlay,
+				this.getCachedAirport(this.clickedFeature),
+				this.getCachedController(this.clickedFeature),
+			);
+		}
+		if (this.hoveredFeature && this.hoveredOverlay) {
+			updateOverlay(
+				this.hoveredFeature,
+				this.hoveredOverlay,
+				this.getCachedAirport(this.hoveredFeature),
+				this.getCachedController(this.hoveredFeature),
+			);
+		}
+
+		if (this.options?.autoTrackPoints) {
+			this.trackService.updateFeatures(this.clickedFeature);
+		}
+
+		if (resetNeeded) {
+			this.resetMap(true);
+		}
+	}
+
+	public setStore({ airports, controllers }: { airports?: AirportShort[]; controllers?: ControllerMerged[] }): void {
 		if (airports) {
 			for (const airport of airports) {
-				this.cachedAirports.set(airport.icao, airport);
+				this.storedAirports.set(airport.icao, airport);
 			}
 		}
 		if (controllers) {
 			for (const controller of controllers) {
-				this.cachedControllers.set(controller.id, controller);
+				this.storedControllers.set(controller.id, controller);
 			}
+		}
+	}
+
+	public updateStore({ airports, controllers }: { airports?: AirportDelta; controllers?: ControllerDelta }): void {
+		if (airports) {
+			const nextAirports = new Map<string, AirportShort>();
+
+			for (const airport of airports.added) {
+				nextAirports.set(airport.icao, airport);
+			}
+
+			for (const a of airports.updated) {
+				const existing = this.storedAirports.get(a.icao);
+
+				nextAirports.set(a.icao, {
+					...existing,
+					...a,
+				});
+			}
+			this.storedAirports = nextAirports;
+		}
+		if (controllers) {
+			const nextControllers = new Map<string, ControllerMerged>();
+
+			for (const controller of controllers.added) {
+				nextControllers.set(controller.id, controller);
+			}
+
+			for (const c of controllers.updated) {
+				const existing = this.storedControllers.get(c.id);
+				const controllers = c.controllers.map((ctl) => {
+					const existingCtl = existing?.controllers.find((e) => e.callsign === ctl.callsign);
+					return { ...existingCtl, ...ctl };
+				});
+
+				nextControllers.set(c.id, {
+					...existing,
+					...c,
+					controllers,
+				});
+			}
+			this.storedControllers = nextControllers;
 		}
 	}
 
@@ -338,14 +474,64 @@ export class MapService {
 		this.airportService.renderFeatures(extent, zoom);
 	}
 
-	public setClickedFeature(type: string, id: string): void {
+	private toggleAnimation(enabled: boolean): void {
+		if (!enabled) {
+			window.cancelAnimationFrame(this.animationFrame);
+			return;
+		}
+
+		const animate = () => {
+			this.animateFeatures();
+			this.animationFrame = window.requestAnimationFrame(animate);
+		};
+		this.animationFrame = window.requestAnimationFrame(animate);
+	}
+
+	private animateFeatures(): void {
+		const resolution = this.map?.getView().getResolution() || 0;
+		let interval = 1000;
+		if (resolution > 1) {
+			interval = Math.min(Math.max(resolution * 5, 40), 1000);
+		}
+
+		const now = Date.now();
+		const elapsed = now - this.animationTimestamp;
+
+		if (elapsed > interval) {
+			this.pilotService.animateFeatures(elapsed);
+
+			if (this.clickedOverlay) {
+				if (this.clickedFeature) {
+					const geom = this.clickedFeature.getGeometry();
+					const coords = geom?.getCoordinates();
+					this.clickedOverlay.setPosition(coords);
+				}
+			}
+			if (this.hoveredOverlay) {
+				if (this.hoveredFeature) {
+					const geom = this.hoveredFeature.getGeometry();
+					const coords = geom?.getCoordinates();
+					this.hoveredOverlay.setPosition(coords);
+				}
+			}
+
+			this.trackService.animateFeatures(this.clickedFeature);
+
+			this.animationTimestamp = now;
+		}
+	}
+
+	public setClickedFeature(type: string, id: string, init?: boolean): void {
 		if (this.clickedFeature?.getId() === `${type}_${id}`) return;
 
-		this.resetMap(false);
+		this.unfocusFeatures();
+
+		if (!init) {
+			this.resetMap(false);
+		}
 
 		if (type === "pilot") {
 			this.clickedFeature = this.pilotService.moveToFeature(id, this.map?.getView());
-			// initTrackFeatures(`pilot_${id}`);
 		}
 		if (type === "airport") {
 			this.clickedFeature = this.airportService.moveToFeature(id, this.map?.getView());
@@ -357,10 +543,201 @@ export class MapService {
 
 		if (this.clickedFeature) {
 			this.clickedFeature.set("clicked", true);
-			createOverlay(this.clickedFeature).then((overlay) => {
-				this.clickedOverlay = overlay;
-				this.map?.addOverlay(overlay);
+			createOverlay(this.clickedFeature, this.getCachedAirport(this.clickedFeature), this.getCachedController(this.clickedFeature)).then(
+				(overlay) => {
+					this.clickedOverlay = overlay;
+					this.map?.addOverlay(overlay);
+				},
+			);
+		}
+	}
+
+	public setHoveredFeature(type?: string, id?: string): void {
+		if (!id && !type && this.hoveredFeature) {
+			this.hoveredFeature.set("hovered", false);
+			this.controllerService.hoverSector(this.hoveredFeature, false, "hovered");
+			this.hoveredFeature = null;
+
+			this.hoveredOverlay && this.map?.removeOverlay(this.hoveredOverlay);
+			this.hoveredOverlay = null;
+			return;
+		}
+
+		if (!id || !type) return;
+
+		if (type === "pilot") {
+			this.hoveredFeature = this.pilotService.moveToFeature(id);
+		}
+		if (type === "airport") {
+			this.hoveredFeature = this.airportService.moveToFeature(id);
+		}
+		if (type === "sector") {
+			this.hoveredFeature = this.controllerService.moveToFeature(id);
+			this.controllerService.hoverSector(this.hoveredFeature, true, "hovered");
+		}
+
+		if (this.hoveredFeature) {
+			this.hoveredFeature.set("hovered", true);
+			createOverlay(this.hoveredFeature, this.getCachedAirport(this.hoveredFeature), this.getCachedController(this.hoveredFeature)).then(
+				(overlay) => {
+					this.hoveredOverlay = overlay;
+					this.map?.addOverlay(overlay);
+				},
+			);
+		}
+	}
+
+	private getCachedAirport(feature: Feature<Point>): AirportShort | undefined {
+		const id = feature
+			.getId()
+			?.toString()
+			.replace(/^airport_/, "");
+		return this.storedAirports.get(id || "");
+	}
+
+	private getCachedController(feature: Feature<Point>): ControllerMerged | undefined {
+		const id = feature
+			.getId()
+			?.toString()
+			.replace(/^(sector|airport)_/, "");
+		const type = feature.get("type");
+		return this.storedControllers.get(`${type}_${id}`);
+	}
+
+	private toggleLayerVisibility(layerTypes: ("airport" | "pilot" | "controller" | "track")[], visible: boolean): void {
+		layerTypes.forEach((type) => {
+			switch (type) {
+				case "airport":
+					this.airportService.setSettings({ show: visible ? this.lastSettings?.airportMarkers : false });
+					break;
+				case "pilot":
+					this.pilotService.setSettings({ show: visible });
+					break;
+				case "controller":
+					this.controllerService.setSettings({
+						showSectors: visible ? this.lastSettings?.sectorAreas : false,
+						showAirports: visible ? this.lastSettings?.airportMarkers : false,
+					});
+					break;
+				case "track":
+					this.trackService.setSettings({ show: visible });
+					break;
+			}
+		});
+	}
+
+	public focusFeatures({
+		pilots,
+		airports,
+		hideLayers,
+	}: {
+		pilots?: string[];
+		airports?: string[];
+		hideLayers?: ("airport" | "pilot" | "controller" | "track")[];
+	}): void {
+		if (pilots && pilots.length > 0) {
+			this.pilotService.focusFeatures(pilots);
+		}
+		if (airports && airports.length > 0) {
+			this.airportService.focusFeatures(airports);
+		}
+
+		if (hideLayers) {
+			this.toggleLayerVisibility(hideLayers, false);
+		}
+
+		this.renderFeatures();
+	}
+
+	public unfocusFeatures(): void {
+		this.pilotService.unfocusFeatures();
+		this.airportService.unfocusFeatures();
+		this.toggleLayerVisibility(["airport", "pilot", "controller", "track"], true);
+	}
+
+	public fitFeatures({ pilots, airports, rememberView = true }: { pilots?: string[]; airports?: string[]; rememberView?: boolean }): void {
+		const view = this.map?.getView();
+		if (!view) return;
+
+		if (pilots && pilots.length > 0) {
+			const extent = this.pilotService.getExtent(pilots);
+			if (extent) {
+				if (rememberView) {
+					this.lastExtent = view.calculateExtent();
+				}
+				view.fit(extent, {
+					padding: MapService.MAP_PADDING,
+					duration: 200,
+					maxZoom: 14,
+				});
+			}
+
+			return;
+		}
+
+		if (airports && airports.length > 0) {
+			const extent = this.airportService.getExtent(airports);
+			if (extent) {
+				if (rememberView) {
+					this.lastExtent = view.calculateExtent();
+				}
+				view.fit(extent, {
+					padding: MapService.MAP_PADDING,
+					duration: 200,
+					maxZoom: 14,
+				});
+			}
+
+			return;
+		}
+
+		if (this.lastExtent) {
+			view.fit(this.lastExtent, {
+				duration: 200,
 			});
+			this.lastExtent = null;
+		}
+	}
+
+	public followPilot(id?: string): void {
+		this.unfollowPilot();
+
+		const view = this.map?.getView();
+		if (!view) return;
+
+		if (!id) {
+			if (this.lastExtent) {
+				view.fit(this.lastExtent, {
+					duration: 200,
+				});
+				this.lastExtent = null;
+			}
+		}
+
+		const type = this.clickedFeature?.get("type") as string | undefined;
+		if (type !== "pilot") return;
+
+		const follow = () => {
+			const geom = this.clickedFeature?.getGeometry();
+			const coords = geom?.getCoordinates();
+			if (coords) {
+				view.animate({
+					center: coords,
+					duration: 200,
+				});
+			}
+		};
+
+		this.lastExtent = view.calculateExtent();
+
+		follow();
+		this.followInterval = setInterval(follow, 3000);
+	}
+
+	public unfollowPilot(): void {
+		if (this.followInterval) {
+			clearInterval(this.followInterval);
+			this.followInterval = null;
 		}
 	}
 }

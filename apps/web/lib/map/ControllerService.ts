@@ -1,4 +1,4 @@
-import type { ControllerMerged } from "@sr24/types/interface";
+import type { ControllerDelta, ControllerMerged } from "@sr24/types/interface";
 import type { View } from "ol";
 import type Feature from "ol/Feature";
 import type { FeatureLike } from "ol/Feature";
@@ -9,7 +9,9 @@ import VectorSource from "ol/source/Vector";
 import Fill from "ol/style/Fill";
 import Style from "ol/style/Style";
 import Text from "ol/style/Text";
-import { getCachedAirport, getCachedFir, getCachedTracon } from "@/storage/cache";
+import type { RgbaColor } from "react-colorful";
+import { toast } from "react-toastify";
+import MessageBox from "@/components/MessageBox/MessageBox";
 import { createAirportFeature, createFirFeature, createTraconFeature, stripPrefix } from "./controllers";
 import { webglConfig } from "./webglConfig";
 
@@ -208,8 +210,104 @@ export class ControllerService {
 		this.labelSource.addFeatures(labelFeatures);
 	}
 
-	public moveToFeature(id: string, view: View | undefined): Feature<Point> | null {
-		const labelFeature = this.labelSource.getFeatureById(`sector_${id}`) as Feature<Point> | null;
+	public async updateFeatures(controllers: ControllerDelta): Promise<boolean> {
+		const controllersInDelta = new Set<string>();
+
+		for (const c of controllers.updated) {
+			if (c.facility === "airport") {
+				const id = stripPrefix(c.id);
+				const feature = this.airportSource.getFeatureById(`sector_${id}`) as Feature<Point> | undefined;
+				if (feature) {
+					await createAirportFeature(c, feature);
+				}
+			}
+			controllersInDelta.add(c.id);
+		}
+
+		for (const c of controllers.added) {
+			const id = stripPrefix(c.id);
+			controllersInDelta.add(c.id);
+			this.set.add(c.id);
+
+			if (c.facility === "tracon") {
+				const { tracon, label } = await createTraconFeature(id);
+				if (tracon) {
+					this.traconSource.addFeature(tracon);
+				}
+				if (label) {
+					this.labelSource.addFeature(label);
+				}
+
+				continue;
+			}
+
+			if (c.facility === "fir") {
+				const { fir, label } = await createFirFeature(id);
+				if (fir) {
+					this.firSource.addFeature(fir);
+				}
+				if (label) {
+					this.labelSource.addFeature(label);
+				}
+
+				continue;
+			}
+
+			if (c.facility === "airport") {
+				const airport = await createAirportFeature(c);
+				if (airport) {
+					this.airportSource.addFeature(airport);
+				}
+			}
+		}
+
+		const toRemove: string[] = [];
+
+		for (const id of this.set) {
+			if (controllersInDelta.has(id)) continue;
+
+			toRemove.push(id);
+			const shortId = stripPrefix(id);
+
+			if (id.startsWith("tracon_") || id.startsWith("fir_")) {
+				const feature = this.labelSource.getFeatureById(`sector_${shortId}`);
+				feature && this.labelSource.removeFeature(feature);
+			}
+
+			if (id.startsWith("tracon_")) {
+				const feature = this.traconSource.getFeatureById(`sector_${shortId}`);
+				feature && this.traconSource.removeFeature(feature);
+				continue;
+			}
+
+			if (id.startsWith("fir_")) {
+				const feature = this.firSource.getFeatureById(`sector_${shortId}`);
+				feature && this.firSource.removeFeature(feature);
+				continue;
+			}
+
+			if (id.startsWith("airport_")) {
+				const feature = this.airportSource.getFeatureById(`sector_${shortId}`);
+				feature && this.airportSource.removeFeature(feature);
+			}
+		}
+
+		for (const id of toRemove) {
+			this.set.delete(id);
+		}
+
+		if (this.highlighted && !this.set.has(`tracon_${this.highlighted}`) && !this.set.has(`fir_${this.highlighted}`)) {
+			toast.info(MessageBox, { data: { title: "Controller Disconnected", message: `The viewed controller has disconnected.` } });
+			this.highlighted = null;
+			return true;
+		}
+
+		return false;
+	}
+
+	public moveToFeature(id: string, view?: View | undefined): Feature<Point> | null {
+		const labelFeature = this.labelSource.getFeatureById(`sector_${id}`) as Feature<Point> | undefined;
+		if (!view) return labelFeature || null;
 
 		const geom = labelFeature?.getGeometry();
 		const coords = geom?.getCoordinates();
@@ -223,6 +321,44 @@ export class ControllerService {
 
 		this.setHighlighted(id);
 
-		return labelFeature;
+		return labelFeature || null;
+	}
+
+	public setSettings({
+		showSectors,
+		firColor,
+		traconColor,
+		showAirports,
+		airportSize,
+	}: {
+		showSectors?: boolean;
+		firColor?: RgbaColor;
+		traconColor?: RgbaColor;
+		showAirports?: boolean;
+		airportSize?: number;
+	}): void {
+		if (showSectors !== undefined) {
+			this.firLayer?.setVisible(showSectors);
+			this.traconLayer?.setVisible(showSectors);
+			this.labelLayer?.setVisible(showSectors);
+		}
+		if (showAirports !== undefined) {
+			this.airportLayer?.setVisible(showAirports);
+		}
+		if (airportSize) {
+			this.airportLayer?.updateStyleVariables({ size: airportSize / 50 });
+		}
+		if (firColor) {
+			this.firLayer?.updateStyleVariables({
+				fill: `rgba(${firColor.r}, ${firColor.g}, ${firColor.b}, ${firColor.a})`,
+				stroke: `rgba(${firColor.r}, ${firColor.g}, ${firColor.b}, 1)`,
+			});
+		}
+		if (traconColor) {
+			this.traconLayer?.updateStyleVariables({
+				fill: `rgba(${traconColor.r}, ${traconColor.g}, ${traconColor.b}, ${traconColor.a})`,
+				stroke: `rgba(${traconColor.r}, ${traconColor.g}, ${traconColor.b}, 1)`,
+			});
+		}
 	}
 }

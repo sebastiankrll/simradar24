@@ -51,12 +51,17 @@ export async function createFirFeature(id: string): Promise<{ fir?: Feature<Mult
 	return { fir, label: labelFeature };
 }
 
-export async function createAirportFeature(controllerMerged: ControllerMerged): Promise<Feature<Point> | null> {
+export async function createAirportFeature(controllerMerged: ControllerMerged, existingFeature?: Feature<Point>): Promise<Feature<Point> | null> {
+	const offset = getStationsOffset(controllerMerged.controllers.map((c) => c.facility));
+	if (existingFeature) {
+		existingFeature.set("offset", offset);
+		return existingFeature;
+	}
+
 	const id = stripPrefix(controllerMerged.id);
 	const airport = await getCachedAirport(id);
 	if (!airport) return null;
 
-	const offset = getStationsOffset(controllerMerged.controllers.map((c) => c.facility));
 	const feature = new Feature({
 		geometry: new Point(fromLonLat([airport.longitude, airport.latitude])),
 	});

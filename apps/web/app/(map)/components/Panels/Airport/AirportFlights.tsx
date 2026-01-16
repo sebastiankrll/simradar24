@@ -6,7 +6,7 @@ import { type InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
-import { setHoveredPilot } from "@/app/(map)/lib/events";
+import { mapService } from "@/app/(map)/lib";
 import { getAirlineIcon } from "@/components/Icon/Icon";
 import { getDelayColorFromDates } from "@/components/Panel/utils";
 import Spinner from "@/components/Spinner/Spinner";
@@ -154,8 +154,8 @@ function ListItem({
 			onClick={() => {
 				router.push(`/pilot/${pilot.id}`);
 			}}
-			onPointerEnter={() => setHoveredPilot(pilot.id)}
-			onPointerLeave={() => setHoveredPilot(null)}
+			onPointerEnter={() => mapService.setHoveredFeature("pilot", pilot.id)}
+			onPointerLeave={() => mapService.setHoveredFeature()}
 		>
 			<div className={`panel-airport-flights-delay ${getDelayColorFromDates(schedTime, estTime) ?? ""}`}></div>
 			<div className="panel-airport-flights-times">

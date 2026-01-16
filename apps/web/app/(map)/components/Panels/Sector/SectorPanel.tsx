@@ -4,15 +4,15 @@ import type { FIRFeature, SimAwareTraconFeature } from "@sr24/types/db";
 import type { ControllerLong } from "@sr24/types/interface";
 import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
-import { resetMap } from "@/app/(map)/lib/events";
+import { mapService } from "@/app/(map)/lib";
 import Icon from "@/components/Icon/Icon";
+import { setHeight } from "@/components/Panel/utils";
 import Spinner from "@/components/Spinner/Spinner";
 import { getCachedFir, getCachedTracon } from "@/storage/cache";
 import { getControllersApiRequest } from "@/storage/map";
 import { fetchApi } from "@/utils/api";
-import NotFoundPanel from "../../../../../components/Panel/NotFound";
-import { setHeight } from "../../../../../components/Panel/utils";
 import { ControllerInfo } from "../shared/ControllerInfo";
+import NotFoundPanel from "../shared/NotFound";
 import { SectorTitle } from "./SectorTitle";
 
 export interface SectorPanelStatic {
@@ -76,7 +76,7 @@ export default function SectorPanel({ callsign }: { callsign: string }) {
 		<>
 			<div className="panel-header">
 				<div className="panel-id">{callsign}</div>
-				<button className="panel-close" type="button" onClick={() => resetMap()}>
+				<button className="panel-close" type="button" onClick={() => mapService.resetMap()}>
 					<Icon name="cancel" size={24} />
 				</button>
 			</div>

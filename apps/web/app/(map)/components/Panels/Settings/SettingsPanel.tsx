@@ -3,7 +3,7 @@
 import "./SettingsPanel.css";
 import { useSession } from "next-auth/react";
 import { type SyntheticEvent, useEffect } from "react";
-import { resetMap } from "@/app/(map)/lib/events";
+import { mapService } from "@/app/(map)/lib";
 import Icon from "@/components/Icon/Icon";
 import { ChooseSwitch, ColorPicker, RangeSwitch, ToggleSwitch } from "@/components/Input/Input";
 import { storeUserSettings, useSettingsStore } from "@/storage/zustand";
@@ -24,7 +24,7 @@ export default function SettingsPanel() {
 		<>
 			<div className="panel-header">
 				<div className="panel-id">Settings</div>
-				<button className="panel-close" type="button" onClick={() => resetMap()}>
+				<button className="panel-close" type="button" onClick={() => mapService.resetMap()}>
 					<Icon name="cancel" size={24} />
 				</button>
 			</div>

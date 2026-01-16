@@ -4,7 +4,7 @@ import Icon from "@/components/Icon/Icon";
 import "./FiltersPanel.css";
 import { type SyntheticEvent, useCallback, useEffect, useState } from "react";
 import type { MultiValue } from "react-select";
-import { resetMap } from "@/app/(map)/lib/events";
+import { mapService } from "@/app/(map)/lib";
 import { applyMapFilters } from "@/app/(map)/lib/filters";
 import { RangeSwitch } from "@/components/Input/Input";
 import { multiStyles, Select, type SelectOptionType, singleStyles } from "@/components/Select/Select";
@@ -100,7 +100,7 @@ export default function FiltersPanel() {
 		<>
 			<div className="panel-header">
 				<div className="panel-id">Filters</div>
-				<button className="panel-close" type="button" onClick={() => resetMap()}>
+				<button className="panel-close" type="button" onClick={() => mapService.resetMap()}>
 					<Icon name="cancel" size={24} />
 				</button>
 			</div>

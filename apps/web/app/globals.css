@@ -43,7 +43,7 @@ html {
 }
 
 [data-theme="dark"] {
-	--color-bg: #040d21;
+	--color-bg: #0b1220;
 	--color-main-text: rgb(221, 225, 235);
 	--color-dark-grey: rgb(56, 64, 82);
 	--color-light-grey: rgb(37, 43, 54);

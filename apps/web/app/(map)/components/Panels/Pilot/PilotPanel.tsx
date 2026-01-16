@@ -1,15 +1,14 @@
 "use client";
 
 import type { StaticAirline, StaticAirport } from "@sr24/types/db";
-import type { PilotLong, TrackPoint } from "@sr24/types/interface";
+import type { DeltaTrackPoint, PilotLong, TrackPoint } from "@sr24/types/interface";
 import { useEffect, useRef, useState } from "react";
-import { getCachedAirline, getCachedAirport, getCachedTrackPoints } from "@/storage/cache";
+import { getCachedAirline, getCachedAirport } from "@/storage/cache";
 import "@/components/Panel/Pilot/PilotPanel.css";
 import useSWR from "swr";
-import { followPilotOnMap, resetMap, showRouteOnMap } from "@/app/(map)/lib/events";
+import { mapService } from "@/app/(map)/lib";
 import flightStatusSprite from "@/assets/images/sprites/flightStatusSprite.png";
 import Icon from "@/components/Icon/Icon";
-import NotFoundPanel from "@/components/Panel/NotFound";
 import { PilotAircraft } from "@/components/Panel/Pilot/PilotAircraft";
 import { PilotAirport } from "@/components/Panel/Pilot/PilotAirport";
 import { PilotCharts } from "@/components/Panel/Pilot/PilotCharts";
@@ -22,8 +21,10 @@ import { PilotTitle } from "@/components/Panel/Pilot/PilotTitle";
 import { PilotUser } from "@/components/Panel/Pilot/PilotUser";
 import { getSpriteOffset, setHeight } from "@/components/Panel/utils";
 import Spinner from "@/components/Spinner/Spinner";
+import { decodeTrackPoints } from "@/lib/map/tracks";
 import { fetchApi } from "@/utils/api";
 import { type WsData, type WsPresence, wsClient } from "@/utils/ws";
+import NotFoundPanel from "../shared/NotFound";
 
 export interface PilotPanelStatic {
 	airline: StaticAirline | null;
@@ -41,7 +42,7 @@ export default function PilotPanel({ id }: { id: string }) {
 	const {
 		data: pilotData,
 		isLoading,
-		mutate,
+		mutate: setPilotData,
 	} = useSWR<PilotLong>(`/map/pilot/${id}`, fetchApi, {
 		refreshInterval: 60_000,
 	});
@@ -59,8 +60,26 @@ export default function PilotPanel({ id }: { id: string }) {
 	const toggleMapInteraction = (interaction: MapInteraction) => {
 		const newInteraction = mapInteraction === interaction ? null : interaction;
 		setMapInteraction(newInteraction);
-		showRouteOnMap(staticData.departure, staticData.arrival, newInteraction);
-		followPilotOnMap(id, newInteraction);
+
+		if (newInteraction === "route") {
+			mapService.unfollowPilot();
+			mapService.focusFeatures({
+				airports: [staticData.departure?.id || "", staticData.arrival?.id || ""],
+				pilots: [id],
+				hideLayers: ["controller"],
+			});
+			mapService.fitFeatures({ airports: [staticData.departure?.id || "", staticData.arrival?.id || ""] });
+		}
+		if (newInteraction === "follow") {
+			mapService.unfocusFeatures();
+			mapService.fitFeatures({});
+			mapService.followPilot(id);
+		}
+		if (!newInteraction) {
+			mapService.unfollowPilot();
+			mapService.unfocusFeatures();
+			mapService.fitFeatures({});
+		}
 	};
 
 	const [shared, setShared] = useState(false);
@@ -80,6 +99,14 @@ export default function PilotPanel({ id }: { id: string }) {
 	};
 
 	useEffect(() => {
+		fetchApi<(TrackPoint | DeltaTrackPoint)[]>(`/map/pilot/${id}/track`).then((masked) => {
+			const trackPoints = decodeTrackPoints(masked);
+			setTrackPoints(trackPoints);
+			mapService.setFeatures({ trackPoints, autoTrackId: id });
+		});
+	}, [id]);
+
+	useEffect(() => {
 		setHeight(infoRef, openSection === "info");
 		setHeight(chartsRef, openSection === "charts");
 		setHeight(userRef, openSection === "pilot");
@@ -95,10 +122,8 @@ export default function PilotPanel({ id }: { id: string }) {
 				getCachedAirline(airlineCode || ""),
 				getCachedAirport(pilotData.flight_plan?.departure.icao || ""),
 				getCachedAirport(pilotData.flight_plan?.arrival.icao || ""),
-				getCachedTrackPoints(pilotData.id),
-			]).then(([airline, departure, arrival, trackPoints]) => {
+			]).then(([airline, departure, arrival]) => {
 				setStaticData({ airline, departure, arrival });
-				setTrackPoints(trackPoints);
 			});
 		})();
 	}, [pilotData]);
@@ -109,7 +134,7 @@ export default function PilotPanel({ id }: { id: string }) {
 			const updatedPilot = msg.data.pilots.updated.find((p) => p.id === id);
 
 			if (updatedPilot) {
-				mutate((prev) => {
+				setPilotData((prev) => {
 					if (!prev) return prev;
 					return {
 						...prev,
@@ -136,7 +161,7 @@ export default function PilotPanel({ id }: { id: string }) {
 		return () => {
 			wsClient.removeListener(handleMessage);
 		};
-	}, [id, mutate]);
+	}, [id, setPilotData]);
 
 	if (isLoading) return <Spinner />;
 	if (!pilotData)
@@ -154,7 +179,7 @@ export default function PilotPanel({ id }: { id: string }) {
 		<>
 			<div className="panel-header">
 				<div className="panel-id">{pilotData.callsign}</div>
-				<button className="panel-close" type="button" onClick={() => resetMap()}>
+				<button className="panel-close" type="button" onClick={() => mapService.resetMap()}>
 					<Icon name="cancel" size={24} />
 				</button>
 			</div>

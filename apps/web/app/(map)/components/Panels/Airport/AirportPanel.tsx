@@ -3,7 +3,7 @@
 import "./AirportPanel.css";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { resetMap } from "@/app/(map)/lib/events";
+import { mapService } from "@/app/(map)/lib";
 import Icon from "@/components/Icon/Icon";
 
 export default function AirportPanel({ icao, children }: { icao: string; children: React.ReactNode }) {
@@ -21,7 +21,7 @@ export default function AirportPanel({ icao, children }: { icao: string; childre
 		<>
 			<div className="panel-header">
 				<div className="panel-id">{icao}</div>
-				<button className="panel-close" type="button" onClick={() => resetMap()}>
+				<button className="panel-close" type="button" onClick={() => mapService.resetMap()}>
 					<Icon name="cancel" size={24} />
 				</button>
 			</div>

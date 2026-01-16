@@ -1,10 +1,12 @@
-import type { PilotShort } from "@sr24/types/interface";
+import type { PilotDelta, PilotShort } from "@sr24/types/interface";
 import { Feature, type View } from "ol";
 import type { Extent } from "ol/extent";
 import { Point } from "ol/geom";
 import WebGLVectorLayer from "ol/layer/WebGLVector";
 import VectorSource from "ol/source/Vector";
 import RBush from "rbush";
+import { toast } from "react-toastify";
+import MessageBox from "@/components/MessageBox/MessageBox";
 import type { SelectOptionType } from "@/components/Select/Select";
 import type { PilotProperties } from "@/types/ol";
 import type { FilterValues } from "@/types/zustand";
@@ -29,7 +31,9 @@ export class PilotService {
 	private map = new Map<string, RBushFeature>();
 
 	private filters: Partial<Record<keyof FilterValues, SelectOptionType[] | number[]>> = {};
-	private highlighted: string | null = null;
+	private highlighted = new Set<string>();
+	private focused = new Set<string>();
+	private isFocused = false;
 	private viewInitialized = false;
 
 	public init(): WebGLVectorLayer[] {
@@ -155,11 +159,11 @@ export class PilotService {
 	}
 
 	public setHighlighted(id: string): void {
-		this.highlighted = id;
+		this.highlighted.add(id);
 	}
 
 	public clearHighlighted(): void {
-		this.highlighted = null;
+		this.highlighted.clear();
 	}
 
 	public setFeatures(pilots: PilotShort[]) {
@@ -196,9 +200,102 @@ export class PilotService {
 		}
 	}
 
+	public updateFeatures(delta: PilotDelta): boolean {
+		const pilotsInDelta = new Set<string>();
+
+		for (const p of delta.updated) {
+			pilotsInDelta.add(p.id);
+
+			if (Object.keys(p).length === 1) continue;
+
+			const item = this.map.get(p.id);
+			if (!item) continue;
+
+			for (const k in p) {
+				item.feature.set(k, p[k as keyof typeof p], true);
+			}
+
+			if (p.coordinates) {
+				const geom = item.feature.getGeometry();
+				geom?.setCoordinates(p.coordinates);
+
+				item.feature.set("coord3857", p.coordinates, true);
+				this.rbush.remove(item);
+				item.minX = item.maxX = p.coordinates[0];
+				item.minY = item.maxY = p.coordinates[1];
+				this.rbush.insert(item);
+			}
+
+			this.map.set(p.id, item);
+		}
+
+		for (const p of delta.added) {
+			pilotsInDelta.add(p.id);
+
+			const props: PilotProperties = {
+				type: "pilot",
+				coord3857: p.coordinates,
+				clicked: false,
+				hovered: false,
+				...p,
+			};
+			const feature = new Feature({
+				geometry: new Point(p.coordinates),
+			});
+			feature.setProperties(props);
+			feature.setId(`pilot_${p.id}`);
+
+			const newItem: RBushFeature = {
+				minX: p.coordinates[0],
+				minY: p.coordinates[1],
+				maxX: p.coordinates[0],
+				maxY: p.coordinates[1],
+				feature,
+			};
+
+			this.map.set(p.id, newItem);
+			this.rbush.insert(newItem);
+		}
+
+		const toRemove: string[] = [];
+
+		for (const item of this.map) {
+			if (pilotsInDelta.has(item[0])) continue;
+			toRemove.push(item[0]);
+			this.rbush.remove(item[1]);
+		}
+
+		for (const id of toRemove) {
+			this.map.delete(id);
+		}
+
+		if (this.highlighted.size > 0) {
+			for (const id of this.highlighted) {
+				if (!this.map.has(id)) {
+					toast.info(MessageBox, { data: { title: "Pilot Disconnected", message: `The viewed pilot has disconnected.` } });
+					this.highlighted.delete(id);
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
 	public renderFeatures(extent: Extent, zoom: number) {
 		if (zoom > 12 && !this.viewInitialized) {
 			this.viewInitialized = true;
+			return;
+		}
+
+		if (this.isFocused) {
+			this.source.clear();
+			this.focused.forEach((id) => {
+				const item = this.map.get(id);
+				if (item) {
+					this.source.addFeature(item.feature);
+				}
+			});
 			return;
 		}
 
@@ -207,34 +304,58 @@ export class PilotService {
 		const pilotsByAltitude = pilotsByExtent.sort((a, b) => (b.feature.get("altitude_agl") || 0) - (a.feature.get("altitude_agl") || 0));
 
 		const features = pilotsByAltitude.map((f) => f.feature);
-		const filteredFeatures = this.filterFeatures(features).slice(0, 300);
+		const newFeatures = this.filterFeatures(features).slice(0, 300);
 
-		if (this.highlighted) {
-			const exists = filteredFeatures.find((p) => p.getId() === `pilot_${this.highlighted}`);
+		this.highlighted.forEach((id) => {
+			const exists = newFeatures.find((f) => f.getId() === `pilot_${id}`);
 			if (!exists) {
-				const item = this.map.get(this.highlighted);
+				const item = this.map.get(id);
 				if (item) {
-					filteredFeatures.push(item.feature);
+					newFeatures.push(item.feature);
 				}
 			}
-		}
+		});
 
 		this.source.clear();
-		this.source.addFeatures(filteredFeatures);
+		this.source.addFeatures(newFeatures);
 	}
 
-	public moveToFeature(id: string, view: View | undefined): Feature<Point> | null {
+	public animateFeatures(elapsed: number): void {
+		const features = this.source.getFeatures() as Feature<Point>[];
+
+		features.forEach((feature) => {
+			const kts = (feature.get("groundspeed") as number) || 0;
+			if (kts <= 0) return;
+
+			const heading = (feature.get("heading") as number) || 0;
+			const headingRad = (heading * Math.PI) / 180;
+			const meters = kts * 0.514444 * (elapsed / 1000);
+
+			const [x, y] = feature.get("coord3857");
+			const dx = meters * Math.sin(headingRad);
+			const dy = meters * Math.cos(headingRad);
+			const nx = x + dx;
+			const ny = y + dy;
+
+			feature.getGeometry()?.setCoordinates([nx, ny]);
+			feature.set("coord3857", [nx, ny], true);
+		});
+	}
+
+	public moveToFeature(id: string, view?: View | undefined): Feature<Point> | null {
 		let feature = this.source.getFeatureById(`pilot_${id}`) as Feature<Point> | undefined;
 		if (!feature) {
 			const item = this.map.get(id);
 			feature = item?.feature;
 		}
 
+		if (!view) return feature || null;
+
 		const geom = feature?.getGeometry();
 		const coords = geom?.getCoordinates();
 		if (!coords) return null;
 
-		view?.animate({
+		view.animate({
 			center: coords,
 			duration: 200,
 			zoom: 10,
@@ -243,5 +364,71 @@ export class PilotService {
 		this.setHighlighted(id);
 
 		return feature || null;
+	}
+
+	public setSettings({ size, show }: { size?: number; show?: boolean }): void {
+		if (size) {
+			this.mainLayer?.updateStyleVariables({ size: size / 50 });
+			this.shadowLayer?.updateStyleVariables({ size: size / 50 });
+		}
+		if (show !== undefined) {
+			this.mainLayer?.setVisible(show);
+			this.shadowLayer?.setVisible(show);
+		}
+	}
+
+	public focusFeatures(ids: string[]): void {
+		this.unfocusFeatures();
+
+		ids.forEach((id) => {
+			const feature = this.map.get(id);
+			if (feature?.feature) {
+				feature.feature.set("clicked", true);
+				this.focused.add(id);
+			}
+		});
+
+		this.isFocused = true;
+	}
+
+	public unfocusFeatures() {
+		this.focused.forEach((id) => {
+			const feature = this.map.get(id);
+			const highlighted = this.highlighted.has(id);
+			if (feature?.feature) {
+				feature.feature.set("clicked", highlighted);
+			}
+		});
+		this.focused.clear();
+
+		this.isFocused = false;
+	}
+
+	public getExtent(ids: string[]): Extent | null {
+		const features: Feature<Point>[] = [];
+		ids.forEach((id) => {
+			const feature = this.map.get(id);
+			if (feature?.feature) {
+				features.push(feature.feature);
+			}
+		});
+
+		if (features.length === 0) return null;
+
+		const extent = features[0].getGeometry()?.getExtent();
+		if (!extent) return null;
+
+		features.forEach((feature) => {
+			const geom = feature.getGeometry();
+			if (geom) {
+				const featExtent = geom.getExtent();
+				extent[0] = Math.min(extent[0], featExtent[0]);
+				extent[1] = Math.min(extent[1], featExtent[1]);
+				extent[2] = Math.max(extent[2], featExtent[2]);
+				extent[3] = Math.max(extent[3], featExtent[3]);
+			}
+		});
+
+		return extent;
 	}
 }

@@ -29,7 +29,8 @@ export class AirportService {
 	private map = new Map<string, Feature<Point>>();
 
 	private highlighted = new Set<string>();
-	private eventAirportsAreActive = false;
+	private focused = new Set<string>();
+	private isFocused = false;
 
 	public init(): WebGLVectorLayer {
 		this.layer = new WebGLVectorLayer({
@@ -79,6 +80,19 @@ export class AirportService {
 	}
 
 	public renderFeatures(extent: Extent, zoom: number) {
+		let newFeatures: Feature<Point>[] = [];
+
+		if (this.isFocused) {
+			this.source.clear();
+			this.focused.forEach((id) => {
+				const feature = this.map.get(id);
+				if (feature) {
+					this.source.addFeature(feature);
+				}
+			});
+			return;
+		}
+
 		const visibleSizes = getVisibleSizes(zoom);
 		if (visibleSizes.length === 0) {
 			this.source.clear();
@@ -86,9 +100,11 @@ export class AirportService {
 			this.highlighted.forEach((id) => {
 				const feature = this.map.get(id);
 				if (feature) {
-					this.source.addFeature(feature);
+					newFeatures.push(feature);
 				}
 			});
+
+			this.source.addFeatures(newFeatures);
 
 			return;
 		}
@@ -96,23 +112,20 @@ export class AirportService {
 		const [minX, minY, maxX, maxY] = transformExtent(extent, "EPSG:3857", "EPSG:4326");
 		const airportsByExtent = this.rbush.search({ minX, minY, maxX, maxY });
 		const airportsBySize = airportsByExtent.filter((f) => visibleSizes.includes(f.size));
+		newFeatures = airportsBySize.map((f) => f.feature);
+
+		this.highlighted.forEach((id) => {
+			const exists = newFeatures.find((f) => f.getId() === `airport_${id}`);
+			if (!exists) {
+				const feature = this.map.get(id);
+				if (feature) {
+					newFeatures.push(feature);
+				}
+			}
+		});
 
 		this.source.clear();
-		if (!this.eventAirportsAreActive) {
-			this.source.addFeatures(airportsBySize.map((f) => f.feature));
-		}
-
-		if (this.highlighted.size > 0) {
-			this.highlighted.forEach((id) => {
-				const exists = airportsBySize.find((a) => a.feature.getId() === `airport_${id}`);
-				if (!exists || this.eventAirportsAreActive) {
-					const feature = this.map.get(id);
-					if (feature) {
-						this.source.addFeature(feature);
-					}
-				}
-			});
-		}
+		this.source.addFeatures(newFeatures);
 	}
 
 	public setHighlighted(id: string): void {
@@ -123,72 +136,13 @@ export class AirportService {
 		this.highlighted.clear();
 	}
 
-	public getEventAirportsView(ids: string[]): void {
-		this.highlighted.forEach((id) => {
-			const feature = this.map.get(id);
-			if (feature) {
-				feature.set("clicked", false);
-			}
-		});
-		this.highlighted.clear();
-
-		const features: Feature<Point>[] = [];
-		ids.forEach((id) => {
-			const feature = this.map.get(id);
-			if (feature) {
-				features.push(feature);
-				feature.set("clicked", true);
-				this.highlighted.add(id);
-			}
-		});
-
-		if (features.length === 0) return;
-
-		const extent = features[0].getGeometry()?.getExtent();
-		if (!extent) return;
-
-		features.forEach((feature) => {
-			const geom = feature.getGeometry();
-			if (geom) {
-				const featExtent = geom.getExtent();
-				extent[0] = Math.min(extent[0], featExtent[0]);
-				extent[1] = Math.min(extent[1], featExtent[1]);
-				extent[2] = Math.max(extent[2], featExtent[2]);
-				extent[3] = Math.max(extent[3], featExtent[3]);
-			}
-		});
-
-		this.eventAirportsAreActive = true;
-		this.source.clear();
-		this.source.addFeatures(features);
-
-		// toggleLayerVisibility(["pilot", "controllers"], false);
-
-		// view?.fit(extent, {
-		// 	duration: 200,
-		// 	maxZoom: 12,
-		// 	padding: MAP_PADDING,
-		// });
-	}
-
-	public hideEventAirports() {
-		this.eventAirportsAreActive = false;
-		this.highlighted.forEach((id) => {
-			const feature = this.map.get(id);
-			if (feature) {
-				feature.set("clicked", false);
-			}
-		});
-		this.highlighted.clear();
-		// toggleLayerVisibility(["pilot", "controllers"], true);
-		// setAirportFeatures(view.calculateExtent(), view.getZoom() || 0);
-	}
-
-	public moveToFeature(id: string, view: View | undefined): Feature<Point> | null {
+	public moveToFeature(id: string, view?: View | undefined): Feature<Point> | null {
 		let feature = this.source.getFeatureById(`airport_${id}`) as Feature<Point> | undefined;
 		if (!feature) {
 			feature = this.map.get(id);
 		}
+
+		if (!view) return feature || null;
 
 		const geom = feature?.getGeometry();
 		const coords = geom?.getCoordinates();
@@ -203,5 +157,69 @@ export class AirportService {
 		this.setHighlighted(id);
 
 		return feature || null;
+	}
+
+	public setSettings({ show, size }: { show?: boolean; size?: number }): void {
+		if (show !== undefined) {
+			this.layer?.setVisible(show);
+		}
+		if (size) {
+			this.layer?.updateStyleVariables({ size: size / 50 });
+		}
+	}
+
+	public getExtent(ids: string[]): Extent | null {
+		const features: Feature<Point>[] = [];
+		ids.forEach((id) => {
+			const feature = this.map.get(id);
+			if (feature) {
+				features.push(feature);
+			}
+		});
+
+		if (features.length === 0) return null;
+
+		const extent = features[0].getGeometry()?.getExtent();
+		if (!extent) return null;
+
+		features.forEach((feature) => {
+			const geom = feature.getGeometry();
+			if (geom) {
+				const featExtent = geom.getExtent();
+				extent[0] = Math.min(extent[0], featExtent[0]);
+				extent[1] = Math.min(extent[1], featExtent[1]);
+				extent[2] = Math.max(extent[2], featExtent[2]);
+				extent[3] = Math.max(extent[3], featExtent[3]);
+			}
+		});
+
+		return extent;
+	}
+
+	public focusFeatures(ids: string[]): void {
+		this.unfocusFeatures();
+
+		ids.forEach((id) => {
+			const feature = this.map.get(id);
+			if (feature) {
+				feature.set("clicked", true);
+				this.focused.add(id);
+			}
+		});
+
+		this.isFocused = true;
+	}
+
+	public unfocusFeatures() {
+		this.focused.forEach((id) => {
+			const feature = this.map.get(id);
+			const highlighted = this.highlighted.has(id);
+			if (feature) {
+				feature.set("clicked", highlighted);
+			}
+		});
+		this.focused.clear();
+
+		this.isFocused = false;
 	}
 }

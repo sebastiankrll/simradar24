@@ -5,8 +5,7 @@ import "./Controls.css";
 import { useState } from "react";
 import Icon from "@/components/Icon/Icon";
 import { useFiltersStore, useMapRotationStore, useMapVisibilityStore } from "@/storage/zustand";
-import { moveViewToCoordinates, zoomView } from "../lib/events";
-import { northUpView } from "../lib/init";
+import { mapService } from "../lib";
 
 export default function Controls() {
 	const router = useRouter();
@@ -34,8 +33,7 @@ export default function Controls() {
 		if (navigator.geolocation) {
 			navigator.geolocation.getCurrentPosition(
 				(pos) => {
-					const { latitude, longitude } = pos.coords;
-					moveViewToCoordinates(longitude, latitude);
+					mapService.setView({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 12 });
 				},
 				(err) => {
 					console.error("Geolocation error:", err);
@@ -55,10 +53,10 @@ export default function Controls() {
 				<button type="button" className="map-control-item" onClick={onFullscreen}>
 					<Icon name={isFullscreen ? "resize-decrease" : "resize-increase"} size={22} />
 				</button>
-				<button type="button" className="map-control-item" onClick={() => zoomView(true)}>
+				<button type="button" className="map-control-item" onClick={() => mapService.setView({ zoomStep: 1 })}>
 					<Icon name="add" />
 				</button>
-				<button type="button" className="map-control-item" onClick={() => zoomView(false)}>
+				<button type="button" className="map-control-item" onClick={() => mapService.setView({ zoomStep: -1 })}>
 					<Icon name="remove" />
 				</button>
 				<button type="button" className="map-control-item" onClick={onCenterOnLocation}>
@@ -68,7 +66,7 @@ export default function Controls() {
 					type="button"
 					className="map-control-item"
 					onClick={() => {
-						northUpView();
+						mapService.setView({ rotation: 0 });
 						setRotation(0);
 					}}
 				>

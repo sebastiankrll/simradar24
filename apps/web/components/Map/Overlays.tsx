@@ -29,15 +29,15 @@ export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; ai
 				<div className="overlay-live pilot">
 					<div className="overlay-live-item">
 						<span>ALT</span>
-						{convertAltitude(Math.round(data.altitude_ms / 250) * 250, altitudeUnit)}
+						{data.altitude_ms && convertAltitude(Math.round(data.altitude_ms / 250) * 250, altitudeUnit)}
 					</div>
 					<div className="overlay-live-item">
 						<span>FPM</span>
-						{convertVerticalSpeed(Math.round(data.vertical_speed / 50) * 50, verticalSpeedUnit, false)}
+						{data.vertical_speed && convertVerticalSpeed(Math.round(data.vertical_speed / 50) * 50, verticalSpeedUnit, false)}
 					</div>
 					<div className="overlay-live-item">
 						<span>GS</span>
-						{convertSpeed(data.groundspeed, speedUnit)}
+						{data.groundspeed && convertSpeed(data.groundspeed, speedUnit)}
 					</div>
 					<div className="overlay-live-item">
 						<span>HDG</span>
@@ -52,11 +52,11 @@ export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; ai
 					</div>
 					<div className="overlay-title">
 						<p>{data.callsign}</p>
-						<p>{data.route.replace(" ", " \u002d ")}</p>
+						<p>{data.route?.replace(" ", " \u002d ")}</p>
 					</div>
 					<div className="overlay-misc">
 						<div className="overlay-pilot-ac-type">{data.aircraft}</div>
-						<div className="overlay-pilot-frequency">{(data.frequency / 1000).toFixed(3)}</div>
+						<div className="overlay-pilot-frequency">{data.frequency && (data.frequency / 1000).toFixed(3)}</div>
 					</div>
 				</div>
 			)}
@@ -95,8 +95,8 @@ export function AirportOverlay({
 	merged,
 }: {
 	cached: StaticAirport | null;
-	short: Required<AirportShort> | null;
-	merged: ControllerMerged | null;
+	short: AirportShort | undefined;
+	merged: ControllerMerged | undefined;
 }) {
 	const [hoveredController, setHoveredController] = useState(null as string | null);
 	const [clickedController, setClickedController] = useState(null as string | null);
@@ -155,11 +155,11 @@ export function AirportOverlay({
 				<div className="overlay-misc">
 					<div className="overlay-airport-traffic">
 						<Icon name="departure" size={18} />
-						<p>{short?.dep_traffic.traffic_count || 0}</p>
+						<p>{short?.dep_traffic?.traffic_count || 0}</p>
 					</div>
 					<div className="overlay-airport-traffic">
 						<Icon name="arrival" size={18} />
-						<p>{short?.arr_traffic.traffic_count || 0}</p>
+						<p>{short?.arr_traffic?.traffic_count || 0}</p>
 					</div>
 				</div>
 			</div>
@@ -167,7 +167,7 @@ export function AirportOverlay({
 	);
 }
 
-export function SectorOverlay({ cached, merged }: { cached: SimAwareTraconFeature | FIRFeature | null; merged: ControllerMerged | null }) {
+export function SectorOverlay({ cached, merged }: { cached: SimAwareTraconFeature | FIRFeature | null; merged: ControllerMerged | undefined }) {
 	const [hoveredController, setHoveredController] = useState(null as string | null);
 	const [clickedController, setClickedController] = useState(null as string | null);
 	const [copied, setCopied] = useState<string | null>(null);

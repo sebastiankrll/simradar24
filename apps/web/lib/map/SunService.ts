@@ -36,11 +36,11 @@ export class Sunservice {
 		this.layer?.updateStyleVariables({ theme });
 	}
 
-	public setSettings(show: boolean | undefined, brightness: number | undefined): void {
+	public setSettings({ show, brightness }: { show?: boolean; brightness?: number }): void {
 		if (show !== undefined) {
 			this.layer?.setVisible(show);
 		}
-		if (brightness !== undefined) {
+		if (brightness) {
 			this.layer?.setOpacity(brightness / 100);
 		}
 	}

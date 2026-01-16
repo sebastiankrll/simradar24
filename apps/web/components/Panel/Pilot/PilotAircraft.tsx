@@ -14,11 +14,10 @@ export function PilotAircraft({ pilot }: { pilot: PilotLong }) {
 			setAircraft(null);
 			return;
 		}
-		(async () => {
-			const aircraft = await getCachedAircraft(registration);
-			setAircraft(aircraft);
-		})();
-	}, [pilot]);
+		getCachedAircraft(registration).then((data) => {
+			setAircraft(data);
+		});
+	}, [pilot.flight_plan?.ac_reg]);
 
 	const acType = `${aircraft?.manufacturerName || ""} ${aircraft?.model || ""}`;
 	return (

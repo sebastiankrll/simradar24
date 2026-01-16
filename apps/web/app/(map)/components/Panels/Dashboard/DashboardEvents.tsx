@@ -1,6 +1,6 @@
 import type { VatsimEvent } from "@sr24/types/vatsim";
 import { useState } from "react";
-import { hideEventAirports, showEventAirports } from "@/app/(map)/lib/airportFeatures";
+import { mapService } from "@/app/(map)/lib";
 import Icon from "@/components/Icon/Icon";
 import { useSettingsStore } from "@/storage/zustand";
 import { convertTime } from "@/utils/helpers";
@@ -69,10 +69,11 @@ function Events({
 								onClick={() => {
 									if (activeEvent === event.id) {
 										setActiveEvent(null);
-										hideEventAirports();
+										mapService.unfocusFeatures();
 									} else {
 										setActiveEvent(event.id);
-										showEventAirports(event.airports.map((airport) => airport.icao));
+										mapService.focusFeatures({ airports: event.airports.map((airport) => airport.icao), hideLayers: ["pilot", "controller"] });
+										mapService.fitFeatures({ airports: event.airports.map((airport) => airport.icao), rememberView: false });
 									}
 								}}
 							>

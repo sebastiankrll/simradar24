@@ -13,8 +13,8 @@ export function getAirportSize(size: string): "s" | "m" | "l" {
 }
 
 export function getVisibleSizes(zoom: number): string[] {
-	if (zoom > 7.5) return ["heliport", "small_airport", "medium_airport", "large_airport"];
-	if (zoom > 6.5) return ["medium_airport", "large_airport"];
-	if (zoom > 4.5) return ["large_airport"];
+	if (zoom > 7.5) return ["s", "m", "l"];
+	if (zoom > 6.5) return ["m", "l"];
+	if (zoom > 4.5) return ["l"];
 	return [];
 }
