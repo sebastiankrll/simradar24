@@ -21,6 +21,8 @@ import { TrackService } from "./TrackService";
 type Options = {
 	onNavigate?: (href: string) => void;
 	autoTrackPoints?: boolean;
+	disableInteractions?: boolean;
+	disableCenterOnPageLoad?: boolean;
 };
 
 export class MapService {
@@ -164,13 +166,17 @@ export class MapService {
 	public addEventListeners() {
 		this.map?.on("moveend", this.onMoveEnd);
 		this.map?.on("pointermove", this.onPointerMove);
-		this.map?.on("click", this.onClick);
+		if (!this.options?.disableInteractions) {
+			this.map?.on("click", this.onClick);
+		}
 	}
 
 	public removeEventListeners() {
 		this.map?.un("moveend", this.onMoveEnd);
 		this.map?.un("pointermove", this.onPointerMove);
-		this.map?.un("click", this.onClick);
+		if (!this.options?.disableInteractions) {
+			this.map?.un("click", this.onClick);
+		}
 	}
 
 	private onMoveEnd = (e: BaseEvent | Event) => {
@@ -340,7 +346,7 @@ export class MapService {
 		trackPoints,
 		autoTrackId,
 	}: {
-		pilots?: PilotShort[];
+		pilots?: Required<PilotShort>[];
 		airports?: StaticAirport[];
 		controllers?: ControllerMerged[];
 		trackPoints?: TrackPoint[];
@@ -530,14 +536,16 @@ export class MapService {
 			this.resetMap(false);
 		}
 
+		const view = this.options?.disableCenterOnPageLoad ? undefined : this.map?.getView();
+
 		if (type === "pilot") {
-			this.clickedFeature = this.pilotService.moveToFeature(id, this.map?.getView());
+			this.clickedFeature = this.pilotService.moveToFeature(id, view);
 		}
 		if (type === "airport") {
-			this.clickedFeature = this.airportService.moveToFeature(id, this.map?.getView());
+			this.clickedFeature = this.airportService.moveToFeature(id, view);
 		}
 		if (type === "sector") {
-			this.clickedFeature = this.controllerService.moveToFeature(id, this.map?.getView());
+			this.clickedFeature = this.controllerService.moveToFeature(id, view);
 			this.controllerService.hoverSector(this.clickedFeature, true, "clicked");
 		}
 
@@ -655,7 +663,7 @@ export class MapService {
 		this.toggleLayerVisibility(["airport", "pilot", "controller", "track"], true);
 	}
 
-	public fitFeatures({ pilots, airports, rememberView = true }: { pilots?: string[]; airports?: string[]; rememberView?: boolean }): void {
+	public fitFeatures({ pilots, airports, rememberView = true }: { pilots?: string[]; airports?: string[]; rememberView?: boolean } = {}): void {
 		const view = this.map?.getView();
 		if (!view) return;
 
@@ -699,25 +707,24 @@ export class MapService {
 		}
 	}
 
-	public followPilot(id?: string): void {
+	public followPilot({ rememberView = true }: { rememberView?: boolean } = {}): void {
 		this.unfollowPilot();
 
 		const view = this.map?.getView();
 		if (!view) return;
 
-		if (!id) {
-			if (this.lastExtent) {
-				view.fit(this.lastExtent, {
-					duration: 200,
-				});
-				this.lastExtent = null;
-			}
+		if (this.lastExtent) {
+			view.fit(this.lastExtent, {
+				duration: 200,
+			});
+			this.lastExtent = null;
 		}
 
 		const type = this.clickedFeature?.get("type") as string | undefined;
 		if (type !== "pilot") return;
 
 		const follow = () => {
+			console.log("Following pilot...");
 			const geom = this.clickedFeature?.getGeometry();
 			const coords = geom?.getCoordinates();
 			if (coords) {
@@ -728,7 +735,9 @@ export class MapService {
 			}
 		};
 
-		this.lastExtent = view.calculateExtent();
+		if (rememberView) {
+			this.lastExtent = view.calculateExtent();
+		}
 
 		follow();
 		this.followInterval = setInterval(follow, 3000);

@@ -6,6 +6,7 @@ import { parseMetar } from "metar-taf-parser";
 import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import Icon from "@/components/Icon/Icon";
+import { setHeight } from "@/components/Panel/utils";
 import Spinner from "@/components/Spinner/Spinner";
 import { getCachedAirport, getCachedTracon } from "@/storage/cache";
 import { fetchApi } from "@/utils/api";
@@ -15,7 +16,6 @@ import { AirportConnections } from "./AirportConnections";
 import { AirportStatus } from "./AirportStatus";
 import { AirportTitle } from "./AirportTitle";
 import { AirportWeather } from "./AirportWeather";
-import { setHeight } from "@/components/Panel/utils";
 
 export interface AirportPanelStatic {
 	airport: StaticAirport | null;

@@ -72,13 +72,13 @@ export default function PilotPanel({ id }: { id: string }) {
 		}
 		if (newInteraction === "follow") {
 			mapService.unfocusFeatures();
-			mapService.fitFeatures({});
-			mapService.followPilot(id);
+			mapService.fitFeatures();
+			mapService.followPilot();
 		}
 		if (!newInteraction) {
 			mapService.unfollowPilot();
 			mapService.unfocusFeatures();
-			mapService.fitFeatures({});
+			mapService.fitFeatures();
 		}
 	};
 

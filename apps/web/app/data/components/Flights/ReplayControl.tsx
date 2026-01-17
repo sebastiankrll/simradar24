@@ -1,8 +1,8 @@
 import { useRouter } from "next/navigation";
-import type { SyntheticEvent } from "react";
+import { type SyntheticEvent, useState } from "react";
 import Icon from "@/components/Icon/Icon";
 import { RangeSwitch } from "@/components/Input/Input";
-import { centerOnRoute } from "../../lib/map";
+import { fitRouteToView, followPilot } from "../../lib";
 import { REPLAY_SPEEDS } from "./Replay";
 
 export function ReplayControl({
@@ -13,8 +13,6 @@ export function ReplayControl({
 	setPlaying,
 	playing,
 	onDownload,
-	setFollow,
-	follow,
 	max,
 }: {
 	progress: number;
@@ -24,11 +22,10 @@ export function ReplayControl({
 	setPlaying: React.Dispatch<React.SetStateAction<boolean>>;
 	playing: boolean;
 	onDownload: () => void;
-	setFollow: React.Dispatch<React.SetStateAction<boolean>>;
-	follow: boolean;
 	max: number;
 }) {
 	const router = useRouter();
+	const [follow, setFollow] = useState(false);
 
 	return (
 		<div id="replay-control">
@@ -43,10 +40,17 @@ export function ReplayControl({
 			>
 				{REPLAY_SPEEDS[speedIndex]}
 			</button>
-			<button type="button" className="replay-button" onClick={() => centerOnRoute()}>
+			<button type="button" className="replay-button" onClick={() => fitRouteToView()}>
 				<Icon name="tour" size={18} />
 			</button>
-			<button type="button" className={`replay-button ${follow ? "active" : ""}`} onClick={() => setFollow((prev) => !prev)}>
+			<button
+				type="button"
+				className={`replay-button ${follow ? "active" : ""}`}
+				onClick={() => {
+					setFollow((prev) => !prev);
+					followPilot(!follow);
+				}}
+			>
 				<Icon name="gps" size={18} />
 			</button>
 			<RangeSwitch

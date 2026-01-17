@@ -36,7 +36,7 @@ export class TrackService {
 
 	public setFeatures(trackPoints: TrackPoint[], id?: string): void {
 		this.source.clear();
-		if (trackPoints.length === 0 || !id) return;
+		if (trackPoints.length === 0) return;
 
 		const trackFeatures: Feature<LineString>[] = [];
 
@@ -67,7 +67,7 @@ export class TrackService {
 
 		this.source.addFeatures(trackFeatures);
 
-		this.pilotId = id;
+		this.pilotId = id || null;
 	}
 
 	public updateFeatures(feature: Feature<Point> | null): void {
