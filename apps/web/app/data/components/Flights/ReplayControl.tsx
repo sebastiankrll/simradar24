@@ -4,6 +4,7 @@ import Icon from "@/components/Icon/Icon";
 import { RangeSwitch } from "@/components/Input/Input";
 import { fitRouteToView, followPilot } from "../../lib";
 import { REPLAY_SPEEDS } from "./Replay";
+import "@/components/Map/ReplayControl/ReplayControl.css";
 
 export function ReplayControl({
 	progress,
@@ -35,7 +36,7 @@ export function ReplayControl({
 			<button
 				type="button"
 				className="replay-button"
-				id="replay-speed"
+				style={{ width: 48 }}
 				onClick={() => setSpeedIndex((prev) => (prev === REPLAY_SPEEDS.length - 1 ? 0 : prev + 1))}
 			>
 				{REPLAY_SPEEDS[speedIndex]}

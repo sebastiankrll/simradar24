@@ -41,6 +41,7 @@
 	justify-content: space-between;
 	align-items: center;
 	padding: 0px 4px;
+	min-height: 20px;
 }
 
 .overlay-live-item.controller {
@@ -86,6 +87,10 @@
 .overlay-controller-connections {
 	margin-left: 3px;
 	text-align: end;
+}
+
+.overlay-controller-booking {
+	margin-left: 2rem;
 }
 
 .overlay-controller-save {

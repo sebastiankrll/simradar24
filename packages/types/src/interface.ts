@@ -111,6 +111,11 @@ export interface ControllerShort {
 	facility: number;
 	atis?: string[] | null;
 	connections?: number;
+	booking?: {
+		start: string;
+		end: string;
+		type: "event" | "exam" | "training" | "booking";
+	};
 }
 
 export interface ControllerLong extends Required<ControllerShort> {

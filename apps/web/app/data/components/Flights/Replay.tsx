@@ -5,12 +5,12 @@ import { toLonLat } from "ol/proj";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 import Spinner from "@/components/Spinner/Spinner";
+import { decodeTrackPoints } from "@/lib/map/tracks";
 import { fetchApi } from "@/utils/api";
 import { init, updatePilot } from "../../lib";
 import { ReplayControl } from "./ReplayControl";
 import ReplayMap from "./ReplayMap";
 import ReplayPanel from "./ReplayPanel";
-import { decodeTrackPoints } from "@/lib/map/tracks";
 
 interface ApiData {
 	pilot: PilotLong;
@@ -26,8 +26,8 @@ export function Replay({ id }: { id: string }) {
 		shouldRetryOnError: false,
 	});
 	const [trackPoints, setTrackPoints] = useState<Required<TrackPoint>[]>([]);
-	const [progress, setProgress] = useState(0);
 
+	const [progress, setProgress] = useState(0);
 	const [playing, setPlaying] = useState(false);
 	const [speedIndex, setSpeedIndex] = useState(3);
 

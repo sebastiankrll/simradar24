@@ -8,7 +8,7 @@ import FlagSprite from "@/assets/images/sprites/flagSprite42.png";
 import Icon, { getAirlineIcon } from "@/components/Icon/Icon";
 import { useSettingsStore } from "@/storage/zustand";
 import type { PilotProperties } from "@/types/ol";
-import { convertAltitude, convertSpeed, convertVerticalSpeed } from "@/utils/helpers";
+import { convertAltitude, convertSpeed, convertTime, convertVerticalSpeed } from "@/utils/helpers";
 
 export function PilotOverlay({ feature, airline }: { feature: Feature<Point>; airline: StaticAirline | null }) {
 	const { planeOverlay, altitudeUnit, verticalSpeedUnit, speedUnit } = useSettingsStore();
@@ -98,11 +98,13 @@ export function AirportOverlay({
 	short: AirportShort | undefined;
 	merged: ControllerMerged | undefined;
 }) {
+	const { timeFormat, timeZone } = useSettingsStore();
+
 	const [hoveredController, setHoveredController] = useState(null as string | null);
 	const [clickedController, setClickedController] = useState(null as string | null);
 	const [copied, setCopied] = useState<string | null>(null);
 
-	const controllers = merged?.controllers as Required<ControllerShort>[] | undefined;
+	const controllers = merged?.controllers as ControllerShort[] | undefined;
 	const sortedControllers = controllers?.sort((a, b) => b.facility - a.facility);
 
 	const handleCopyClick = () => {
@@ -133,12 +135,21 @@ export function AirportOverlay({
 							>
 								<div className="overlay-controller-color" style={{ backgroundColor: getControllerColor(c.facility) }}></div>
 								<div className="overlay-controller-callsign">{c.callsign}</div>
-								<div className="overlay-controller-frequency">{(c.frequency / 1000).toFixed(3)}</div>
-								<Icon name="groups" size={16} />
-								<div className="overlay-controller-connections">{c.connections}</div>
-								<button type="button" className="overlay-controller-save" onClick={handleCopyClick}>
-									{copied === c.callsign ? <Icon name="select" size={20} /> : <Icon name="copy" size={14} />}
-								</button>
+								{c.frequency && <div className="overlay-controller-frequency">{(c.frequency / 1000).toFixed(3)}</div>}
+								{c.connections && (
+									<>
+										<Icon name="groups" size={16} />
+										<div className="overlay-controller-connections">{c.connections}</div>
+									</>
+								)}
+								{c.atis && (
+									<button type="button" className="overlay-controller-save" onClick={handleCopyClick}>
+										{copied === c.callsign ? <Icon name="select" size={20} /> : <Icon name="copy" size={14} />}
+									</button>
+								)}
+								{c.booking && (
+									<div className="overlay-controller-booking">{`${convertTime(c.booking.start, timeFormat, timeZone, false)} - ${convertTime(c.booking.end, timeFormat, timeZone)}`}</div>
+								)}
 							</div>
 						);
 					})}
@@ -172,11 +183,13 @@ export function AirportOverlay({
 }
 
 export function SectorOverlay({ cached, merged }: { cached: SimAwareTraconFeature | FIRFeature | null; merged: ControllerMerged | undefined }) {
+	const { timeFormat, timeZone } = useSettingsStore();
+
 	const [hoveredController, setHoveredController] = useState(null as string | null);
 	const [clickedController, setClickedController] = useState(null as string | null);
 	const [copied, setCopied] = useState<string | null>(null);
 
-	const controllers = merged?.controllers as Required<ControllerShort>[] | undefined;
+	const controllers = merged?.controllers as ControllerShort[] | undefined;
 
 	const handleCopyClick = () => {
 		copyControllerAtisToClipboard(controllers?.find((c) => c.callsign === hoveredController));
@@ -206,12 +219,21 @@ export function SectorOverlay({ cached, merged }: { cached: SimAwareTraconFeatur
 							>
 								<div className="overlay-controller-color" style={{ backgroundColor: getControllerColor(c.facility) }}></div>
 								<div className="overlay-controller-callsign">{c.callsign}</div>
-								<div className="overlay-controller-frequency">{(c.frequency / 1000).toFixed(3)}</div>
-								<Icon name="groups" size={16} />
-								<div className="overlay-controller-connections">{c.connections}</div>
-								<button type="button" className="overlay-controller-save" onClick={handleCopyClick}>
-									{copied === c.callsign ? <Icon name="select" size={20} /> : <Icon name="copy" size={14} />}
-								</button>
+								{c.frequency && <div className="overlay-controller-frequency">{(c.frequency / 1000).toFixed(3)}</div>}
+								{c.connections && (
+									<>
+										<Icon name="groups" size={16} />
+										<div className="overlay-controller-connections">{c.connections}</div>
+									</>
+								)}
+								{c.atis && (
+									<button type="button" className="overlay-controller-save" onClick={handleCopyClick}>
+										{copied === c.callsign ? <Icon name="select" size={20} /> : <Icon name="copy" size={14} />}
+									</button>
+								)}
+								{c.booking && (
+									<div className="overlay-controller-booking">{`${convertTime(c.booking.start, timeFormat, timeZone, false)} - ${convertTime(c.booking.end, timeFormat, timeZone)}`}</div>
+								)}
 							</div>
 						);
 					})}

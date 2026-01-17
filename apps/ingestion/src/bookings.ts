@@ -13,8 +13,16 @@ export async function updateBookingsData(): Promise<void> {
 
 	const bookings = await axios.get<VatsimBooking[]>("https://atc-bookings.vatsim.net/api/booking").then((res) => res.data);
 	const parsedBookings = parseBookings(bookings);
-	rdsPub("data:bookings", parsedBookings);
 
+	const twoDaysFromNow = now + 2 * 24 * 60 * 60 * 1000;
+	const limitedBookings = parsedBookings.filter((booking) => {
+		const bookingStart = new Date(booking.start).getTime();
+		return bookingStart <= twoDaysFromNow;
+	});
+
+	const sortedBookings = limitedBookings.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+
+	rdsPub("data:bookings", sortedBookings);
 	lastUpdate = now;
 }
 

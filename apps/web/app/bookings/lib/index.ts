@@ -19,28 +19,43 @@ export async function setFeaturesByTime(time: number): Promise<void> {
 		return startTime <= time && time < endTime;
 	});
 
-	const controllersMerged = parseBookings(currentBookings);
-	const staticAirports = await Promise.all(controllersMerged.filter((c) => c.facility === "airport").map((c) => getCachedAirport(c.id)));
-	mapService.setFeatures({ controllers: controllersMerged, airports: staticAirports.filter((a): a is NonNullable<typeof a> => a !== null) });
+	const controllers = parseBookings(currentBookings);
+	const staticAirports = await Promise.all(
+		controllers.filter((c) => c.facility === "airport").map((c) => getCachedAirport(c.id.replace(/^airport_/, ""))),
+	);
+
+	mapService.setStore({ controllers });
+	mapService.setFeatures({
+		controllers,
+		airports: staticAirports.filter((a): a is NonNullable<typeof a> => a !== null),
+		sunTime: new Date(time),
+	});
 }
 
 function parseBookings(bookings: Booking[]): ControllerMerged[] {
 	const controllersMerged = new Map<string, ControllerMerged>();
 
 	for (const booking of bookings) {
-		if (!controllersMerged.has(booking.id)) {
-			controllersMerged.set(booking.id, {
-				id: booking.id,
+		const id = `${getFacilityType(booking.facility)}_${booking.id}`;
+
+		if (!controllersMerged.has(id)) {
+			controllersMerged.set(id, {
+				id,
 				facility: getFacilityType(booking.facility),
 				controllers: [],
 			});
 		}
-		const merged = controllersMerged.get(booking.id);
+		const merged = controllersMerged.get(id);
 		if (!merged) continue;
 
 		const controllerShort: ControllerShort = {
 			callsign: booking.callsign,
 			facility: booking.facility,
+			booking: {
+				start: booking.start,
+				end: booking.end,
+				type: booking.type,
+			},
 		};
 		merged.controllers.push(controllerShort);
 	}

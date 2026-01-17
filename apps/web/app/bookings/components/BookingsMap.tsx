@@ -11,7 +11,7 @@ export default function BookingsMap() {
 	const { dayNightLayer, dayNightLayerBrightness, airportMarkerSize, traconColor, firColor } = useSettingsStore();
 
 	useEffect(() => {
-		const map = mapService.init({ autoTrackPoints: false, disableCenterOnPageLoad: true });
+		const map = mapService.init({ autoTrackPoints: false, disableCenterOnPageLoad: true, sunTime: new Date() });
 		mapService.addEventListeners();
 
 		return () => {
