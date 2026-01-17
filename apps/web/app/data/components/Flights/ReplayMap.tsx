@@ -10,7 +10,7 @@ export default function ReplayMap() {
 	const { dayNightLayer, dayNightLayerBrightness, planeMarkerSize, airportMarkerSize } = useSettingsStore();
 
 	useEffect(() => {
-		const map = mapService.init({ autoTrackPoints: false, disableInteractions: true, disableCenterOnPageLoad: true });
+		const map = mapService.init({ autoTrackPoints: false, disableInteractions: true, disableCenterOnPageLoad: true, sunTime: new Date() });
 		mapService.addEventListeners();
 
 		return () => {

@@ -23,6 +23,7 @@ type Options = {
 	autoTrackPoints?: boolean;
 	disableInteractions?: boolean;
 	disableCenterOnPageLoad?: boolean;
+	sunTime?: Date;
 };
 
 export class MapService {
@@ -87,7 +88,7 @@ export class MapService {
 			properties: { type: "base" },
 		});
 
-		const sunLayer = this.sunService.init();
+		const sunLayer = this.sunService.init(this.options?.sunTime);
 		const pilotLayers = this.pilotService.init();
 		const airportLayer = this.airportService.init();
 		const controllerLayers = this.controllerService.init();
@@ -345,12 +346,14 @@ export class MapService {
 		controllers,
 		trackPoints,
 		autoTrackId,
+		sunTime,
 	}: {
 		pilots?: Required<PilotShort>[];
 		airports?: StaticAirport[];
 		controllers?: ControllerMerged[];
 		trackPoints?: TrackPoint[];
 		autoTrackId?: string;
+		sunTime?: Date;
 	}): Promise<void> {
 		if (pilots) {
 			this.pilotService.setFeatures(pilots);
@@ -364,6 +367,9 @@ export class MapService {
 		if (trackPoints) {
 			this.trackService.setFeatures(trackPoints, autoTrackId);
 		}
+		if (sunTime) {
+			this.sunService.setFeatures(sunTime);
+		}
 		this.renderFeatures();
 	}
 
@@ -371,10 +377,12 @@ export class MapService {
 		pilots,
 		airports,
 		controllers,
+		sunTime,
 	}: {
 		pilots?: PilotDelta;
 		airports?: StaticAirport[];
 		controllers?: ControllerDelta;
+		sunTime?: Date;
 	}): Promise<void> {
 		let resetNeeded = false;
 
@@ -386,6 +394,9 @@ export class MapService {
 		}
 		if (controllers) {
 			resetNeeded = (await this.controllerService.updateFeatures(controllers)) || resetNeeded;
+		}
+		if (sunTime) {
+			this.sunService.setFeatures(sunTime);
 		}
 
 		if (this.clickedFeature && this.clickedOverlay) {

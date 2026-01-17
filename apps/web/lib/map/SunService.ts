@@ -10,7 +10,7 @@ export class Sunservice {
 	});
 	private layer: WebGLVectorLayer | null = null;
 
-	public init(): WebGLVectorLayer {
+	public init(time?: Date): WebGLVectorLayer {
 		this.layer = new WebGLVectorLayer({
 			source: this.source,
 			variables: {
@@ -24,10 +24,12 @@ export class Sunservice {
 			},
 		});
 
-		setInterval(() => {
-			this.updateFeatures();
-		}, 30000);
-		this.updateFeatures();
+		if (!time) {
+			setInterval(() => {
+				this.setFeatures(new Date());
+			}, 30000);
+		}
+		this.setFeatures(time || new Date());
 
 		return this.layer;
 	}
@@ -45,9 +47,9 @@ export class Sunservice {
 		}
 	}
 
-	private updateFeatures(): void {
+	public setFeatures(time: Date): void {
 		const angles = [0.566666, 6, 12, 18];
-		const center = this.getShadowPosition(new Date());
+		const center = this.getShadowPosition(time);
 
 		const newFeatures = angles.map((angle) => {
 			const radius = this.getShadowRadiusFromAngle(angle);

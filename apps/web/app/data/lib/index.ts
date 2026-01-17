@@ -12,7 +12,7 @@ let pilotId: string = "";
 export async function init(pilot: PilotLong, trackPoints: Required<TrackPoint>[]): Promise<void> {
 	airports = await initAirports(pilot);
 
-	mapService.setFeatures({ airports, trackPoints, pilots: [getPilotShort(pilot, trackPoints[0])] });
+	mapService.setFeatures({ airports, trackPoints, pilots: [getPilotShort(pilot, trackPoints[0])], sunTime: new Date(trackPoints[0].timestamp) });
 	mapService.setClickedFeature("pilot", pilot.id, true);
 	mapService.fitFeatures({ airports: airports.map((a) => a.id), rememberView: false });
 
@@ -45,7 +45,7 @@ export function updatePilot(trackPoint: Required<TrackPoint> | undefined): void 
 		heading: trackPoint.heading,
 	};
 	const delta = { updated: [pilotShort], added: [] };
-	mapService.updateFeatures({ pilots: delta });
+	mapService.updateFeatures({ pilots: delta, sunTime: new Date(trackPoint.timestamp) });
 }
 
 function getPilotShort(pilot: PilotLong, trackPoint: Required<TrackPoint> | undefined): Required<PilotShort> {
