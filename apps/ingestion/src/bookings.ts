@@ -48,6 +48,7 @@ function parseBookings(bookings: VatsimBooking[]): Booking[] {
 			id,
 			facility,
 			callsign: booking.callsign,
+			type: booking.type,
 			start: booking.start,
 			end: booking.end,
 		};

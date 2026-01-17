@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import useSWR from "swr";
 import Spinner from "@/components/Spinner/Spinner";
 import { fetchApi } from "@/utils/api";
-import { initDataLayers } from "../lib/map";
+import { init } from "../lib";
 import BookingsControls from "./BookingsControls";
 import BookingsMap from "./BookingsMap";
 
@@ -16,8 +16,9 @@ export default function Bookings() {
 	});
 
 	useEffect(() => {
-		if (!data) return;
-		initDataLayers(data);
+		if (data) {
+			init(data);
+		}
 	}, [data]);
 
 	if (!data || isLoading) {

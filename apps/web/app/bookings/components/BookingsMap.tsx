@@ -2,29 +2,30 @@
 
 import { useTheme } from "next-themes";
 import { useEffect } from "react";
-import { setSunLayerSettings } from "@/components/Map/sunLayer";
 import { useSettingsStore } from "@/storage/zustand";
-import { initMap, setDataLayersSettings, setMapTheme } from "../lib/map";
 import "./Bookings.css";
+import { mapService } from "../lib";
 
 export default function BookingsMap() {
 	const { theme } = useTheme();
 	const { dayNightLayer, dayNightLayerBrightness, airportMarkerSize, traconColor, firColor } = useSettingsStore();
 
 	useEffect(() => {
-		const map = initMap();
+		const map = mapService.init({ autoTrackPoints: false, disableInteractions: true, disableCenterOnPageLoad: true });
+		mapService.addEventListeners();
+
 		return () => {
+			mapService.removeEventListeners();
 			map.setTarget(undefined);
 		};
 	}, []);
 
 	useEffect(() => {
-		setMapTheme(theme === "dark");
+		mapService.setTheme(theme);
 	}, [theme]);
 
 	useEffect(() => {
-		setSunLayerSettings(dayNightLayer, dayNightLayerBrightness);
-		setDataLayersSettings(airportMarkerSize, traconColor, firColor);
+		mapService.setSettings({ dayNightLayer, dayNightLayerBrightness, airportMarkerSize, traconColor, firColor });
 	}, [dayNightLayer, dayNightLayerBrightness, airportMarkerSize, traconColor, firColor]);
 
 	return <div id="map" />;

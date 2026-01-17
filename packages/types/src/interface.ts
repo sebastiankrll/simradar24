@@ -209,6 +209,7 @@ export interface Booking {
 	id: string;
 	callsign: string;
 	facility: number;
+	type: "event" | "exam" | "training" | "booking";
 	start: string;
 	end: string;
 }
