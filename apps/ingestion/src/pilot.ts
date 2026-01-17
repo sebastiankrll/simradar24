@@ -107,10 +107,6 @@ export async function mapPilots(vatsimData: VatsimData): Promise<PilotLong[]> {
 			let pilotLong: PilotLong;
 			if (cachedPilot) {
 				pilotLong = { ...cachedPilot, ...updatedFields };
-				const short = getPilotShort(pilotLong, cachedPilot);
-				if (short) {
-					updated.push(short);
-				}
 			} else {
 				pilotLong = {
 					id: id,
@@ -127,11 +123,16 @@ export async function mapPilots(vatsimData: VatsimData): Promise<PilotLong[]> {
 					live: "live",
 					...updatedFields,
 				};
-				added.push(getPilotShort(pilotLong) as Required<PilotShort>);
 			}
 
 			pilotLong.vertical_speed = calculateVerticalSpeed(pilotLong, cachedPilot);
 			pilotLong.times = mapPilotTimes(pilotLong, cachedPilot, pilot);
+
+			if (cachedPilot) {
+				updated.push(getPilotShort(pilotLong, cachedPilot));
+			} else {
+				added.push(getPilotShort(pilotLong));
+			}
 
 			newPilotsLong.push(pilotLong);
 			newCached.push(pilotLong);

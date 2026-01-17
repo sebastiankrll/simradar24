@@ -22,6 +22,22 @@ async function onDeleteAccount() {
 	}
 }
 
+function stripNumbersIfMixed(name: string): string {
+	const trimmed = name.trim();
+
+	// Only numbers → return as-is (after trim)
+	if (/^\d+$/.test(trimmed)) {
+		return trimmed;
+	}
+
+	// Has at least one letter AND one number → remove all numbers
+	if (/[a-zA-Z]/.test(trimmed) && /\d/.test(trimmed)) {
+		return trimmed.replace(/\d+/g, "").trim();
+	}
+
+	return trimmed;
+}
+
 export default function Auth({ session }: { session: Session | null }) {
 	return (
 		<main id="auth-page">
@@ -30,7 +46,7 @@ export default function Auth({ session }: { session: Session | null }) {
 				<Icon name="cancel" />
 			</a>
 			<div id="auth-logins">
-				<div id="auth-title">{session?.vatsim ? `Hi, ${session.vatsim.name}!` : "Welcome!"}</div>
+				<div id="auth-title">{session?.vatsim ? `Hi, ${stripNumbersIfMixed(session.vatsim.name)}!` : "Welcome!"}</div>
 				<p>Connect VATSIM to sync settings between devices and access personalized features.</p>
 				<button type="button" id="vatsim-login" className="auth-login-button" onClick={() => signIn("vatsim")} disabled={!!session?.vatsim}>
 					{session?.vatsim ? "VATSIM Connected!" : "Connect VATSIM"}

@@ -111,6 +111,11 @@ export interface ControllerShort {
 	facility: number;
 	atis?: string[] | null;
 	connections?: number;
+	booking?: {
+		start: string;
+		end: string;
+		type: "event" | "exam" | "training" | "booking";
+	};
 }
 
 export interface ControllerLong extends Required<ControllerShort> {
@@ -203,4 +208,13 @@ export interface RedisAll {
 	airports: AirportLong[];
 	dashboard: DashboardData;
 	init: InitialData;
+}
+
+export interface Booking {
+	id: string;
+	callsign: string;
+	facility: number;
+	type: "event" | "exam" | "training" | "booking";
+	start: string;
+	end: string;
 }

@@ -4,8 +4,7 @@ import Icon from "@/components/Icon/Icon";
 import "./FiltersPanel.css";
 import { type SyntheticEvent, useCallback, useEffect, useState } from "react";
 import type { MultiValue } from "react-select";
-import { resetMap } from "@/app/(map)/lib/events";
-import { applyMapFilters } from "@/app/(map)/lib/filters";
+import { mapService } from "@/app/(map)/lib";
 import { RangeSwitch } from "@/components/Input/Input";
 import { multiStyles, Select, type SelectOptionType, singleStyles } from "@/components/Select/Select";
 import { getFilterValues } from "@/storage/filter";
@@ -70,7 +69,7 @@ export default function FiltersPanel() {
 	const handleSaveAndApply = () => {
 		setFilters(filterValues);
 		setActive(true);
-		applyMapFilters(filterValues);
+		mapService.setFilters(filterValues);
 	};
 
 	const handleClearAll = () => {
@@ -78,7 +77,7 @@ export default function FiltersPanel() {
 		setFilterValues({});
 		resetAllFilters();
 		setActive(false);
-		applyMapFilters({});
+		mapService.setFilters();
 	};
 
 	useEffect(() => {
@@ -100,7 +99,7 @@ export default function FiltersPanel() {
 		<>
 			<div className="panel-header">
 				<div className="panel-id">Filters</div>
-				<button className="panel-close" type="button" onClick={() => resetMap()}>
+				<button className="panel-close" type="button" onClick={() => mapService.resetMap()}>
 					<Icon name="cancel" size={24} />
 				</button>
 			</div>
@@ -140,7 +139,7 @@ export default function FiltersPanel() {
 						Save & Apply
 					</button>
 					<button type="button" className="filter-action" style={{ background: "var(--color-red)" }} onClick={handleClearAll}>
-						Clear All
+						Reset All
 					</button>
 				</div>
 

@@ -6,12 +6,11 @@ import { type InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
-import { setHoveredPilot } from "@/app/(map)/lib/events";
+import { mapService } from "@/app/(map)/lib";
 import { getAirlineIcon } from "@/components/Icon/Icon";
 import { getDelayColorFromDates } from "@/components/Panel/utils";
 import Spinner from "@/components/Spinner/Spinner";
 import { getCachedAirline, getCachedAirport } from "@/storage/cache";
-import { cacheIsInitialized } from "@/storage/map";
 import { useSettingsStore } from "@/storage/zustand";
 import { fetchApi } from "@/utils/api";
 import { convertTime } from "@/utils/helpers";
@@ -134,11 +133,7 @@ function ListItem({
 	useEffect(() => {
 		const airlineCode = pilot.callsign.slice(0, 3).toUpperCase();
 
-		const loadData = async () => {
-			while (!cacheIsInitialized()) {
-				await new Promise((resolve) => setTimeout(resolve, 50));
-			}
-
+		(async () => {
 			const [airline, departure, arrival] = await Promise.all([
 				getCachedAirline(airlineCode || ""),
 				getCachedAirport(pilot.flight_plan?.departure.icao || ""),
@@ -146,9 +141,7 @@ function ListItem({
 			]);
 
 			setData({ airline, departure, arrival });
-		};
-
-		loadData();
+		})();
 	}, [pilot]);
 
 	const schedTime = dir === "dep" ? pilot.times?.sched_off_block : pilot.times?.sched_on_block;
@@ -161,8 +154,8 @@ function ListItem({
 			onClick={() => {
 				router.push(`/pilot/${pilot.id}`);
 			}}
-			onPointerEnter={() => setHoveredPilot(pilot.id)}
-			onPointerLeave={() => setHoveredPilot(null)}
+			onPointerEnter={() => mapService.setHoveredFeature("pilot", pilot.id)}
+			onPointerLeave={() => mapService.setHoveredFeature()}
 		>
 			<div className={`panel-airport-flights-delay ${getDelayColorFromDates(schedTime, estTime) ?? ""}`}></div>
 			<div className="panel-airport-flights-times">

@@ -1,6 +1,6 @@
 import type { FIRFeature, SimAwareTraconFeature, StaticAircraft, StaticAirline, StaticAirport } from "@sr24/types/db";
 import type { DeltaTrackPoint, TrackPoint } from "@sr24/types/interface";
-import { decodeTrackPoints } from "@/components/Map/trackFeatures";
+import { decodeTrackPoints } from "@/lib/map/tracks";
 import { fetchApi } from "@/utils/api";
 import { dxGetAirline, dxGetAirport, dxGetFirs, dxGetTracons } from "./dexie";
 

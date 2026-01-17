@@ -1,14 +1,19 @@
 import type { VatsimEvent } from "@sr24/types/vatsim";
+import { useState } from "react";
+import { mapService } from "@/app/(map)/lib";
+import Icon from "@/components/Icon/Icon";
 import { useSettingsStore } from "@/storage/zustand";
 import { convertTime } from "@/utils/helpers";
 
 export function DashboardEvents({ events, ref, openSection }: { events: VatsimEvent[]; ref: React.Ref<HTMLDivElement>; openSection: string[] }) {
+	const [selected, setSelected] = useState<number | null>(null);
+
 	return (
 		<div ref={ref} className={`panel-section-content accordion${openSection.includes("events") ? " open" : ""}`}>
 			<div className="panel-data-separator">Todays events</div>
-			<Events events={events} dayFilter={new Date()} />
+			<Events events={events} dayFilter={new Date()} selected={selected} setSelected={setSelected} />
 			<div className="panel-data-separator">Tomorrows events</div>
-			<Events events={events} dayFilter={new Date(Date.now() + 86400000)} />
+			<Events events={events} dayFilter={new Date(Date.now() + 86400000)} selected={selected} setSelected={setSelected} />
 		</div>
 	);
 }
@@ -23,7 +28,25 @@ function getDurationString(start: string, end: string, timeFormat: "12h" | "24h"
 	return `${startDay}.${startMonth} ${convertTime(startDate, timeFormat, timeZone, false)} - ${convertTime(endDate, timeFormat, timeZone, false)}`;
 }
 
-function Events({ events, dayFilter }: { events: VatsimEvent[]; dayFilter: Date }) {
+function getActiveStatus(start: string, end: string): boolean {
+	const now = Date.now();
+	const startTime = Date.parse(start);
+	const endTime = Date.parse(end);
+
+	return startTime <= now && now < endTime;
+}
+
+function Events({
+	events,
+	dayFilter,
+	selected,
+	setSelected,
+}: {
+	events: VatsimEvent[];
+	dayFilter: Date;
+	selected: number | null;
+	setSelected: React.Dispatch<React.SetStateAction<number | null>>;
+}) {
 	const { timeZone, timeFormat } = useSettingsStore();
 
 	const todaysEvents = events.filter((event) => {
@@ -41,11 +64,37 @@ function Events({ events, dayFilter }: { events: VatsimEvent[]; dayFilter: Date 
 				<p>No events today.</p>
 			) : (
 				todaysEvents.map((event) => (
-					<a key={event.id} className="dashboard-event-item" href={event.link} target="_blank" rel="noreferrer">
-						<p className="dashboard-event-title">{event.name}</p>
-						<p>{event.airports.map((airport) => airport.icao).join(", ")}</p>
-						<p>{getDurationString(event.start_time, event.end_time, timeFormat, timeZone)}</p>
-					</a>
+					<div key={event.id} className={`dashboard-event-item${selected === event.id ? " selected" : ""}`}>
+						<div className="dashboard-event-content">
+							<p className="dashboard-event-title">
+								{getActiveStatus(event.start_time, event.end_time) && <span></span>}
+								{event.name}
+							</p>
+							<p>{event.airports.map((airport) => airport.icao).join(", ")}</p>
+							<p>{getDurationString(event.start_time, event.end_time, timeFormat, timeZone)}</p>
+						</div>
+						<div className="dashboard-event-buttons">
+							<button
+								type="button"
+								className="dashboard-event-button"
+								onClick={() => {
+									if (selected === event.id) {
+										setSelected(null);
+										mapService.unfocusFeatures();
+									} else {
+										setSelected(event.id);
+										mapService.focusFeatures({ airports: event.airports.map((airport) => airport.icao), hideLayers: ["pilot", "controller"] });
+										mapService.fitFeatures({ airports: event.airports.map((airport) => airport.icao), rememberView: false });
+									}
+								}}
+							>
+								<Icon name={selected === event.id ? "cancel" : "tour"} size={24} />
+							</button>
+							<a href={event.link} className="dashboard-event-button" target="_blank" rel="noreferrer">
+								<Icon name="share-android" size={24} />
+							</a>
+						</div>
+					</div>
 				))
 			)}
 		</div>

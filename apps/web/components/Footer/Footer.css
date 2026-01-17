@@ -50,19 +50,7 @@ footer {
 	width: 8px;
 	background: var(--color-green);
 	border-radius: 50%;
-	animation: connected-blink 2s infinite;
-}
-
-@keyframes connected-blink {
-	0%,
-	50%,
-	100% {
-		opacity: 1;
-	}
-	25%,
-	75% {
-		opacity: 0;
-	}
+	animation: blink 2s infinite;
 }
 
 #footer-clock span {

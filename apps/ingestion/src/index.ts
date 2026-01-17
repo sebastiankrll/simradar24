@@ -5,10 +5,12 @@ import type { InitialData, RedisAll, WsDelta } from "@sr24/types/interface";
 import type { VatsimData, VatsimTransceivers } from "@sr24/types/vatsim";
 import axios from "axios";
 import { getAirportDelta, getAirportShort, mapAirports } from "./airport.js";
+import { updateBookingsData } from "./bookings.js";
 import { getControllerDelta, mapControllers } from "./controller.js";
 import { updateDashboardData } from "./dashboard.js";
 import { getPilotDelta, getPilotShort, mapPilots } from "./pilot.js";
 import { mapTrackPoints } from "./tracks.js";
+import { updateSectorPrefixes } from "./utils/sectors.js";
 
 const VATSIM_DATA_URL = "https://data.vatsim.net/v3/vatsim-data.json";
 const VATSIM_TRANSCEIVERS_URL = "https://data.vatsim.net/v3/transceivers-data.json";
@@ -35,6 +37,8 @@ async function fetchVatsimData(): Promise<void> {
 		lastVatsimUpdate = timestmap;
 		vatsimData.transceivers = await axios.get<VatsimTransceivers[]>(VATSIM_TRANSCEIVERS_URL).then((res) => res.data);
 
+		await updateSectorPrefixes();
+
 		const pilotsLong = await mapPilots(vatsimData);
 		const [controllersLong, controllersMerged] = await mapControllers(vatsimData, pilotsLong);
 		const airportsLong = await mapAirports(pilotsLong);
@@ -50,6 +54,7 @@ async function fetchVatsimData(): Promise<void> {
 		}
 
 		const dashboard = await updateDashboardData(vatsimData, controllersLong);
+		updateBookingsData();
 
 		const init: InitialData = {
 			pilots: pilotsLong.map((p) => getPilotShort(p)),

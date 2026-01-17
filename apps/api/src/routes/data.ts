@@ -1,8 +1,14 @@
 import { rdsGetSingle } from "@sr24/db/redis";
 import type { FastifyPluginAsync } from "fastify";
 import { getFlightsByCallsign, getFlightsByRegistration, getPilotReplay } from "../services/db.js";
+import { bookingsStore } from "../stores/bookings.js";
+import { getDataVersions } from "../stores/static.js";
 
 const dataRoutes: FastifyPluginAsync = async (app) => {
+	app.get("/static/versions", async () => {
+		return await getDataVersions();
+	});
+
 	app.get(
 		"/flights/callsign/:callsign",
 		{
@@ -96,6 +102,10 @@ const dataRoutes: FastifyPluginAsync = async (app) => {
 			return aircraft;
 		},
 	);
+
+	app.get("/bookings", async () => {
+		return bookingsStore.bookings;
+	});
 };
 
 export default dataRoutes;

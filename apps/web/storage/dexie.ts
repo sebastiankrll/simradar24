@@ -51,16 +51,14 @@ export function dxEnsureInitialized(setStatus?: StatusSetter): Promise<void> {
 export function dxDatabaseIsStale(): boolean {
 	const lastCheck = localStorage.getItem("simradar21-db");
 	const now = Date.now();
-	if (lastCheck && now - parseInt(lastCheck, 10) < 12 * 60 * 60 * 1000) {
+	if (lastCheck && now - parseInt(lastCheck, 10) < 30 * 60 * 1000) {
 		return false;
 	}
 	return true;
 }
 
 async function dxInitDatabases(setStatus?: StatusSetter): Promise<void> {
-	const latestManifest = await fetchApi<StaticVersions>(`${R2_BUCKET_URL}/manifest.json`, {
-		cache: "no-store",
-	});
+	const latestManifest = await fetchApi<StaticVersions>("/data/static/versions");
 	const storedManifest = (await db.manifest.get("databaseVersions")) as Manifest | undefined;
 
 	if (latestManifest.airportsVersion !== storedManifest?.versions.airportsVersion) {

@@ -9,13 +9,13 @@ export function PilotCharts({
 	openSection,
 	ref,
 }: {
-	trackPoints: TrackPoint[];
+	trackPoints: TrackPoint[] | undefined;
 	openSection: string | null;
 	ref: React.Ref<HTMLDivElement>;
 }) {
 	const { altitudeUnit, speedUnit, timeFormat, timeZone } = useSettingsStore();
-	const data = trackPoints.map((point) => ({
-		name: convertTime(point.timestamp * 1000, timeFormat, timeZone),
+	const data = trackPoints?.map((point) => ({
+		name: convertTime(point.timestamp, timeFormat, timeZone),
 		altitude: convertAltitude(point.altitude_ms, altitudeUnit),
 		speed: convertSpeed(point.groundspeed, speedUnit),
 	}));

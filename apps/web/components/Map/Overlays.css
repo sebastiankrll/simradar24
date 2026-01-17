@@ -1,0 +1,238 @@
+.overlay-wrapper {
+	display: flex;
+	flex-flow: column;
+	gap: 0.2rem;
+	position: relative;
+	border: none;
+	max-width: 300px;
+}
+
+.overlay-atis {
+	background: var(--color-red);
+	padding: 2px;
+	box-sizing: border-box;
+	box-shadow: var(--box-shadow);
+}
+
+.overlay-atis-item {
+	background: var(--color-bg);
+	padding: 4px;
+	box-sizing: border-box;
+	font-size: var(--font-size-small);
+}
+
+.overlay-live {
+	display: grid;
+	gap: 2px;
+	padding: 2px;
+	background: var(--color-red);
+	box-shadow: var(--box-shadow);
+}
+
+.overlay-live.pilot {
+	grid-template-columns: 1fr 1fr;
+	grid-template-rows: auto auto;
+}
+
+.overlay-live-item {
+	display: flex;
+	background-color: var(--color-bg);
+	font-size: var(--font-size-small);
+	justify-content: space-between;
+	align-items: center;
+	padding: 0px 4px;
+	min-height: 20px;
+}
+
+.overlay-live-item.controller {
+	justify-content: initial;
+	cursor: pointer;
+}
+
+.overlay-live-item.controller.active {
+	background-color: var(--color-green);
+}
+
+.overlay-live-item.controller:hover {
+	background-color: var(--color-hover);
+}
+
+.overlay-live-item.controller:hover *,
+.overlay-live-item.controller.active * {
+	color: white;
+}
+
+.overlay-live-item span {
+	font-weight: var(--font-weight-bold);
+}
+
+.overlay-controller-color {
+	height: 8px;
+	width: 8px;
+	border-radius: 50%;
+	margin-right: 5px;
+}
+
+.overlay-controller-callsign {
+	font-weight: var(--font-weight-bold);
+	margin-right: auto;
+}
+
+.overlay-controller-frequency {
+	margin-left: 2rem;
+	font-weight: var(--font-weight-bold);
+	margin-right: 10px;
+}
+
+.overlay-controller-connections {
+	margin-left: 3px;
+	text-align: end;
+}
+
+.overlay-controller-booking {
+	margin-left: 2rem;
+}
+
+.overlay-controller-save {
+	margin-left: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+}
+
+.overlay-controller-save use {
+	color: var(--color-main-text);
+}
+
+.overlay-main-wrapper {
+	display: flex;
+	background: var(--color-red);
+	height: 2.5rem;
+	padding: 2px;
+	box-sizing: border-box;
+	box-shadow: var(--box-shadow);
+}
+
+.overlay-main-wrapper.minimal {
+	height: fit-content;
+	color: white;
+	padding: 0px 5px;
+	font-weight: var(--font-weight-bold);
+	line-height: 18px;
+	font-size: var(--font-size-normal);
+}
+
+.overlay-main-wrapper::after {
+	content: "";
+	position: absolute;
+	bottom: -6px;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 0;
+	height: 0;
+	border-left: 8px solid transparent;
+	border-right: 8px solid transparent;
+	border-top: 8px solid var(--color-red);
+}
+
+.overlay-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	aspect-ratio: 1 / 1;
+	background-color: var(--color-bg);
+}
+
+.overlay-icon.flag {
+	padding: 0px 4px;
+	box-sizing: border-box;
+}
+
+.overlay-icon p,
+.overlay-icon span {
+	font-weight: 800;
+	font-size: 18px;
+	line-height: 18px;
+}
+
+.overlay-title {
+	display: flex;
+	flex-flow: column;
+	gap: 2px;
+	margin-left: 5px;
+	margin-right: auto;
+	min-width: 0;
+	justify-content: center;
+}
+
+.overlay-title p {
+	color: white;
+	font-weight: var(--font-weight-bold);
+	font-size: var(--font-size-normal);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.overlay-title p:last-child {
+	font-size: var(--font-size-small);
+	font-weight: var(--font-weight-normal);
+}
+
+.overlay-misc {
+	display: flex;
+	flex-flow: column;
+	gap: 5px;
+	height: 100%;
+	margin-left: 1rem;
+}
+
+.overlay-misc div {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 12px;
+	line-height: 12px;
+	padding: 2px 0px;
+	width: 2.8rem;
+}
+
+.overlay-pilot-ac-type {
+	background: rgb(21, 27, 39);
+	color: white;
+	font-weight: 700;
+}
+
+.overlay-pilot-frequency {
+	color: white;
+}
+
+.overlay-misc .overlay-airport-traffic {
+	gap: 2px;
+	height: 50%;
+	overflow: hidden;
+	width: fit-content;
+	padding-right: 4px;
+}
+
+.overlay-airport-traffic p {
+	color: white;
+	width: 16px;
+	text-align: end;
+}
+
+.overlay-airport-traffic use {
+	color: white;
+}
+
+.overlay-anchor {
+	position: absolute;
+	width: 40px;
+	height: 20px;
+	bottom: -20px;
+	left: 50%;
+	transform: translate(-50%);
+}

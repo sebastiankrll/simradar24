@@ -147,3 +147,20 @@ export const useFiltersStore = create<FilterState>()(
 		},
 	),
 );
+
+export const useMapVisibilityStore = create<{ isHidden: boolean; setHidden: (value: boolean) => void }>()(
+	persist(
+		(set) => ({
+			isHidden: false,
+			setHidden: (value: boolean) => set({ isHidden: value }),
+		}),
+		{
+			name: "simradar21-map-visibility",
+		},
+	),
+);
+
+export const useMapRotationStore = create<{ rotation: number; setRotation: (value: number) => void }>((set) => ({
+	rotation: 0,
+	setRotation: (value: number) => set({ rotation: value }),
+}));

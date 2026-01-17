@@ -75,12 +75,31 @@
 
 .dashboard-event-item {
 	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 4px;
 }
 
-.dashboard-event-item {
+.dashboard-event-item.selected {
+	background: var(--color-red);
+	color: white;
+}
+
+.dashboard-event-buttons {
 	display: flex;
-	flex-flow: column;
-	padding: 4px;
+	gap: 8px;
+}
+
+.dashboard-event-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+}
+
+.dashboard-event-button:hover use {
+	color: var(--color-green);
 }
 
 .dashboard-event-item:hover {
@@ -95,9 +114,20 @@
 	font-size: var(--font-size-small);
 }
 
-.dashboard-event-item .dashboard-event-title {
+.dashboard-event-title {
 	font-weight: var(--font-weight-bold);
 	font-size: var(--font-size-small);
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+
+.dashboard-event-title span {
+	background: var(--color-green);
+	height: 6px;
+	width: 6px;
+	border-radius: 50%;
+	display: inline-block;
+	border: 1px solid var(--color-main-text);
+	animation: blink 2s infinite;
+	margin-right: 4px;
 }

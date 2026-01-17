@@ -19,7 +19,7 @@ export async function getPilotsByAirport(icao: string, direction?: string, limit
 		where[timeCol] = { gte: new Date() };
 	}
 
-	return await prisma.pilot.findMany({
+	let pilots = await prisma.pilot.findMany({
 		take: normalizedBackwards ? -(normalizedLimit + 1) : normalizedLimit + 1,
 		skip: cursor ? 1 : 0,
 		cursor: cursor
@@ -40,6 +40,28 @@ export async function getPilotsByAirport(icao: string, direction?: string, limit
 			live: true,
 		},
 	});
+
+	if (!cursor && pilots.length === 0) {
+		pilots = await prisma.pilot.findMany({
+			take: 5,
+			where: {
+				[dirCol]: icao.toUpperCase(),
+				[timeCol]: { lt: new Date() },
+			},
+			orderBy: { [timeCol]: "desc" },
+			select: {
+				id: true,
+				callsign: true,
+				aircraft: true,
+				flight_plan: true,
+				times: true,
+				live: true,
+			},
+		});
+		pilots.reverse();
+	}
+
+	return pilots;
 }
 
 async function searchPilots(where: Prisma.PilotWhereInput) {

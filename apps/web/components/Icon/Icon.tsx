@@ -1,8 +1,8 @@
 import type { StaticAirline } from "@sr24/types/db";
 
-export default function Icon({ name, size = 32, offset }: { name: string; size?: number; offset?: number }) {
+export default function Icon({ name, size = 32, offset, style }: { name: string; size?: number; offset?: number; style?: React.CSSProperties }) {
 	return (
-		<svg width={size} height={size} aria-hidden="true" style={{ transform: offset ? `translateY(${offset}px)` : undefined }}>
+		<svg width={size} height={size} aria-hidden="true" style={{ transform: offset ? `translateY(${offset}px)` : undefined, ...style }}>
 			<use href={`/sprites/icons.svg#${name}`} />
 		</svg>
 	);
