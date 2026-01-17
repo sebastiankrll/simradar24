@@ -135,7 +135,7 @@ export class MapService {
 		this.lastSettings = settings;
 	}
 
-	public setFilters(filters: Partial<Record<keyof FilterValues, SelectOptionType[] | number[]>>) {
+	public setFilters(filters?: Partial<Record<keyof FilterValues, SelectOptionType[] | number[]>>) {
 		this.pilotService.setFilters(filters);
 	}
 

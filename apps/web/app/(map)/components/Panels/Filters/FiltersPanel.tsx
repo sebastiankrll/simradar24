@@ -5,7 +5,6 @@ import "./FiltersPanel.css";
 import { type SyntheticEvent, useCallback, useEffect, useState } from "react";
 import type { MultiValue } from "react-select";
 import { mapService } from "@/app/(map)/lib";
-import { applyMapFilters } from "@/app/(map)/lib/filters";
 import { RangeSwitch } from "@/components/Input/Input";
 import { multiStyles, Select, type SelectOptionType, singleStyles } from "@/components/Select/Select";
 import { getFilterValues } from "@/storage/filter";
@@ -70,7 +69,7 @@ export default function FiltersPanel() {
 	const handleSaveAndApply = () => {
 		setFilters(filterValues);
 		setActive(true);
-		applyMapFilters(filterValues);
+		mapService.setFilters(filterValues);
 	};
 
 	const handleClearAll = () => {
@@ -78,7 +77,7 @@ export default function FiltersPanel() {
 		setFilterValues({});
 		resetAllFilters();
 		setActive(false);
-		applyMapFilters({});
+		mapService.setFilters();
 	};
 
 	useEffect(() => {

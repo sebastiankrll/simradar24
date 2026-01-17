@@ -70,8 +70,8 @@ export class PilotService {
 		this.shadowLayer?.updateStyleVariables({ theme });
 	}
 
-	public setFilters(filters: Partial<Record<keyof FilterValues, SelectOptionType[] | number[]>>) {
-		this.filters = filters;
+	public setFilters(filters?: Partial<Record<keyof FilterValues, SelectOptionType[] | number[]>>) {
+		this.filters = filters || {};
 	}
 
 	private filterFeatures(features: Feature<Point>[]): Feature<Point>[] {
