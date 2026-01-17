@@ -4,13 +4,13 @@ import type { DeltaTrackPoint, PilotLong, TrackPoint } from "@sr24/types/interfa
 import { toLonLat } from "ol/proj";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
-import { decodeTrackPoints } from "@/components/Map/trackFeatures";
 import Spinner from "@/components/Spinner/Spinner";
 import { fetchApi } from "@/utils/api";
 import { init, updatePilot } from "../../lib";
 import { ReplayControl } from "./ReplayControl";
 import ReplayMap from "./ReplayMap";
 import ReplayPanel from "./ReplayPanel";
+import { decodeTrackPoints } from "@/lib/map/tracks";
 
 interface ApiData {
 	pilot: PilotLong;

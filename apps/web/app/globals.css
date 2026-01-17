@@ -231,3 +231,15 @@ td {
 .delay-indicator.red {
 	background-color: var(--color-red);
 }
+
+@keyframes blink {
+	0%,
+	50%,
+	100% {
+		opacity: 1;
+	}
+	25%,
+	75% {
+		opacity: 0;
+	}
+}

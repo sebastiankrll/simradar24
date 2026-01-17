@@ -153,14 +153,18 @@ export function AirportOverlay({
 					<p>{`${cached?.id || "N/A"} / ${cached?.iata || "N/A"}`}</p>
 				</div>
 				<div className="overlay-misc">
-					<div className="overlay-airport-traffic">
-						<Icon name="departure" size={18} />
-						<p>{short?.dep_traffic?.traffic_count || 0}</p>
-					</div>
-					<div className="overlay-airport-traffic">
-						<Icon name="arrival" size={18} />
-						<p>{short?.arr_traffic?.traffic_count || 0}</p>
-					</div>
+					{short?.dep_traffic && (
+						<div className="overlay-airport-traffic">
+							<Icon name="departure" size={18} />
+							<p>{short?.dep_traffic?.traffic_count || 0}</p>
+						</div>
+					)}
+					{short?.arr_traffic && (
+						<div className="overlay-airport-traffic">
+							<Icon name="arrival" size={18} />
+							<p>{short?.arr_traffic?.traffic_count || 0}</p>
+						</div>
+					)}
 				</div>
 			</div>
 		</div>

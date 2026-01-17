@@ -15,26 +15,15 @@ export default function BasePanel({ children }: { children: React.ReactNode }) {
 	useEffect(() => {
 		const type = pathname.split("/")[1] || "";
 
-		if (type === "") {
-			setOpen(!isHidden);
+		if (prevPath.current === null && !isHidden) {
 			prevPath.current = type;
 			return;
 		}
 
-		if (prevPath.current === type) {
-			return;
-		}
-
-		const shouldOpenImmediately = type === "" || (isHidden && prevPath.current === "");
-
 		let openTimeout: NodeJS.Timeout | undefined;
 
-		if (shouldOpenImmediately) {
-			setOpen(true);
-		} else {
-			setOpen(false);
-			openTimeout = setTimeout(() => setOpen(true), 300);
-		}
+		setOpen(false);
+		openTimeout = setTimeout(() => setOpen(type === "" ? !isHidden : true), 300);
 
 		prevPath.current = type;
 

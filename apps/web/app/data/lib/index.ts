@@ -61,7 +61,7 @@ function getPilotShort(pilot: PilotLong, trackPoint: Required<TrackPoint> | unde
 		aircraft: pilot.aircraft,
 		transponder: pilot.transponder,
 		frequency: pilot.frequency,
-		route: pilot.flight_plan ? `${pilot.flight_plan.departure.icao} - ${pilot.flight_plan.arrival.icao}` : "N/A",
+		route: pilot.flight_plan ? `${pilot.flight_plan.departure.icao} ${pilot.flight_plan.arrival.icao}` : "N/A",
 		flight_rules: pilot.flight_plan?.flight_rules || "IFR",
 		ac_reg: pilot.flight_plan?.ac_reg || "A320",
 	};
