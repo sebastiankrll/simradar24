@@ -1,3 +1,4 @@
+import { ChooseSwitch } from "@/components/Input/Input";
 import type { DashboardStats as Stats } from "@sr24/types/interface";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -29,20 +30,7 @@ export function DashboardStats({ stats }: { stats: Stats }) {
 				</div>
 			</div>
 			<div className="panel-sub-container sep" id="panel-dashboard-busiest">
-				<div id="dashboard-stats-navigation">
-					<button className={openTab === "airports" ? "active" : ""} type="button" onClick={() => setOpenTab("airports")}>
-						Airports
-					</button>
-					<button className={openTab === "routes" ? "active" : ""} type="button" onClick={() => setOpenTab("routes")}>
-						Routes
-					</button>
-					<button className={openTab === "aircrafts" ? "active" : ""} type="button" onClick={() => setOpenTab("aircrafts")}>
-						Aircrafts
-					</button>
-					<button className={openTab === "controllers" ? "active" : ""} type="button" onClick={() => setOpenTab("controllers")}>
-						Controllers
-					</button>
-				</div>
+				<ChooseSwitch options={["airports", "routes", "aircrafts", "controllers"] as const} value={openTab} onChange={setOpenTab} />
 				{openTab === "airports" && <AirportStats stats={stats} router={router} />}
 				{openTab === "routes" && <RouteStats stats={stats} />}
 				{openTab === "aircrafts" && <AircraftStats stats={stats} />}
