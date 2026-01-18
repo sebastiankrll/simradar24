@@ -57,7 +57,7 @@ async function fetchVatsimData(): Promise<void> {
 		updateBookingsData();
 
 		const init: InitialData = {
-			pilots: pilotsLong.map((p) => getPilotShort(p)),
+			pilots: pilotsLong.filter((p) => p.live === "live").map((p) => getPilotShort(p)),
 			airports: airportsLong.map((a) => getAirportShort(a)),
 			controllers: controllersMerged,
 			timestamp: new Date(vatsimData.general.update_timestamp),

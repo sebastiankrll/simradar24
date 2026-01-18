@@ -216,7 +216,7 @@ function getPilotId(pilot: VatsimPilot | VatsimPrefile): string {
 		.update(`${base}${plan ? `_${variable}` : ""}`)
 		.digest();
 	const b64url = digest.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-	return b64url.slice(0, 10);
+	return b64url.slice(0, 16);
 }
 
 export function getPilotDelta(): PilotDelta {
