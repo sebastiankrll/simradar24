@@ -1,4 +1,4 @@
-FROM node:20-bookworm-slim AS base
+FROM node:20-trixie-slim AS base
 
 FROM base AS builder
 WORKDIR /app
