@@ -64,7 +64,7 @@ export function PilotFlightplan({
 				</div>
 				<a className="panel-data-link" href={`/data/aircrafts/${pilot.flight_plan?.ac_reg}`}>
 					<Icon name="share" size={20} />
-					<a href={`/data/flights/${pilot.callsign}`}>View more flights for {pilot.callsign}</a>
+					<p>View more flights for {pilot.callsign}</p>
 				</a>
 			</div>
 		</div>

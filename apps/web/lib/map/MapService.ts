@@ -370,6 +370,30 @@ export class MapService {
 		if (sunTime) {
 			this.sunService.setFeatures(sunTime);
 		}
+
+		this.renderFeatures();
+	}
+
+	public async revalidateFeatures({
+		pilots,
+		airports,
+		controllers,
+	}: {
+		pilots?: Required<PilotShort>[];
+		airports?: StaticAirport[];
+		controllers?: ControllerMerged[];
+	}): Promise<void> {
+		if (pilots) {
+			this.pilotService.updateFeatures({ added: pilots, updated: pilots });
+		}
+		if (airports) {
+			// this.airportService.setFeatures(airports);
+		}
+		if (controllers) {
+			await this.controllerService.updateFeatures({ added: controllers, updated: controllers });
+		}
+
+		this.updateRelatives();
 		this.renderFeatures();
 	}
 
@@ -399,6 +423,14 @@ export class MapService {
 			this.sunService.setFeatures(sunTime);
 		}
 
+		this.updateRelatives();
+
+		if (resetNeeded) {
+			this.resetMap(true);
+		}
+	}
+
+	private updateRelatives(): void {
 		if (this.clickedFeature && this.clickedOverlay) {
 			updateOverlay(
 				this.clickedFeature,
@@ -418,10 +450,6 @@ export class MapService {
 
 		if (this.options?.autoTrackPoints) {
 			this.trackService.updateFeatures(this.clickedFeature);
-		}
-
-		if (resetNeeded) {
-			this.resetMap(true);
 		}
 	}
 

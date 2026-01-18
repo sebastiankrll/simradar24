@@ -27,11 +27,11 @@ export async function init(pathname: string): Promise<void> {
 	const handleMessage = async (msg: WsData | WsPresence) => {
 		if (msg.t === "delta") {
 			if (lastMessageSeq && msg.s !== (lastMessageSeq + 1) % Number.MAX_SAFE_INTEGER) {
-				console.warn(`Missed WS messages: last seq ${lastMessageSeq}, current seq ${msg.s}`);
+				console.warn(`Missed WS messages: last seq ${lastMessageSeq}, current seq ${msg.s}. Refetching full data.`);
 				const data = await fetchApi<InitialData>("/map/init");
 
-				await mapService.setFeatures({ pilots: data.pilots, controllers: data.controllers });
 				mapService.setStore({ airports: data.airports, controllers: data.controllers });
+				await mapService.revalidateFeatures({ pilots: data.pilots, controllers: data.controllers });
 			} else {
 				mapService.updateStore({ airports: msg.data.airports, controllers: msg.data.controllers });
 				await mapService.updateFeatures({ pilots: msg.data.pilots, controllers: msg.data.controllers });

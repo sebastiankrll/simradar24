@@ -71,7 +71,7 @@ export function PilotAircraft({ pilot }: { pilot: PilotLong }) {
 				{pilot.flight_plan?.ac_reg && (
 					<a className="panel-data-link" href={`/data/aircrafts/${pilot.flight_plan?.ac_reg}`} style={{ gridColumn: "span 2" }}>
 						<Icon name="share" size={20} />
-						<a href={`/data/aircrafts/${pilot.flight_plan?.ac_reg}`}>View more flights of {pilot.flight_plan?.ac_reg}</a>
+						<p>View more flights of {pilot.flight_plan?.ac_reg}</p>
 					</a>
 				)}
 			</div>

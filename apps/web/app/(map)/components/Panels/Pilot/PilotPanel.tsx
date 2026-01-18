@@ -38,6 +38,8 @@ function onStatsClick(cid: string) {
 	window.open(`https://stats.vatsim.net/stats/${cid}`, "_blank");
 }
 
+let lastMessageSeq: number | null = null;
+
 export default function PilotPanel({ id }: { id: string }) {
 	const {
 		data: pilotData,
@@ -104,6 +106,7 @@ export default function PilotPanel({ id }: { id: string }) {
 			setTrackPoints(trackPoints);
 			mapService.setFeatures({ trackPoints, autoTrackId: id });
 		});
+		lastMessageSeq = null;
 	}, [id]);
 
 	useEffect(() => {
@@ -130,29 +133,40 @@ export default function PilotPanel({ id }: { id: string }) {
 
 	useEffect(() => {
 		const handleMessage = (msg: WsData | WsPresence) => {
-			if (msg.t !== "delta") return;
-			const updatedPilot = msg.data.pilots.updated.find((p) => p.id === id);
+			if (msg.t === "delta") {
+				if (lastMessageSeq && msg.s !== (lastMessageSeq + 1) % Number.MAX_SAFE_INTEGER) {
+					console.warn(`Missed WS messages: last seq ${lastMessageSeq}, current seq ${msg.s}. Refetching trackpoints.`);
+					fetchApi<(TrackPoint | DeltaTrackPoint)[]>(`/map/pilot/${id}/track`).then((masked) => {
+						const trackPoints = decodeTrackPoints(masked);
+						setTrackPoints(trackPoints);
+						mapService.setFeatures({ trackPoints, autoTrackId: id });
+					});
+				} else {
+					const updatedPilot = msg.data.pilots.updated.find((p) => p.id === id);
 
-			if (updatedPilot) {
-				setPilotData((prev) => {
-					if (!prev) return prev;
-					return {
-						...prev,
-						...updatedPilot,
-					};
-				}, false);
+					if (updatedPilot) {
+						setPilotData((prev) => {
+							if (!prev) return prev;
+							return {
+								...prev,
+								...updatedPilot,
+							};
+						}, false);
 
-				setTrackPoints((prev) => [
-					...prev,
-					{
-						id: updatedPilot.id,
-						coordinates: [0, 0],
-						altitude_ms: updatedPilot.altitude_ms ?? prev[prev.length - 1]?.altitude_ms,
-						groundspeed: updatedPilot.groundspeed ?? prev[prev.length - 1]?.groundspeed,
-						color: "transparent",
-						timestamp: Date.now(),
-					},
-				]);
+						setTrackPoints((prev) => [
+							...prev,
+							{
+								id: updatedPilot.id,
+								coordinates: [0, 0],
+								altitude_ms: updatedPilot.altitude_ms ?? prev[prev.length - 1]?.altitude_ms,
+								groundspeed: updatedPilot.groundspeed ?? prev[prev.length - 1]?.groundspeed,
+								color: "transparent",
+								timestamp: Date.now(),
+							},
+						]);
+					}
+				}
+				lastMessageSeq = msg.s;
 			}
 		};
 
