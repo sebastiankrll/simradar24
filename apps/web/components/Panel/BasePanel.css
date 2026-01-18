@@ -21,9 +21,9 @@
 .panel-container {
 	display: flex;
 	background-color: var(--color-bg);
+	box-shadow: var(--box-shadow);
 	padding: 0.5rem;
 	box-sizing: border-box;
-	box-shadow: var(--box-shadow);
 	overflow-x: hidden;
 	flex-shrink: 0;
 }
@@ -250,7 +250,7 @@
 .panel-navigation {
 	display: flex;
 	background-color: var(--color-bg);
-	box-shadow: 1px 1px 5px 1px var(--color-box-shadow);
+	box-shadow: var(--box-shadow);
 }
 
 .panel-navigation-button {

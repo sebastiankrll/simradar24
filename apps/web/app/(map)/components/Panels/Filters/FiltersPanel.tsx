@@ -27,7 +27,7 @@ const UPPERCASE_FILTERS = ["Aircraft Registration", "Callsign"];
 const RANGE_FILTERS = ["Barometric Altitude", "Groundspeed"];
 
 export default function FiltersPanel() {
-	const { setFilters, setActive, resetAllFilters } = useFiltersStore();
+	const { setFilters, resetAllFilters, setActive } = useFiltersStore();
 
 	const [options, setOptions] = useState<string[]>([]);
 	const [inputs, setInputs] = useState<string[]>([]);

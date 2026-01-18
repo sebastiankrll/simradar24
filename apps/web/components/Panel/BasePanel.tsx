@@ -4,13 +4,17 @@ import Spinner from "@/components/Spinner/Spinner";
 import "./BasePanel.css";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { useMapVisibilityStore } from "@/storage/zustand";
+import { useFiltersStore, useMapVisibilityStore } from "@/storage/zustand";
 
 export default function BasePanel({ children }: { children: React.ReactNode }) {
 	const pathname = usePathname();
+
 	const [open, setOpen] = useState(true);
+
 	const prevPath = useRef<string | null>(null);
+
 	const { isHidden } = useMapVisibilityStore();
+	const { active } = useFiltersStore();
 
 	useEffect(() => {
 		const type = pathname.split("/")[1] || "";
@@ -33,7 +37,7 @@ export default function BasePanel({ children }: { children: React.ReactNode }) {
 	}, [pathname, isHidden]);
 
 	return (
-		<div className={`panel${open ? "" : " hide"}`}>
+		<div className={`panel${open ? "" : " hide"}`} style={{ maxHeight: `calc(100% - ${active ? 9.5 : 7}rem)` }}>
 			{!open && <Spinner />}
 			{children}
 		</div>

@@ -1,8 +1,8 @@
-import { ChooseSwitch } from "@/components/Input/Input";
 import type { DashboardStats as Stats } from "@sr24/types/interface";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Fragment } from "react/jsx-runtime";
+import { ChooseSwitch } from "@/components/Input/Input";
 
 export function DashboardStats({ stats }: { stats: Stats }) {
 	const router = useRouter();

@@ -6,8 +6,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import Initializer from "@/components/Initializer/Initializer";
 import BasePanel from "@/components/Panel/BasePanel";
-import { useMapRotationStore, useSettingsStore } from "@/storage/zustand";
+import { useFilterStatsStore, useMapRotationStore, useSettingsStore } from "@/storage/zustand";
 import { init, mapService } from "../lib";
+import ActiveFilters from "./ActiveFilters";
 import Controls from "./Controls";
 
 export default function OMap({ children }: { children?: React.ReactNode }) {
@@ -27,6 +28,7 @@ export default function OMap({ children }: { children?: React.ReactNode }) {
 		firColor,
 	} = useSettingsStore();
 	const { setRotation } = useMapRotationStore();
+	const { setPilotCount } = useFilterStatsStore();
 
 	useEffect(() => {
 		const handleMoveEnd = () => {
@@ -35,15 +37,20 @@ export default function OMap({ children }: { children?: React.ReactNode }) {
 		};
 
 		const map = mapService.init({ onNavigate: (href) => router.push(href), autoTrackPoints: true });
+
 		map.on("moveend", handleMoveEnd);
 		mapService.addEventListeners();
+
+		mapService.subscribe((stats) => {
+			setPilotCount([stats.pilots.rendered, stats.pilots.total]);
+		});
 
 		return () => {
 			mapService.removeEventListeners();
 			map.un("moveend", handleMoveEnd);
 			map.setTarget(undefined);
 		};
-	}, [router, setRotation]);
+	}, [router, setRotation, setPilotCount]);
 
 	useEffect(() => {
 		init(pathname);
@@ -82,6 +89,7 @@ export default function OMap({ children }: { children?: React.ReactNode }) {
 			<Initializer />
 			<BasePanel>{children}</BasePanel>
 			<Controls />
+			<ActiveFilters />
 			<div id="map" />
 		</>
 	);

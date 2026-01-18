@@ -46,8 +46,9 @@ footer {
 
 #footer-timestamp span {
 	margin-right: 8px;
-	height: 8px;
-	width: 8px;
+	height: 6px;
+	width: 6px;
+	border: 1px solid white;
 	background: var(--color-green);
 	border-radius: 50%;
 	animation: blink 2s infinite;

@@ -433,4 +433,11 @@ export class PilotService {
 
 		return extent;
 	}
+
+	public getStats(): { total: number; rendered: number } {
+		return {
+			total: this.map.size,
+			rendered: this.source.getFeatures().length,
+		};
+	}
 }
