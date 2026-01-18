@@ -124,6 +124,10 @@ async function pgUpsertPilotsBatch(pilots: PilotLong[]): Promise<void> {
 		idx++;
 	}
 
+	if (values.length === 0) {
+		return;
+	}
+
 	const query = `
 		INSERT INTO "Pilot" (
 			id, cid, callsign, latitude, longitude, altitude_agl,
