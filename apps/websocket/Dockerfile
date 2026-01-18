@@ -1,46 +1,25 @@
-FROM node:20-alpine AS base
+FROM node:20-bookworm-slim AS base
 
 FROM base AS builder
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk update
-RUN apk add --no-cache libc6-compat
-# Set working directory
 WORKDIR /app
+
 RUN npm install turbo --global
 COPY . .
 RUN turbo prune @sr24/websocket --docker
 
-# Add lockfile and package.json's of isolated subworkspace
 FROM base AS installer
-RUN apk update
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# First install dependencies (as they change less often)
 COPY --from=builder /app/out/json/ .
 RUN npm install
 
-# Build the project and its dependencies
 COPY --from=builder /app/out/full/ .
-
-# Uncomment and use build args to enable remote caching
-# ARG TURBO_TEAM
-# ENV TURBO_TEAM=$TURBO_TEAM
-
-# ARG TURBO_TOKEN
-# ENV TURBO_TOKEN=$TURBO_TOKEN
-
 RUN npm run build
 
 FROM base AS runner
 WORKDIR /app
-
 ENV NODE_ENV=production
 
-# Copy only the compiled files and dependencies
 COPY --from=installer /app .
-
-# Expose port if needed
 EXPOSE 3002
-
 CMD ["node", "apps/websocket/dist/index.js"]
