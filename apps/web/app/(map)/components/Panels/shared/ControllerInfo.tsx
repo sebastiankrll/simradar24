@@ -1,8 +1,8 @@
 import type { ControllerLong } from "@sr24/types/interface";
 import "./ControllerInfo.css";
 import type { FIRFeature, SimAwareTraconFeature, StaticAirport } from "@sr24/types/db";
-import { getControllerColor } from "@/app/(map)/components/Overlays";
 import Icon from "@/components/Icon/Icon";
+import { getControllerColor } from "@/components/Map/Overlays";
 
 function getControllerName(
 	facility: number,

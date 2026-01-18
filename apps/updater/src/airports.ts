@@ -41,7 +41,7 @@ export async function updateAirports(): Promise<void> {
 			timezone: findTimezone(Number(a.latitude_deg), Number(a.longitude_deg))[0],
 		}));
 
-	await rdsSetMultiple(filteredAirports, "static_airport", (a) => a.id, "airports:static");
+	await rdsSetMultiple(filteredAirports, "static_airport", (a) => a.id);
 	await rdsSetSingle("static_airports:all", filteredAirports);
 	await rdsSetSingle("static_airports:version", MANUAL_VERSION);
 

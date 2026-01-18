@@ -118,9 +118,14 @@ export interface ControllerShort {
 	};
 }
 
-export interface ControllerLong extends Required<ControllerShort> {
+export interface ControllerLong {
 	cid: number;
+	callsign: string;
 	name: string;
+	frequency: number;
+	facility: number;
+	atis: string[] | null;
+	connections: number;
 	rating: number;
 	server: string;
 	visual_range: number;

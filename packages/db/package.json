@@ -21,6 +21,7 @@
 	"scripts": {
 		"dev": "tsc --watch",
 		"build": "tsc && shx cp -r src/generated dist/generated",
+		"typecheck": "tsc --noEmit",
 		"prebuild": "prisma generate",
 		"format-and-lint": "biome check .",
 		"format-and-lint:fix": "biome check . --write",
