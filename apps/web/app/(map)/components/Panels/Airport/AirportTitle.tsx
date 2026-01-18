@@ -12,21 +12,13 @@ function formatLocalTime(tz: string): string {
 		hour12: false,
 	}).format(now);
 
-	const offsetMinutes = new Date(now.toLocaleString("en-US", { timeZone: tz })).getTimezoneOffset() * -1;
-
-	const sign = offsetMinutes >= 0 ? "+" : "-";
-	const abs = Math.abs(offsetMinutes);
-	const hours = String(Math.floor(abs / 60)).padStart(2, "0");
-	const minutes = String(abs % 60).padStart(2, "0");
-	const utcOffset = `UTC ${sign}${hours}:${minutes}`;
-
 	const date = new Intl.DateTimeFormat("en-US", {
 		month: "short",
 		day: "numeric",
 		timeZone: tz,
 	}).format(now);
 
-	return `${time} | ${utcOffset} | ${date}`;
+	return `${time} | ${date}`;
 }
 
 export function AirportTitle({ staticAirport }: { staticAirport: StaticAirport | null }) {

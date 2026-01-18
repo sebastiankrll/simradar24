@@ -21,9 +21,9 @@
 .panel-container {
 	display: flex;
 	background-color: var(--color-bg);
+	box-shadow: var(--box-shadow);
 	padding: 0.5rem;
 	box-sizing: border-box;
-	box-shadow: var(--box-shadow);
 	overflow-x: hidden;
 	flex-shrink: 0;
 }
@@ -116,18 +116,17 @@
 .panel-desc-item {
 	font-size: var(--font-size-small);
 	font-weight: var(--font-weight-bold);
+	padding: 2px 4px;
 }
 
 .panel-desc-item.r {
 	background-color: var(--color-red);
-	color: white;
-	padding: 0px 4px;
+	color: var(--color-bg);
 }
 
 .panel-desc-item.g {
 	background-color: var(--color-green);
-	color: white;
-	padding: 0px 4px;
+	color: var(--color-bg);
 }
 
 .panel-container.main {
@@ -216,6 +215,22 @@
 	text-transform: uppercase;
 }
 
+.panel-data-link {
+	display: flex;
+	gap: 4px;
+	align-items: center;
+	padding: 4px;
+	font-size: var(--font-size-small);
+}
+
+.panel-data-link:hover {
+	text-decoration: underline;
+}
+
+.panel-data-link use {
+	color: var(--color-green);
+}
+
 .panel-data-item {
 	padding: 4px;
 	display: flex;
@@ -235,7 +250,7 @@
 .panel-navigation {
 	display: flex;
 	background-color: var(--color-bg);
-	box-shadow: 1px 1px 5px 1px var(--color-box-shadow);
+	box-shadow: var(--box-shadow);
 }
 
 .panel-navigation-button {

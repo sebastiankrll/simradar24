@@ -30,7 +30,7 @@ export function PilotAircraft({ pilot }: { pilot: PilotLong }) {
 					<p>Aircraft type</p>
 					<p>{acType.trim() ? acType : pilot.aircraft}</p>
 				</div>
-				{!aircraft && (
+				{!aircraft && pilot.flight_plan?.ac_reg && (
 					<div className="panel-data-item">
 						<p>Registration</p>
 						<p>{pilot.flight_plan?.ac_reg}</p>
@@ -67,6 +67,12 @@ export function PilotAircraft({ pilot }: { pilot: PilotLong }) {
 							<p>{aircraft?.selCal || "N/A"}</p>
 						</div>
 					</>
+				)}
+				{pilot.flight_plan?.ac_reg && (
+					<a className="panel-data-link" href={`/data/aircrafts/${pilot.flight_plan?.ac_reg}`} style={{ gridColumn: "span 2" }}>
+						<Icon name="share" size={20} />
+						<p>View more flights of {pilot.flight_plan?.ac_reg}</p>
+					</a>
 				)}
 			</div>
 		</div>

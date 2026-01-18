@@ -121,6 +121,7 @@
 	cursor: pointer;
 	text-transform: uppercase;
 	z-index: 1;
+	height: 20px;
 }
 
 .choose-switch-option:hover {

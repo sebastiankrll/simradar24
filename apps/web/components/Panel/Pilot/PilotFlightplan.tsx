@@ -62,6 +62,10 @@ export function PilotFlightplan({
 						<p>{pilot.flight_plan?.flight_rules || "N/A"}</p>
 					</div>
 				</div>
+				<a className="panel-data-link" href={`/data/aircrafts/${pilot.flight_plan?.ac_reg}`}>
+					<Icon name="share" size={20} />
+					<p>View more flights for {pilot.callsign}</p>
+				</a>
 			</div>
 		</div>
 	);

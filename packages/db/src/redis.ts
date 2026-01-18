@@ -81,7 +81,6 @@ export async function rdsSetMultiple<T>(
 	items: T[],
 	keyPrefix: string,
 	keyExtractor: KeyExtractor<T>,
-	activeSetName?: string,
 	ttlSeconds: number | null = null,
 ): Promise<void> {
 	if (items.length === 0) return;
@@ -97,9 +96,6 @@ export async function rdsSetMultiple<T>(
 					pipeline.setEx(key, ttlSeconds, JSON.stringify(item));
 				} else {
 					pipeline.set(key, JSON.stringify(item));
-				}
-				if (activeSetName) {
-					pipeline.sAdd(activeSetName, keyExtractor(item));
 				}
 			}
 

@@ -103,7 +103,7 @@ export class TrackService {
 		trackFeature.setId(`track_${this.pilotId}_${++this.lastIndex}`);
 		this.source.addFeature(trackFeature);
 
-		this.lastCoords = props?.coordinates || this.lastCoords;
+		this.lastCoords = coordinates || this.lastCoords;
 		this.lastStroke = stroke;
 		this.lastAltitudeAgl = props?.altitude_agl;
 		this.animatedTrackFeature = trackFeature;

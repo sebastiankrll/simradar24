@@ -40,15 +40,17 @@ export function ChooseSwitch<const T extends readonly string[]>({
 	options,
 	value,
 	onChange,
+	style,
 }: {
 	options: T;
 	value?: T[number];
 	onChange?: (value: T[number]) => void;
+	style?: React.CSSProperties;
 }) {
 	const index = value ? (options as readonly string[]).indexOf(value as string) : 0;
 
 	return (
-		<fieldset className="choose-switch" style={{ "--count": options.length, "--index": index } as React.CSSProperties} aria-label="Options">
+		<fieldset className="choose-switch" style={{ "--count": options.length, "--index": index, ...style } as React.CSSProperties} aria-label="Options">
 			<span className="choose-switch-thumb" aria-hidden="true" />
 			{options.map((option, idx) => (
 				<button key={option} type="button" className="choose-switch-option" aria-pressed={index === idx} onClick={() => onChange?.(option)}>

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { FilterState, SettingState, SettingValues } from "@/types/zustand";
+import type { FilterState, FilterStats, SettingState, SettingValues } from "@/types/zustand";
 
 const defaultSettings: SettingValues = {
 	theme: "dark" as const,
@@ -125,8 +125,8 @@ export const useFiltersStore = create<FilterState>()(
 			Groundspeed: { min: 0, max: 2000 },
 			"Flight Rules": [],
 
+			setActive: (active: boolean) => set({ active }),
 			setFilters: (filters) => set({ ...filters }),
-			setActive: (value) => set({ active: value }),
 			resetAllFilters: () =>
 				set({
 					Airline: [],
@@ -147,6 +147,11 @@ export const useFiltersStore = create<FilterState>()(
 		},
 	),
 );
+
+export const useFilterStatsStore = create<FilterStats>((set) => ({
+	pilotCount: [0, 0],
+	setPilotCount: (count) => set({ pilotCount: count }),
+}));
 
 export const useMapVisibilityStore = create<{ isHidden: boolean; setHidden: (value: boolean) => void }>()(
 	persist(

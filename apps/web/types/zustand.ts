@@ -73,7 +73,12 @@ export interface FilterValues {
 }
 
 export interface FilterState extends FilterValues {
+	setActive: (active: boolean) => void;
 	setFilters: (filters: Partial<FilterValues>) => void;
-	setActive: (value: boolean) => void;
 	resetAllFilters: () => void;
+}
+
+export interface FilterStats {
+	pilotCount: [number, number];
+	setPilotCount: (count: [number, number]) => void;
 }

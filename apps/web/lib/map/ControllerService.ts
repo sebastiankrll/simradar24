@@ -214,6 +214,11 @@ export class ControllerService {
 		const controllersInDelta = new Set<string>();
 
 		for (const c of controllers.updated) {
+			if (this.set.has(c.id)) {
+				controllersInDelta.add(c.id);
+				continue;
+			}
+
 			if (c.facility === "airport") {
 				const id = stripPrefix(c.id);
 				const feature = this.airportSource.getFeatureById(`sector_${id}`) as Feature<Point> | undefined;
@@ -225,6 +230,10 @@ export class ControllerService {
 		}
 
 		for (const c of controllers.added) {
+			if (controllersInDelta.has(c.id)) {
+				continue;
+			}
+
 			const id = stripPrefix(c.id);
 			controllersInDelta.add(c.id);
 			this.set.add(c.id);

@@ -25,6 +25,13 @@ type Options = {
 	disableCenterOnPageLoad?: boolean;
 	sunTime?: Date;
 };
+type Stats = {
+	pilots: {
+		total: number;
+		rendered: number;
+	};
+};
+type StatsListener = (stats: Stats) => void;
 
 export class MapService {
 	private static readonly MAP_PADDING = [204, 116, 140, 436];
@@ -55,6 +62,13 @@ export class MapService {
 	private animationFrame = 0;
 
 	private followInterval: NodeJS.Timeout | null = null;
+
+	private statsListeners = new Set<StatsListener>();
+
+	subscribe(cb: StatsListener) {
+		this.statsListeners.add(cb);
+		return () => this.statsListeners.delete(cb);
+	}
 
 	public init(options?: Options): OlMap {
 		if (options) {
@@ -138,6 +152,7 @@ export class MapService {
 
 	public setFilters(filters?: Partial<Record<keyof FilterValues, SelectOptionType[] | number[]>>) {
 		this.pilotService.setFilters(filters);
+		this.renderFeatures();
 	}
 
 	public setView({ rotation, zoomStep, center, zoom }: { rotation?: number; zoomStep?: number; center?: [number, number]; zoom?: number }): void {
@@ -370,6 +385,30 @@ export class MapService {
 		if (sunTime) {
 			this.sunService.setFeatures(sunTime);
 		}
+
+		this.renderFeatures();
+	}
+
+	public async revalidateFeatures({
+		pilots,
+		airports,
+		controllers,
+	}: {
+		pilots?: Required<PilotShort>[];
+		airports?: StaticAirport[];
+		controllers?: ControllerMerged[];
+	}): Promise<void> {
+		if (pilots) {
+			this.pilotService.updateFeatures({ added: pilots, updated: pilots });
+		}
+		if (airports) {
+			// this.airportService.setFeatures(airports);
+		}
+		if (controllers) {
+			await this.controllerService.updateFeatures({ added: controllers, updated: controllers });
+		}
+
+		this.updateRelatives();
 		this.renderFeatures();
 	}
 
@@ -399,6 +438,16 @@ export class MapService {
 			this.sunService.setFeatures(sunTime);
 		}
 
+		this.updateRelatives();
+
+		if (resetNeeded) {
+			this.resetMap(true);
+		}
+
+		this.renderFeatures();
+	}
+
+	private updateRelatives(): void {
 		if (this.clickedFeature && this.clickedOverlay) {
 			updateOverlay(
 				this.clickedFeature,
@@ -418,10 +467,6 @@ export class MapService {
 
 		if (this.options?.autoTrackPoints) {
 			this.trackService.updateFeatures(this.clickedFeature);
-		}
-
-		if (resetNeeded) {
-			this.resetMap(true);
 		}
 	}
 
@@ -489,6 +534,8 @@ export class MapService {
 
 		this.pilotService.renderFeatures(extent, zoom);
 		this.airportService.renderFeatures(extent, zoom);
+
+		this.emit();
 	}
 
 	private toggleAnimation(enabled: boolean): void {
@@ -759,5 +806,17 @@ export class MapService {
 			clearInterval(this.followInterval);
 			this.followInterval = null;
 		}
+	}
+
+	private emit() {
+		this.statsListeners.forEach((cb) => {
+			const pilotStats = this.pilotService.getStats();
+			cb({
+				pilots: {
+					total: pilotStats.total,
+					rendered: pilotStats.rendered,
+				},
+			});
+		});
 	}
 }

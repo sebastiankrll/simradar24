@@ -24,7 +24,7 @@ html {
 	--color-light-grey: rgb(237, 240, 247);
 	--color-dark-grey: rgb(214, 218, 226);
 	--color-border: rgb(189, 193, 206);
-	--color-box-shadow: rgb(193, 194, 202);
+	--color-box-shadow: rgba(193, 194, 202, 0.5);
 	--color-blue: #2140dd;
 	--color-green: #2dbf7b;
 	--color-red: #ea5979;
@@ -47,8 +47,8 @@ html {
 	--color-main-text: rgb(221, 225, 235);
 	--color-dark-grey: rgb(56, 64, 82);
 	--color-light-grey: rgb(37, 43, 54);
-	--color-border: rgb(113, 121, 153);
-	--color-box-shadow: rgb(39, 40, 46);
+	--color-border: rgb(99, 106, 134);
+	--color-box-shadow: rgba(39, 40, 46, 0.5);
 	--color-glass-bg: rgba(80, 80, 80, 0.3);
 	--color-hover: rgb(105, 124, 165);
 }

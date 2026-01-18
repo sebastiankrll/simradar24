@@ -14,7 +14,7 @@ enum PilotLiveStatus {
 }
 
 model Pilot {
-    id              String          @id @db.Char(10)
+    id              String          @id @db.Char(16)
     cid             String
     callsign        String
     latitude        Float
@@ -55,7 +55,7 @@ model Pilot {
 }
 
 model Trackpoint {
-    id         String   @id @db.Char(10)
+    id         String   @id @db.Char(16)
     points     Bytes
     created_at DateTime @default(now())
 

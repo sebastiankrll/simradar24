@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { rdsGetMultiple, rdsGetSingle } from "@sr24/db/redis";
+import { rdsGetMultiple, rdsGetSingle, rdsSetMultiple } from "@sr24/db/redis";
 import type { StaticAirport } from "@sr24/types/db";
 import type { PilotDelta, PilotFlightPlan, PilotLong, PilotShort, PilotTimes } from "@sr24/types/interface";
 import type { VatsimData, VatsimPilot, VatsimPilotFlightPlan, VatsimPrefile } from "@sr24/types/vatsim";
@@ -108,21 +108,27 @@ export async function mapPilots(vatsimData: VatsimData): Promise<PilotLong[]> {
 			if (cachedPilot) {
 				pilotLong = { ...cachedPilot, ...updatedFields };
 			} else {
-				pilotLong = {
-					id: id,
-					cid: String(pilot.cid),
-					callsign: pilot.callsign,
-					aircraft: pilot.flight_plan?.aircraft_short || "A320",
-					name: pilot.name,
-					server: pilot.server,
-					pilot_rating: PILOT_RATINGS.find((r) => r.id === pilot.pilot_rating)?.short_name || "NEW",
-					military_rating: MILITARY_RATINGS.find((r) => r.id === pilot.military_rating)?.short_name || "M0",
-					flight_plan: await mapPilotFlightPlan(pilot.flight_plan),
-					logon_time: new Date(pilot.logon_time),
-					times: null,
-					live: "live",
-					...updatedFields,
-				};
+				const existing = (await rdsGetSingle(`pilot:${id}`)) as PilotLong | undefined;
+
+				if (existing) {
+					pilotLong = { ...existing, ...updatedFields };
+				} else {
+					pilotLong = {
+						id: id,
+						cid: String(pilot.cid),
+						callsign: pilot.callsign,
+						aircraft: pilot.flight_plan?.aircraft_short || "A320",
+						name: pilot.name,
+						server: pilot.server,
+						pilot_rating: PILOT_RATINGS.find((r) => r.id === pilot.pilot_rating)?.short_name || "NEW",
+						military_rating: MILITARY_RATINGS.find((r) => r.id === pilot.military_rating)?.short_name || "M0",
+						flight_plan: await mapPilotFlightPlan(pilot.flight_plan),
+						logon_time: new Date(pilot.logon_time),
+						times: null,
+						live: "live",
+						...updatedFields,
+					};
+				}
 			}
 
 			pilotLong.vertical_speed = calculateVerticalSpeed(pilotLong, cachedPilot);
@@ -194,6 +200,8 @@ export async function mapPilots(vatsimData: VatsimData): Promise<PilotLong[]> {
 		}
 	}
 
+	await rdsSetMultiple(newPilotsLong, "pilot", (p) => p.id, 12 * 60 * 60);
+
 	cached = newCached;
 	return newPilotsLong;
 }
@@ -208,7 +216,7 @@ function getPilotId(pilot: VatsimPilot | VatsimPrefile): string {
 		.update(`${base}${plan ? `_${variable}` : ""}`)
 		.digest();
 	const b64url = digest.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-	return b64url.slice(0, 10);
+	return b64url.slice(0, 16);
 }
 
 export function getPilotDelta(): PilotDelta {
@@ -353,7 +361,7 @@ function mapPilotTimes(
 			touch_down: new Date(sched_off_block.getTime() + TAXI_TIME_MS + enrouteTimeMs),
 			sched_on_block: roundDateTo5Min(sched_on_block),
 			on_block: sched_on_block,
-			state: estimateInitState(current),
+			state: prefile ? "Boarding" : estimateInitState(current),
 			stop_counter: 0,
 		};
 	}

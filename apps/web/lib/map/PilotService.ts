@@ -204,12 +204,12 @@ export class PilotService {
 		const pilotsInDelta = new Set<string>();
 
 		for (const p of delta.updated) {
+			const item = this.map.get(p.id);
+			if (!item) continue;
+
 			pilotsInDelta.add(p.id);
 
 			if (Object.keys(p).length === 1) continue;
-
-			const item = this.map.get(p.id);
-			if (!item) continue;
 
 			for (const k in p) {
 				item.feature.set(k, p[k as keyof typeof p], true);
@@ -230,6 +230,8 @@ export class PilotService {
 		}
 
 		for (const p of delta.added) {
+			if (pilotsInDelta.has(p.id)) continue;
+
 			pilotsInDelta.add(p.id);
 
 			const props: PilotProperties = {
@@ -430,5 +432,12 @@ export class PilotService {
 		});
 
 		return extent;
+	}
+
+	public getStats(): { total: number; rendered: number } {
+		return {
+			total: this.map.size,
+			rendered: this.source.getFeatures().length,
+		};
 	}
 }
