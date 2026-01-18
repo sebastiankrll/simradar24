@@ -19,19 +19,19 @@ interface NavigraphProfile {
 	name: string;
 }
 
-const VATSIM_AUTH_URL = process.env.VATSIM_AUTH_URL || "auth-dev.vatsim.net";
-const NAVIGRAPH_AUTH_URL = process.env.NAVIGRAPH_AUTH_URL || "identity.api.navigraph.com";
+const VATSIM_AUTH_URL = process.env.VATSIM_AUTH_URL || "https://auth-dev.vatsim.net";
+const NAVIGRAPH_AUTH_URL = "https://identity.api.navigraph.com";
 
 const VatsimProvider: OAuthConfig<VatsimProfile> = {
 	id: "vatsim",
 	name: "VATSIM",
 	type: "oauth",
 	authorization: {
-		url: `https://${VATSIM_AUTH_URL}/oauth/authorize`,
+		url: `${VATSIM_AUTH_URL}/oauth/authorize`,
 		params: { scope: "full_name" },
 	},
-	token: `https://${VATSIM_AUTH_URL}/oauth/token`,
-	userinfo: `https://${VATSIM_AUTH_URL}/api/user`,
+	token: `${VATSIM_AUTH_URL}/oauth/token`,
+	userinfo: `${VATSIM_AUTH_URL}/api/user`,
 	clientId: process.env.VATSIM_CLIENT_ID || "",
 	clientSecret: process.env.VATSIM_CLIENT_SECRET || "",
 	profile(profile) {
@@ -46,13 +46,14 @@ const NavigraphProvider: OAuthConfig<NavigraphProfile> = {
 	id: "navigraph",
 	name: "Navigraph",
 	type: "oauth",
+	issuer: NAVIGRAPH_AUTH_URL,
 	authorization: {
-		url: `https://${NAVIGRAPH_AUTH_URL}/connect/authorize`,
+		url: `${NAVIGRAPH_AUTH_URL}/connect/authorize`,
 		params: { scope: "openid fmsdata offline_access", response_type: "code" },
 	},
 	checks: ["pkce", "state"],
-	token: `https://${NAVIGRAPH_AUTH_URL}/connect/token`,
-	userinfo: `https://${NAVIGRAPH_AUTH_URL}/connect/userinfo`,
+	token: `${NAVIGRAPH_AUTH_URL}/connect/token`,
+	userinfo: `${NAVIGRAPH_AUTH_URL}/connect/userinfo`,
 	clientId: process.env.NAVIGRAPH_CLIENT_ID || "",
 	clientSecret: process.env.NAVIGRAPH_CLIENT_SECRET || "",
 	profile(profile) {
@@ -144,7 +145,7 @@ export const authOptions: NextAuthOptions = {
 					if (!token.navigraph?.refreshToken) throw new TypeError("Missing refresh_token");
 
 					try {
-						const response = await fetch(`https://${NAVIGRAPH_AUTH_URL}/connect/token`, {
+						const response = await fetch(`${NAVIGRAPH_AUTH_URL}/connect/token`, {
 							method: "POST",
 							headers: {
 								"Content-Type": "application/x-www-form-urlencoded",

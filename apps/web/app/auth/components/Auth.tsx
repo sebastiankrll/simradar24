@@ -57,7 +57,13 @@ export default function Auth({ session }: { session: Session | null }) {
 					)}
 				</button>
 				<p>Connect Navigraph to access up-to-date navigational data.</p>
-				<button type="button" id="navigraph-login" className="auth-login-button" onClick={() => signIn("navigraph")} disabled={!!session?.navigraph}>
+				<button
+					type="button"
+					id="navigraph-login"
+					className="auth-login-button"
+					onClick={() => signIn("navigraph")}
+					disabled={!!session?.navigraph || true}
+				>
 					<Image src={session?.navigraph ? NavigraphSquare : NavigraphLandscape} alt="Navigraph Logo" height={32} />
 					{session?.navigraph && <p>Connected!</p>}
 					{session?.navigraph && (
