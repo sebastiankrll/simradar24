@@ -67,7 +67,7 @@ const dataRoutes: FastifyPluginAsync = async (app) => {
 			schema: {
 				params: {
 					type: "object",
-					properties: { id: { type: "string", minLength: 10, maxLength: 10 } },
+					properties: { id: { type: "string", minLength: 16, maxLength: 16 } },
 					required: ["id"],
 				},
 			},

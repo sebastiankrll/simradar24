@@ -8,12 +8,13 @@ interface ApiError {
 	error?: any;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_URL = process.env.API_URL || "http://localhost:3001";
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || "";
 
 export async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
 	const isAbsolute = /^https?:\/\//i.test(endpoint);
-	const url = isAbsolute ? endpoint : `${API_URL}${endpoint}`;
+	const url = isAbsolute ? endpoint : `${NEXT_PUBLIC_API_URL}${endpoint}`;
 
 	const response = await fetch(url, {
 		...options,
