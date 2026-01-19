@@ -105,30 +105,38 @@ export async function mapPilots(vatsimData: VatsimData): Promise<PilotLong[]> {
 			};
 
 			let pilotLong: PilotLong;
-			if (cachedPilot) {
+			if (cachedPilot && cachedPilot.live === "live") {
 				pilotLong = { ...cachedPilot, ...updatedFields };
+			} else if (cachedPilot && cachedPilot.live === "pre") {
+				pilotLong = {
+					...cachedPilot,
+					...updatedFields,
+					server: pilot.server,
+					pilot_rating: PILOT_RATINGS.find((r) => r.id === pilot.pilot_rating)?.short_name || "NEW",
+					military_rating: MILITARY_RATINGS.find((r) => r.id === pilot.military_rating)?.short_name || "M0",
+					flight_plan: await mapPilotFlightPlan(pilot.flight_plan),
+					logon_time: new Date(pilot.logon_time),
+					times: null,
+					live: "live",
+				};
 			} else {
 				const existing = (await rdsGetSingle(`pilot:${id}`)) as PilotLong | undefined;
 
-				if (existing) {
-					pilotLong = { ...existing, ...updatedFields };
-				} else {
-					pilotLong = {
-						id: id,
-						cid: String(pilot.cid),
-						callsign: pilot.callsign,
-						aircraft: pilot.flight_plan?.aircraft_short || "A320",
-						name: pilot.name,
-						server: pilot.server,
-						pilot_rating: PILOT_RATINGS.find((r) => r.id === pilot.pilot_rating)?.short_name || "NEW",
-						military_rating: MILITARY_RATINGS.find((r) => r.id === pilot.military_rating)?.short_name || "M0",
-						flight_plan: await mapPilotFlightPlan(pilot.flight_plan),
-						logon_time: new Date(pilot.logon_time),
-						times: null,
-						live: "live",
-						...updatedFields,
-					};
-				}
+				pilotLong = {
+					id: id,
+					cid: String(pilot.cid),
+					callsign: pilot.callsign,
+					aircraft: pilot.flight_plan?.aircraft_short || existing?.aircraft || "A320",
+					name: pilot.name,
+					server: pilot.server,
+					pilot_rating: PILOT_RATINGS.find((r) => r.id === pilot.pilot_rating)?.short_name || "NEW",
+					military_rating: MILITARY_RATINGS.find((r) => r.id === pilot.military_rating)?.short_name || "M0",
+					flight_plan: existing?.flight_plan || (await mapPilotFlightPlan(pilot.flight_plan)),
+					logon_time: new Date(pilot.logon_time),
+					times: existing?.times || null,
+					live: "live",
+					...updatedFields,
+				};
 			}
 
 			pilotLong.vertical_speed = calculateVerticalSpeed(pilotLong, cachedPilot);
