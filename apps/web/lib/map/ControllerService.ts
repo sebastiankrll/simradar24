@@ -25,9 +25,7 @@ export class ControllerService {
 	private airportSource = new VectorSource({
 		useSpatialIndex: false,
 	});
-	private labelSource = new VectorSource({
-		useSpatialIndex: false,
-	});
+	private labelSource = new VectorSource<Feature<Point>>();
 	private firLayer: WebGLVectorLayer | null = null;
 	private traconLayer: WebGLVectorLayer | null = null;
 	private airportLayer: WebGLVectorLayer | null = null;
@@ -87,6 +85,10 @@ export class ControllerService {
 		});
 
 		return [this.firLayer, this.traconLayer, this.airportLayer, this.labelLayer];
+	}
+
+	public getSource(): VectorSource<Feature<Point>> {
+		return this.labelSource;
 	}
 
 	public setTheme(theme: boolean) {

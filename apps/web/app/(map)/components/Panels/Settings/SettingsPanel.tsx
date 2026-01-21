@@ -113,7 +113,9 @@ function PlaneSettings() {
 			<div className="setting-item">
 				<p className="setting-item-title">Animated plane markers</p>
 				<ToggleSwitch checked={animatedPlaneMarkers} onChange={(e) => setAnimatedPlaneMarkers(e.target.checked)} />
-				<p className="setting-item-desc">Turn off to improve performance on low-end devices.</p>
+				<p className="setting-item-desc">
+					<span style={{ color: "var(--color-red)" }}>Experimental:</span> Turn off to improve performance on low-end devices.
+				</p>
 			</div>
 		</>
 	);

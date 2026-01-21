@@ -21,9 +21,7 @@ type RBushFeature = {
 };
 
 export class PilotService {
-	private source = new VectorSource({
-		useSpatialIndex: false,
-	});
+	private source = new VectorSource<Feature<Point>>();
 	private mainLayer: WebGLVectorLayer | null = null;
 	private shadowLayer: WebGLVectorLayer | null = null;
 
@@ -39,6 +37,7 @@ export class PilotService {
 	public init(): WebGLVectorLayer[] {
 		this.mainLayer = new WebGLVectorLayer({
 			source: this.source,
+			disableHitDetection: true,
 			variables: {
 				theme: false,
 				size: 1,
@@ -64,6 +63,10 @@ export class PilotService {
 		});
 
 		return [this.mainLayer, this.shadowLayer];
+	}
+
+	public getSource(): VectorSource<Feature<Point>> {
+		return this.source;
 	}
 
 	public setTheme(theme: boolean) {

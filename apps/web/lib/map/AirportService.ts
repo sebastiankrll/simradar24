@@ -20,9 +20,7 @@ type RBushFeature = {
 };
 
 export class AirportService {
-	private source = new VectorSource({
-		useSpatialIndex: false,
-	});
+	private source = new VectorSource<Feature<Point>>();
 	private layer: WebGLVectorLayer | null = null;
 
 	private rbush = new RBush<RBushFeature>();
@@ -35,6 +33,7 @@ export class AirportService {
 	public init(): WebGLVectorLayer {
 		this.layer = new WebGLVectorLayer({
 			source: this.source,
+			disableHitDetection: true,
 			variables: {
 				size: 1,
 			},
@@ -45,6 +44,10 @@ export class AirportService {
 			zIndex: 7,
 		});
 		return this.layer;
+	}
+
+	public getSource(): VectorSource<Feature<Point>> {
+		return this.source;
 	}
 
 	public setFeatures(airports: StaticAirport[]): void {

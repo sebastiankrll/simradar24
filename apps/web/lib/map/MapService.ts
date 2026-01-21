@@ -6,6 +6,7 @@ import { type Feature, type MapBrowserEvent, Map as OlMap, type Overlay, View } 
 import type BaseEvent from "ol/events/Event";
 import type { Extent } from "ol/extent";
 import type { Point } from "ol/geom";
+import type { Pixel } from "ol/pixel";
 import { fromLonLat, toLonLat, transformExtent } from "ol/proj";
 import type { SelectOptionType } from "@/components/Select/Select";
 import type { FilterValues, SettingValues } from "@/types/zustand";
@@ -181,7 +182,11 @@ export class MapService {
 
 	public addEventListeners() {
 		this.map?.on("moveend", this.onMoveEnd);
-		this.map?.on("pointermove", this.onPointerMove);
+
+		const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+		if (!isTouch) {
+			this.map?.on("pointermove", this.onPointerMove);
+		}
 		if (!this.options?.disableInteractions) {
 			this.map?.on("click", this.onClick);
 		}
@@ -190,9 +195,7 @@ export class MapService {
 	public removeEventListeners() {
 		this.map?.un("moveend", this.onMoveEnd);
 		this.map?.un("pointermove", this.onPointerMove);
-		if (!this.options?.disableInteractions) {
-			this.map?.un("click", this.onClick);
-		}
+		this.map?.un("click", this.onClick);
 	}
 
 	private onMoveEnd = (e: BaseEvent | Event) => {
@@ -203,6 +206,31 @@ export class MapService {
 		this.renderFeatures();
 		localStorage.setItem("simradar21-map-view", JSON.stringify({ center, zoom }));
 	};
+
+	private getFeatureAtPointer(pixel: Pixel, tolerancePx = 15) {
+		const coord = this.map?.getCoordinateFromPixel(pixel);
+		const resolution = this.map?.getView().getResolution() || 1;
+		const tolerance = tolerancePx * resolution;
+
+		if (!coord) return;
+
+		const extent = [coord[0] - tolerance, coord[1] - tolerance, coord[0] + tolerance, coord[1] + tolerance];
+
+		return this.getFeatureFromSources(extent);
+	}
+
+	private getFeatureFromSources(extent: Extent): Feature<Point> | undefined {
+		const f1 = this.airportService.getSource().getFeaturesInExtent(extent)[0];
+		if (f1) return f1;
+
+		const f2 = this.pilotService.getSource().getFeaturesInExtent(extent)[0];
+		if (f2) return f2;
+
+		const f3 = this.controllerService.getSource().getFeaturesInExtent(extent)[0];
+		if (f3) return f3;
+
+		return;
+	}
 
 	private onPointerMove = async (e: MapBrowserEvent) => {
 		if (this.hovering) return;
@@ -224,10 +252,7 @@ export class MapService {
 			return;
 		}
 
-		const feature = map.forEachFeatureAtPixel(pixel, (f) => f, {
-			layerFilter: (layer) => layer.get("type") === "airport_main" || layer.get("type") === "pilot_main" || layer.get("type") === "sector_label",
-			hitTolerance: 5,
-		}) as Feature<Point> | undefined;
+		const feature = this.getFeatureAtPointer(pixel);
 
 		map.getTargetElement().style.cursor = feature ? "pointer" : "";
 
@@ -259,10 +284,7 @@ export class MapService {
 		const map = e.map;
 		const pixel = e.pixel;
 
-		const feature = map.forEachFeatureAtPixel(pixel, (f) => f, {
-			layerFilter: (layer) => layer.get("type") === "airport_main" || layer.get("type") === "pilot_main" || layer.get("type") === "sector_label",
-			hitTolerance: 5,
-		}) as Feature<Point> | undefined;
+		const feature = this.getFeatureAtPointer(pixel);
 
 		if (feature !== this.clickedFeature && this.clickedOverlay) {
 			map.removeOverlay(this.clickedOverlay);
