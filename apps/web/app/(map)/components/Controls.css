@@ -36,6 +36,10 @@
 	justify-content: center;
 }
 
+.map-control-item use {
+	color: var(--color-main-text);
+}
+
 .map-control-item:hover {
 	background: var(--color-hover);
 }

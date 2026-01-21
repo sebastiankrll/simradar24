@@ -13,6 +13,7 @@ export class Sunservice {
 	public init(time?: Date): WebGLVectorLayer {
 		this.layer = new WebGLVectorLayer({
 			source: this.source,
+			disableHitDetection: true,
 			variables: {
 				theme: false,
 			},

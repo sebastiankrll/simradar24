@@ -51,6 +51,7 @@ export class PilotService {
 		});
 		this.shadowLayer = new WebGLVectorLayer({
 			source: this.source,
+			disableHitDetection: true,
 			variables: {
 				theme: false,
 				size: 1,

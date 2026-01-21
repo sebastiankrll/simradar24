@@ -41,6 +41,7 @@ export class ControllerService {
 	public init(): (WebGLVectorLayer | VectorLayer)[] {
 		this.firLayer = new WebGLVectorLayer({
 			source: this.firSource,
+			disableHitDetection: true,
 			variables: {
 				fill: "rgba(77, 95, 131, 0.1)",
 				stroke: "rgba(77, 95, 131, 1)",
@@ -53,6 +54,7 @@ export class ControllerService {
 		});
 		this.traconLayer = new WebGLVectorLayer({
 			source: this.traconSource,
+			disableHitDetection: true,
 			variables: {
 				fill: "rgba(222, 89, 234, 0.1)",
 				stroke: "rgba(222, 89, 234, 1)",
@@ -65,6 +67,7 @@ export class ControllerService {
 		});
 		this.airportLayer = new WebGLVectorLayer({
 			source: this.airportSource,
+			disableHitDetection: true,
 			variables: {
 				size: 1,
 			},
