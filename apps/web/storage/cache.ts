@@ -1,6 +1,4 @@
 import type { FIRFeature, SimAwareTraconFeature, StaticAircraft, StaticAirline, StaticAirport } from "@sr24/types/db";
-import type { DeltaTrackPoint, TrackPoint } from "@sr24/types/interface";
-import { decodeTrackPoints } from "@/lib/map/tracks";
 import { fetchApi } from "@/utils/api";
 import { dxGetAirline, dxGetAirport, dxGetFirs, dxGetTracons } from "./dexie";
 
@@ -74,38 +72,4 @@ export async function getCachedFir(id: string): Promise<FIRFeature | null> {
 	}
 
 	return feature || null;
-}
-
-const cachedTrackPoints = new Map<string, TrackPoint[]>();
-const pendingTrackPoints = new Map<string, Promise<TrackPoint[]>>();
-
-export async function getCachedTrackPoints(id: string): Promise<TrackPoint[]> {
-	const cached = cachedTrackPoints.get(id);
-	if (cached) {
-		return cached;
-	}
-
-	const inFlight = pendingTrackPoints.get(id);
-	if (inFlight) {
-		return inFlight;
-	}
-
-	const promise = fetchApi<(TrackPoint | DeltaTrackPoint)[]>(`/map/pilot/${id}/track`)
-		.then((masked) => {
-			const data = decodeTrackPoints(masked);
-			cachedTrackPoints.set(id, data);
-			pendingTrackPoints.delete(id);
-			return data;
-		})
-		.catch((err) => {
-			pendingTrackPoints.delete(id);
-			throw err;
-		});
-
-	pendingTrackPoints.set(id, promise);
-	return promise;
-}
-
-export function clearCachedTrackPoints(): void {
-	cachedTrackPoints.clear();
 }

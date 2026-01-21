@@ -226,7 +226,7 @@ export class MapService {
 
 		const feature = map.forEachFeatureAtPixel(pixel, (f) => f, {
 			layerFilter: (layer) => layer.get("type") === "airport_main" || layer.get("type") === "pilot_main" || layer.get("type") === "sector_label",
-			hitTolerance: 10,
+			hitTolerance: 5,
 		}) as Feature<Point> | undefined;
 
 		map.getTargetElement().style.cursor = feature ? "pointer" : "";
@@ -261,7 +261,7 @@ export class MapService {
 
 		const feature = map.forEachFeatureAtPixel(pixel, (f) => f, {
 			layerFilter: (layer) => layer.get("type") === "airport_main" || layer.get("type") === "pilot_main" || layer.get("type") === "sector_label",
-			hitTolerance: 10,
+			hitTolerance: 5,
 		}) as Feature<Point> | undefined;
 
 		if (feature !== this.clickedFeature && this.clickedOverlay) {
