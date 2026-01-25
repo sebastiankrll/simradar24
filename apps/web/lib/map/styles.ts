@@ -1,8 +1,7 @@
 import aircraftSprite from "@/assets/images/sprites/aircrafts.png";
-import airportLabelSprite from "@/assets/images/sprites/airportLabelSprite.png";
-import airportSprite from "@/assets/images/sprites/airportSprite.png";
+import airportLabelSprite from "@/assets/images/sprites/airportLabel.png";
 
-export const webglConfig = {
+export const styleConfig = {
 	pilot_main: {
 		"icon-src": aircraftSprite.src,
 		"icon-size": [94, 94],
@@ -1391,13 +1390,6 @@ export const webglConfig = {
 			[188, 7332],
 			[188, 658],
 		],
-	},
-	airport_main: {
-		"icon-src": airportSprite.src,
-		"icon-size": [32, 32],
-		"icon-offset": ["case", ["all", ["==", ["get", "clicked"], 0], ["==", ["get", "hovered"], 0]], [0, 0], [32, 0]],
-		"icon-scale": ["*", ["case", ["==", ["get", "size"], "s"], 0.6, ["==", ["get", "size"], "m"], 0.7, 0.8], ["+", 0, ["var", "size"]]],
-		"icon-rotate-with-view": false,
 	},
 	airport_label: {
 		"icon-src": airportLabelSprite.src,

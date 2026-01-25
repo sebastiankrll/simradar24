@@ -83,6 +83,7 @@ function AirportSettings() {
 					onChange={(_event: Event | SyntheticEvent<Element, Event>, newValue: number | number[]) => {
 						setAirportMarkerSize(newValue as number);
 					}}
+					step={10}
 					style={{ width: 100 }}
 				/>
 			</div>
@@ -108,6 +109,7 @@ function PlaneSettings() {
 						setPlaneMarkerSize(newValue as number);
 					}}
 					style={{ width: 100 }}
+					step={10}
 				/>
 			</div>
 			<div className="setting-item">

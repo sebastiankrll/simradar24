@@ -2,7 +2,7 @@ import type { PilotDelta, PilotShort } from "@sr24/types/interface";
 import { Feature, type View } from "ol";
 import type { Extent } from "ol/extent";
 import { Point } from "ol/geom";
-import WebGLVectorLayer from "ol/layer/WebGLVector";
+import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import RBush from "rbush";
 import { toast } from "react-toastify";
@@ -10,20 +10,23 @@ import MessageBox from "@/components/MessageBox/MessageBox";
 import type { SelectOptionType } from "@/components/Select/Select";
 import type { PilotProperties } from "@/types/ol";
 import type { FilterValues } from "@/types/zustand";
-import { webglConfig } from "./webglConfig";
+import { getPilotStyle, getShadowStyle, type PilotStyleVars } from "./styles/pilot";
 
 type RBushFeature = {
 	minX: number;
 	minY: number;
 	maxX: number;
 	maxY: number;
+	altitude_agl: number;
 	feature: Feature<Point>;
 };
 
 export class PilotService {
-	private source = new VectorSource<Feature<Point>>();
-	private mainLayer: WebGLVectorLayer | null = null;
-	private shadowLayer: WebGLVectorLayer | null = null;
+	private source = new VectorSource<Feature<Point>>({
+		useSpatialIndex: false,
+	});
+	private mainLayer: VectorLayer | null = null;
+	private shadowLayer: VectorLayer | null = null;
 
 	private rbush = new RBush<RBushFeature>();
 	private map = new Map<string, RBushFeature>();
@@ -34,28 +37,20 @@ export class PilotService {
 	private isFocused = false;
 	private viewInitialized = false;
 
-	public init(): WebGLVectorLayer[] {
-		this.mainLayer = new WebGLVectorLayer({
+	private styleVars: PilotStyleVars = {};
+
+	public init(): VectorLayer[] {
+		this.mainLayer = new VectorLayer({
 			source: this.source,
-			disableHitDetection: true,
-			variables: {
-				theme: false,
-				size: 1,
-			},
-			style: webglConfig.pilot_main,
+			style: getPilotStyle(this.styleVars),
 			properties: {
 				type: "pilot_main",
 			},
 			zIndex: 5,
 		});
-		this.shadowLayer = new WebGLVectorLayer({
+		this.shadowLayer = new VectorLayer({
 			source: this.source,
-			disableHitDetection: true,
-			variables: {
-				theme: false,
-				size: 1,
-			},
-			style: webglConfig.pilot_shadow,
+			style: getShadowStyle(this.styleVars),
 			properties: {
 				type: "pilot_shadow",
 			},
@@ -70,8 +65,8 @@ export class PilotService {
 	}
 
 	public setTheme(theme: boolean) {
-		this.mainLayer?.updateStyleVariables({ theme });
-		this.shadowLayer?.updateStyleVariables({ theme });
+		this.styleVars.theme = theme;
+		this.shadowLayer?.setStyle(getShadowStyle(this.styleVars));
 	}
 
 	public setFilters(filters?: Partial<Record<keyof FilterValues, SelectOptionType[] | number[]>>) {
@@ -196,6 +191,7 @@ export class PilotService {
 				minY: p.coordinates[1],
 				maxX: p.coordinates[0],
 				maxY: p.coordinates[1],
+				altitude_agl: p.altitude_agl || 0,
 				feature,
 			};
 
@@ -256,6 +252,7 @@ export class PilotService {
 				minY: p.coordinates[1],
 				maxX: p.coordinates[0],
 				maxY: p.coordinates[1],
+				altitude_agl: p.altitude_agl || 0,
 				feature,
 			};
 
@@ -288,8 +285,8 @@ export class PilotService {
 		return false;
 	}
 
-	public renderFeatures(extent: Extent, zoom: number) {
-		if (zoom > 12 && !this.viewInitialized) {
+	public renderFeatures(extent: Extent, resolution: number) {
+		if (resolution > 12 && !this.viewInitialized) {
 			this.viewInitialized = true;
 			return;
 		}
@@ -307,7 +304,7 @@ export class PilotService {
 
 		const [minX, minY, maxX, maxY] = extent;
 		const pilotsByExtent = this.rbush.search({ minX, minY, maxX, maxY });
-		const pilotsByAltitude = pilotsByExtent.sort((a, b) => (b.feature.get("altitude_agl") || 0) - (a.feature.get("altitude_agl") || 0));
+		const pilotsByAltitude = pilotsByExtent.sort((a, b) => b.altitude_agl - a.altitude_agl);
 
 		const features = pilotsByAltitude.map((f) => f.feature);
 		const newFeatures = this.filterFeatures(features).slice(0, 300);
@@ -374,8 +371,9 @@ export class PilotService {
 
 	public setSettings({ size, show }: { size?: number; show?: boolean }): void {
 		if (size) {
-			this.mainLayer?.updateStyleVariables({ size: size / 50 });
-			this.shadowLayer?.updateStyleVariables({ size: size / 50 });
+			this.styleVars.size = size;
+			this.mainLayer?.setStyle(getPilotStyle(this.styleVars));
+			this.shadowLayer?.setStyle(getShadowStyle(this.styleVars));
 		}
 		if (show !== undefined) {
 			this.mainLayer?.setVisible(show);

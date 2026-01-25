@@ -1,19 +1,14 @@
 import type { ControllerDelta, ControllerMerged } from "@sr24/types/interface";
 import type { View } from "ol";
 import type Feature from "ol/Feature";
-import type { FeatureLike } from "ol/Feature";
 import type { MultiPolygon, Point, Polygon } from "ol/geom";
 import VectorLayer from "ol/layer/Vector";
-import WebGLVectorLayer from "ol/layer/WebGLVector";
 import VectorSource from "ol/source/Vector";
-import Fill from "ol/style/Fill";
-import Style from "ol/style/Style";
-import Text from "ol/style/Text";
 import type { RgbaColor } from "react-colorful";
 import { toast } from "react-toastify";
 import MessageBox from "@/components/MessageBox/MessageBox";
 import { createAirportFeature, createFirFeature, createTraconFeature, stripPrefix } from "./controllers";
-import { webglConfig } from "./webglConfig";
+import { type ControllerStyleVars, getAirportStyle, getFirStyle, getLabelStyle, getTraconStyle } from "./styles/controller";
 
 export class ControllerService {
 	private firSource = new VectorSource({
@@ -26,50 +21,36 @@ export class ControllerService {
 		useSpatialIndex: false,
 	});
 	private labelSource = new VectorSource<Feature<Point>>();
-	private firLayer: WebGLVectorLayer | null = null;
-	private traconLayer: WebGLVectorLayer | null = null;
-	private airportLayer: WebGLVectorLayer | null = null;
+	private firLayer: VectorLayer | null = null;
+	private traconLayer: VectorLayer | null = null;
+	private airportLayer: VectorLayer | null = null;
 	private labelLayer: VectorLayer | null = null;
-
-	private styleCache = new Map<string, Style>();
 
 	private set = new Set<string>();
 	private highlighted: string | null = null;
 
-	public init(): (WebGLVectorLayer | VectorLayer)[] {
-		this.firLayer = new WebGLVectorLayer({
+	private styleVars: ControllerStyleVars = {};
+
+	public init(): VectorLayer[] {
+		this.firLayer = new VectorLayer({
 			source: this.firSource,
-			disableHitDetection: true,
-			variables: {
-				fill: "rgba(77, 95, 131, 0.1)",
-				stroke: "rgba(77, 95, 131, 1)",
-			},
-			style: webglConfig.controller,
+			style: getFirStyle(this.styleVars),
 			properties: {
 				type: "fir",
 			},
 			zIndex: 1,
 		});
-		this.traconLayer = new WebGLVectorLayer({
+		this.traconLayer = new VectorLayer({
 			source: this.traconSource,
-			disableHitDetection: true,
-			variables: {
-				fill: "rgba(222, 89, 234, 0.1)",
-				stroke: "rgba(222, 89, 234, 1)",
-			},
-			style: webglConfig.controller,
+			style: getTraconStyle(this.styleVars),
 			properties: {
 				type: "tracon",
 			},
 			zIndex: 2,
 		});
-		this.airportLayer = new WebGLVectorLayer({
+		this.airportLayer = new VectorLayer({
 			source: this.airportSource,
-			disableHitDetection: true,
-			variables: {
-				size: 1,
-			},
-			style: webglConfig.airport_label,
+			style: getAirportStyle(this.styleVars),
 			properties: {
 				type: "airport_label",
 			},
@@ -77,7 +58,7 @@ export class ControllerService {
 		});
 		this.labelLayer = new VectorLayer({
 			source: this.labelSource,
-			style: this.getLabelStyle.bind(this),
+			style: getLabelStyle(this.styleVars),
 			properties: {
 				type: "sector_label",
 			},
@@ -91,9 +72,8 @@ export class ControllerService {
 		return this.labelSource;
 	}
 
-	public setTheme(theme: boolean) {
-		this.firLayer?.updateStyleVariables({ theme });
-		this.traconLayer?.updateStyleVariables({ theme });
+	public setTheme(_theme: boolean) {
+		// No theme changes yet
 	}
 
 	public hoverSector(feature: Feature<Point> | undefined | null, hovered: boolean, event: "hovered" | "clicked"): void {
@@ -116,39 +96,6 @@ export class ControllerService {
 				}
 			}
 		}
-	}
-
-	private getLabelStyle(feature: FeatureLike, resolution: number): Style | undefined {
-		const type = feature.get("type") as "tracon" | "fir";
-
-		if ((type === "tracon" && resolution > 3500) || (type === "fir" && resolution > 6000)) {
-			return;
-		}
-
-		const active = (feature.get("clicked") as boolean) || (feature.get("hovered") as boolean);
-		const label = feature.get("label") as string;
-
-		const key = `${type}_${active}`;
-		const cached = this.styleCache.get(key);
-		if (cached) {
-			cached.getText()?.setText(label);
-			return cached;
-		}
-
-		const bg = type === "fir" ? new Fill({ color: "rgb(77, 95, 131)" }) : new Fill({ color: "rgb(222, 89, 234)" });
-		const style = new Style({
-			text: new Text({
-				font: "400 11px Ubuntu, sans-serif",
-				fill: new Fill({ color: "white" }),
-				backgroundFill: active ? new Fill({ color: "rgb(234, 89, 121)" }) : bg,
-				padding: [3, 2, 1, 4],
-				textAlign: "center",
-			}),
-		});
-		style.getText()?.setText(label);
-		this.styleCache.set(key, style);
-
-		return style;
 	}
 
 	public setHighlighted(id: string): void {
@@ -360,19 +307,18 @@ export class ControllerService {
 			this.airportLayer?.setVisible(showAirports);
 		}
 		if (airportSize) {
-			this.airportLayer?.updateStyleVariables({ size: airportSize / 50 });
+			this.styleVars.airportSize = airportSize;
+			this.airportLayer?.setStyle(getAirportStyle(this.styleVars));
 		}
 		if (firColor) {
-			this.firLayer?.updateStyleVariables({
-				fill: `rgba(${firColor.r}, ${firColor.g}, ${firColor.b}, ${firColor.a})`,
-				stroke: `rgba(${firColor.r}, ${firColor.g}, ${firColor.b}, 1)`,
-			});
+			this.styleVars.firColor = firColor;
+			this.labelLayer?.setStyle(getLabelStyle(this.styleVars));
+			this.firLayer?.setStyle(getFirStyle(this.styleVars));
 		}
 		if (traconColor) {
-			this.traconLayer?.updateStyleVariables({
-				fill: `rgba(${traconColor.r}, ${traconColor.g}, ${traconColor.b}, ${traconColor.a})`,
-				stroke: `rgba(${traconColor.r}, ${traconColor.g}, ${traconColor.b}, 1)`,
-			});
+			this.styleVars.traconColor = traconColor;
+			this.labelLayer?.setStyle(getLabelStyle(this.styleVars));
+			this.traconLayer?.setStyle(getTraconStyle(this.styleVars));
 		}
 	}
 }

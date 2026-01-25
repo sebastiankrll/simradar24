@@ -2,13 +2,13 @@ import type { StaticAirport } from "@sr24/types/db";
 import { Feature, type View } from "ol";
 import type { Extent } from "ol/extent";
 import { Point } from "ol/geom";
-import WebGLVectorLayer from "ol/layer/WebGLVector";
+import VectorLayer from "ol/layer/Vector";
 import { fromLonLat, transformExtent } from "ol/proj";
 import VectorSource from "ol/source/Vector";
 import RBush from "rbush";
 import type { AirportProperties } from "@/types/ol";
 import { getAirportSize, getVisibleSizes } from "./airports";
-import { webglConfig } from "./webglConfig";
+import { type AirportStyleVars, getAirportStyle } from "./styles/airport";
 
 type RBushFeature = {
 	minX: number;
@@ -20,8 +20,10 @@ type RBushFeature = {
 };
 
 export class AirportService {
-	private source = new VectorSource<Feature<Point>>();
-	private layer: WebGLVectorLayer | null = null;
+	private source = new VectorSource<Feature<Point>>({
+		useSpatialIndex: false,
+	});
+	private layer: VectorLayer | null = null;
 
 	private rbush = new RBush<RBushFeature>();
 	private map = new Map<string, Feature<Point>>();
@@ -30,24 +32,18 @@ export class AirportService {
 	private focused = new Set<string>();
 	private isFocused = false;
 
-	public init(): WebGLVectorLayer {
-		this.layer = new WebGLVectorLayer({
+	private styleVars: AirportStyleVars = {};
+
+	public init(): VectorLayer {
+		this.layer = new VectorLayer({
 			source: this.source,
-			disableHitDetection: true,
-			variables: {
-				size: 1,
-			},
-			style: webglConfig.airport_main,
+			style: getAirportStyle(this.styleVars),
 			properties: {
 				type: "airport_main",
 			},
 			zIndex: 7,
 		});
 		return this.layer;
-	}
-
-	public getSource(): VectorSource<Feature<Point>> {
-		return this.source;
 	}
 
 	public setFeatures(airports: StaticAirport[]): void {
@@ -82,7 +78,7 @@ export class AirportService {
 		this.rbush.load(items);
 	}
 
-	public renderFeatures(extent: Extent, zoom: number) {
+	public renderFeatures(extent: Extent, resolution: number) {
 		let newFeatures: Feature<Point>[] = [];
 
 		if (this.isFocused) {
@@ -96,7 +92,7 @@ export class AirportService {
 			return;
 		}
 
-		const visibleSizes = getVisibleSizes(zoom);
+		const visibleSizes = getVisibleSizes(resolution);
 		if (visibleSizes.length === 0) {
 			this.source.clear();
 
@@ -167,7 +163,8 @@ export class AirportService {
 			this.layer?.setVisible(show);
 		}
 		if (size) {
-			this.layer?.updateStyleVariables({ size: size / 50 });
+			this.styleVars.size = size;
+			this.layer?.setStyle(getAirportStyle(this.styleVars));
 		}
 	}
 

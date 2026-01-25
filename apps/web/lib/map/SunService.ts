@@ -1,25 +1,21 @@
 import { Feature } from "ol";
 import { MultiPolygon } from "ol/geom";
 import { circular } from "ol/geom/Polygon";
-import WebGLVectorLayer from "ol/layer/WebGLVector";
+import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
+import { sunStyles } from "./styles/sun";
 
 export class Sunservice {
 	private source = new VectorSource({
 		wrapX: false,
+		useSpatialIndex: false,
 	});
-	private layer: WebGLVectorLayer | null = null;
+	private layer: VectorLayer | null = null;
 
-	public init(time?: Date): WebGLVectorLayer {
-		this.layer = new WebGLVectorLayer({
+	public init(time?: Date): VectorLayer {
+		this.layer = new VectorLayer({
 			source: this.source,
-			disableHitDetection: true,
-			variables: {
-				theme: false,
-			},
-			style: {
-				"fill-color": ["case", ["var", "theme"], [0, 0, 0, 0.15], [77, 95, 131, 0.2]],
-			},
+			style: sunStyles.dark,
 			properties: {
 				type: "sun",
 			},
@@ -36,7 +32,11 @@ export class Sunservice {
 	}
 
 	public setTheme(theme: boolean): void {
-		this.layer?.updateStyleVariables({ theme });
+		if (theme) {
+			this.layer?.setStyle(sunStyles.light);
+		} else {
+			this.layer?.setStyle(sunStyles.dark);
+		}
 	}
 
 	public setSettings({ show, brightness }: { show?: boolean; brightness?: number }): void {

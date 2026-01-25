@@ -6,7 +6,6 @@ import { type Feature, type MapBrowserEvent, Map as OlMap, type Overlay, View } 
 import type BaseEvent from "ol/events/Event";
 import type { Extent } from "ol/extent";
 import type { Point } from "ol/geom";
-import type { Pixel } from "ol/pixel";
 import { fromLonLat, toLonLat, transformExtent } from "ol/proj";
 import type { SelectOptionType } from "@/components/Select/Select";
 import type { FilterValues, SettingValues } from "@/types/zustand";
@@ -202,35 +201,12 @@ export class MapService {
 		const view: View = e.target.getView();
 		const center = toLonLat(view.getCenter() || [0, 0]);
 		const zoom = view.getZoom() || 2;
+		const resolution = view.getResolution() || 0;
+		console.log(zoom, resolution);
 
 		this.renderFeatures();
 		localStorage.setItem("simradar21-map-view", JSON.stringify({ center, zoom }));
 	};
-
-	private getFeatureAtPointer(pixel: Pixel, tolerancePx = 15) {
-		const coord = this.map?.getCoordinateFromPixel(pixel);
-		const resolution = this.map?.getView().getResolution() || 1;
-		const tolerance = tolerancePx * resolution;
-
-		if (!coord) return;
-
-		const extent = [coord[0] - tolerance, coord[1] - tolerance, coord[0] + tolerance, coord[1] + tolerance];
-
-		return this.getFeatureFromSources(extent);
-	}
-
-	private getFeatureFromSources(extent: Extent): Feature<Point> | undefined {
-		const f1 = this.airportService.getSource().getFeaturesInExtent(extent)[0];
-		if (f1) return f1;
-
-		const f2 = this.pilotService.getSource().getFeaturesInExtent(extent)[0];
-		if (f2) return f2;
-
-		const f3 = this.controllerService.getSource().getFeaturesInExtent(extent)[0];
-		if (f3) return f3;
-
-		return;
-	}
 
 	private onPointerMove = async (e: MapBrowserEvent) => {
 		if (this.hovering) return;
@@ -252,7 +228,13 @@ export class MapService {
 			return;
 		}
 
-		const feature = this.getFeatureAtPointer(pixel);
+		const feature = map.forEachFeatureAtPixel(pixel, (feat) => feat, {
+			layerFilter: (layer) => {
+				const type = layer.get("type");
+				return type === "airport_main" || type === "pilot_main" || type === "sector_label";
+			},
+			hitTolerance: 5,
+		}) as Feature<Point> | undefined;
 
 		map.getTargetElement().style.cursor = feature ? "pointer" : "";
 
@@ -284,7 +266,13 @@ export class MapService {
 		const map = e.map;
 		const pixel = e.pixel;
 
-		const feature = this.getFeatureAtPointer(pixel);
+		const feature = map.forEachFeatureAtPixel(pixel, (feat) => feat, {
+			layerFilter: (layer) => {
+				const type = layer.get("type");
+				return type === "airport_main" || type === "pilot_main" || type === "sector_label";
+			},
+			hitTolerance: 5,
+		}) as Feature<Point> | undefined;
 
 		if (feature !== this.clickedFeature && this.clickedOverlay) {
 			map.removeOverlay(this.clickedOverlay);
@@ -552,10 +540,10 @@ export class MapService {
 		if (!view) return;
 
 		const extent = view.calculateExtent();
-		const zoom = view.getZoom() || 2;
+		const resolution = view.getResolution() || 0;
 
-		this.pilotService.renderFeatures(extent, zoom);
-		this.airportService.renderFeatures(extent, zoom);
+		this.pilotService.renderFeatures(extent, resolution);
+		this.airportService.renderFeatures(extent, resolution);
 
 		this.emit();
 	}
