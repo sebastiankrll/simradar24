@@ -35,14 +35,12 @@
 	padding: 1px 4px;
 }
 
-#flights-page a,
-#flights-aircraft a {
+.flights-page-link {
 	color: var(--color-green);
 	font-size: var(--font-size-normal);
 }
 
-#flights-page a:hover,
-#flights-aircraft a:hover {
+.flights-page-link:hover {
 	color: var(--color-hover);
 }
 

@@ -54,6 +54,7 @@
 	text-align: start;
 	width: fit-content;
 	font-size: var(--font-size-small);
+	color: var(--color-main-text);
 }
 
 .dashboard-table-button:hover {
@@ -96,6 +97,10 @@
 	justify-content: center;
 	width: 30px;
 	height: 30px;
+}
+
+.dashboard-event-button use {
+	color: var(--color-main-text);
 }
 
 .dashboard-event-button:hover use {

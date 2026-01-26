@@ -23,6 +23,7 @@
 	user-select: none;
 	background-color: var(--color-light-grey);
 	padding: 0.5rem 1rem;
+	color: var(--color-main-text);
 }
 
 .panel-pilot-airport:hover {

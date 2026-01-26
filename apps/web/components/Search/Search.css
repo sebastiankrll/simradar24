@@ -33,6 +33,10 @@
 	width: 16px;
 }
 
+#header-search-clear use {
+	color: var(--color-main-text);
+}
+
 #header-search-clear:hover use {
 	color: var(--color-red);
 }
@@ -88,6 +92,7 @@
 	box-sizing: border-box;
 	width: 100%;
 	overflow: hidden;
+	color: var(--color-main-text);
 }
 
 .search-item:hover,

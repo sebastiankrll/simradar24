@@ -149,14 +149,18 @@ function Row({ pilot, registration }: { pilot: PilotLong; registration?: string 
 			<td>{getDay(pilot.times?.sched_off_block)}</td>
 			{registration && (
 				<td>
-					<a href={`/data/flights/${pilot.callsign}`}>{pilot.callsign}</a>
+					<a className="flights-page-link" href={`/data/flights/${pilot.callsign}`}>
+						{pilot.callsign}
+					</a>
 				</td>
 			)}
 			<Airport airport={data.departure} />
 			<Airport airport={data.arrival} />
 			<td>
 				{pilot.aircraft}&nbsp;&nbsp;
-				<a href={`/data/aircrafts/${pilot.flight_plan?.ac_reg}`}>{pilot.flight_plan?.ac_reg || "N/A"}</a>
+				<a className="flights-page-link" href={`/data/aircrafts/${pilot.flight_plan?.ac_reg}`}>
+					{pilot.flight_plan?.ac_reg || "N/A"}
+				</a>
 			</td>
 			<td>{calculateFlightTime(pilot.times?.off_block, pilot.times?.on_block)}</td>
 			<td>
@@ -219,7 +223,9 @@ function Airport({ airport }: { airport: StaticAirport | null }) {
 	return (
 		<td>
 			{airport.city}&nbsp;&nbsp;
-			<a href={`/airport/${airport.id}`}>{airport.id}</a>
+			<a className="flights-page-link" href={`/airport/${airport.id}`}>
+				{airport.id}
+			</a>
 		</td>
 	);
 }

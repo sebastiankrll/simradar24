@@ -2,43 +2,44 @@ import type { StaticAirport } from "@sr24/types/db";
 import { Feature, type View } from "ol";
 import type { Extent } from "ol/extent";
 import { Point } from "ol/geom";
-import WebGLVectorLayer from "ol/layer/WebGLVector";
+import VectorLayer from "ol/layer/Vector";
 import { fromLonLat, transformExtent } from "ol/proj";
 import VectorSource from "ol/source/Vector";
 import RBush from "rbush";
 import type { AirportProperties } from "@/types/ol";
 import { getAirportSize, getVisibleSizes } from "./airports";
-import { webglConfig } from "./webglConfig";
+import { type AirportStyleVars, getAirportStyle } from "./styles/airport";
 
 type RBushFeature = {
 	minX: number;
 	minY: number;
 	maxX: number;
 	maxY: number;
-	size: string;
+	size: "s" | "m" | "l";
 	feature: Feature<Point>;
 };
 
 export class AirportService {
-	private source = new VectorSource({
+	private source = new VectorSource<Feature<Point>>({
 		useSpatialIndex: false,
 	});
-	private layer: WebGLVectorLayer | null = null;
+	private layer: VectorLayer | null = null;
 
 	private rbush = new RBush<RBushFeature>();
 	private map = new Map<string, Feature<Point>>();
+	private rendered = new Set<string>();
+	private renderPending = false;
 
 	private highlighted = new Set<string>();
 	private focused = new Set<string>();
 	private isFocused = false;
 
-	public init(): WebGLVectorLayer {
-		this.layer = new WebGLVectorLayer({
+	private styleVars: AirportStyleVars = {};
+
+	public init(): VectorLayer {
+		this.layer = new VectorLayer({
 			source: this.source,
-			variables: {
-				size: 1,
-			},
-			style: webglConfig.airport_main,
+			style: getAirportStyle(this.styleVars),
 			properties: {
 				type: "airport_main",
 			},
@@ -79,8 +80,9 @@ export class AirportService {
 		this.rbush.load(items);
 	}
 
-	public renderFeatures(extent: Extent, zoom: number) {
-		let newFeatures: Feature<Point>[] = [];
+	public renderFeatures(extent: Extent, resolution: number) {
+		if (this.renderPending) return;
+		this.renderPending = true;
 
 		if (this.isFocused) {
 			this.source.clear();
@@ -90,42 +92,64 @@ export class AirportService {
 					this.source.addFeature(feature);
 				}
 			});
+
+			this.renderPending = false;
 			return;
 		}
 
-		const visibleSizes = getVisibleSizes(zoom);
+		const visibleSizes = getVisibleSizes(resolution);
+
 		if (visibleSizes.length === 0) {
+			const newFeatures = Array.from(this.highlighted)
+				.map((id) => this.map.get(id))
+				.filter(Boolean) as Feature<Point>[];
+
 			this.source.clear();
-
-			this.highlighted.forEach((id) => {
-				const feature = this.map.get(id);
-				if (feature) {
-					newFeatures.push(feature);
-				}
-			});
-
 			this.source.addFeatures(newFeatures);
 
+			this.rendered = new Set(newFeatures.map((f) => f.getId() as string));
+			this.renderPending = false;
 			return;
 		}
 
 		const [minX, minY, maxX, maxY] = transformExtent(extent, "EPSG:3857", "EPSG:4326");
 		const airportsByExtent = this.rbush.search({ minX, minY, maxX, maxY });
-		const airportsBySize = airportsByExtent.filter((f) => visibleSizes.includes(f.size));
-		newFeatures = airportsBySize.map((f) => f.feature);
+
+		const visibleSet = new Set(visibleSizes);
+		const newFeatures: Feature<Point>[] = [];
+
+		for (const item of airportsByExtent) {
+			if (visibleSet.has(item.size)) newFeatures.push(item.feature);
+		}
+
+		const newSet = new Set(newFeatures.map((f) => f.getId() as string));
 
 		this.highlighted.forEach((id) => {
-			const exists = newFeatures.find((f) => f.getId() === `airport_${id}`);
-			if (!exists) {
+			const fid = `airport_${id}`;
+			if (!newSet.has(fid)) {
 				const feature = this.map.get(id);
-				if (feature) {
-					newFeatures.push(feature);
-				}
+				if (feature) newFeatures.push(feature);
 			}
 		});
 
-		this.source.clear();
-		this.source.addFeatures(newFeatures);
+		const next = new Set(newFeatures.map((f) => f.getId() as string));
+
+		this.rendered.forEach((id) => {
+			if (!next.has(id)) {
+				const f = this.source.getFeatureById(id);
+				if (f) this.source.removeFeature(f);
+			}
+		});
+
+		for (const f of newFeatures) {
+			const id = f.getId() as string;
+			if (!this.rendered.has(id)) {
+				this.source.addFeature(f);
+			}
+		}
+
+		this.rendered = next;
+		this.renderPending = false;
 	}
 
 	public setHighlighted(id: string): void {
@@ -164,7 +188,8 @@ export class AirportService {
 			this.layer?.setVisible(show);
 		}
 		if (size) {
-			this.layer?.updateStyleVariables({ size: size / 50 });
+			this.styleVars.size = size;
+			this.layer?.setStyle(getAirportStyle(this.styleVars));
 		}
 	}
 

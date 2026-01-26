@@ -138,5 +138,5 @@ function getStationsOffset(facilities: number[]): number {
 	});
 
 	const mask = (stations[0] << 3) | (stations[1] << 2) | (stations[2] << 1) | stations[3];
-	return (mask - 1) * 36;
+	return mask - 1;
 }

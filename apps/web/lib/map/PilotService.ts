@@ -2,7 +2,7 @@ import type { PilotDelta, PilotShort } from "@sr24/types/interface";
 import { Feature, type View } from "ol";
 import type { Extent } from "ol/extent";
 import { Point } from "ol/geom";
-import WebGLVectorLayer from "ol/layer/WebGLVector";
+import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import RBush from "rbush";
 import { toast } from "react-toastify";
@@ -10,52 +10,52 @@ import MessageBox from "@/components/MessageBox/MessageBox";
 import type { SelectOptionType } from "@/components/Select/Select";
 import type { PilotProperties } from "@/types/ol";
 import type { FilterValues } from "@/types/zustand";
-import { webglConfig } from "./webglConfig";
+import { getPilotStyle, getShadowStyle, type PilotStyleVars } from "./styles/pilot";
 
 type RBushFeature = {
 	minX: number;
 	minY: number;
 	maxX: number;
 	maxY: number;
+	altitude_agl: number;
 	feature: Feature<Point>;
 };
 
 export class PilotService {
-	private source = new VectorSource({
+	private source = new VectorSource<Feature<Point>>({
 		useSpatialIndex: false,
 	});
-	private mainLayer: WebGLVectorLayer | null = null;
-	private shadowLayer: WebGLVectorLayer | null = null;
+	private mainLayer: VectorLayer | null = null;
+	private shadowLayer: VectorLayer | null = null;
 
 	private rbush = new RBush<RBushFeature>();
 	private map = new Map<string, RBushFeature>();
+	private rendered = new Set<string>();
+	private renderPending = false;
 
 	private filters: Partial<Record<keyof FilterValues, SelectOptionType[] | number[]>> = {};
 	private highlighted = new Set<string>();
 	private focused = new Set<string>();
 	private isFocused = false;
-	private viewInitialized = false;
+	// private viewInitialized = false;
 
-	public init(): WebGLVectorLayer[] {
-		this.mainLayer = new WebGLVectorLayer({
+	private moving = new Set<Feature<Point>>();
+
+	private styleVars: PilotStyleVars = {};
+
+	public init(): VectorLayer[] {
+		this.mainLayer = new VectorLayer({
 			source: this.source,
-			variables: {
-				theme: false,
-				size: 1,
-			},
-			style: webglConfig.pilot_main,
+			style: getPilotStyle(this.styleVars),
 			properties: {
 				type: "pilot_main",
 			},
+			declutter: true,
 			zIndex: 5,
 		});
-		this.shadowLayer = new WebGLVectorLayer({
+		this.shadowLayer = new VectorLayer({
 			source: this.source,
-			variables: {
-				theme: false,
-				size: 1,
-			},
-			style: webglConfig.pilot_shadow,
+			style: getShadowStyle(this.styleVars),
 			properties: {
 				type: "pilot_shadow",
 			},
@@ -65,97 +65,101 @@ export class PilotService {
 		return [this.mainLayer, this.shadowLayer];
 	}
 
+	public getSource(): VectorSource<Feature<Point>> {
+		return this.source;
+	}
+
 	public setTheme(theme: boolean) {
-		this.mainLayer?.updateStyleVariables({ theme });
-		this.shadowLayer?.updateStyleVariables({ theme });
+		this.styleVars.theme = theme;
+		this.shadowLayer?.setStyle(getShadowStyle(this.styleVars));
 	}
 
 	public setFilters(filters?: Partial<Record<keyof FilterValues, SelectOptionType[] | number[]>>) {
 		this.filters = filters || {};
 	}
 
-	private filterFeatures(features: Feature<Point>[]): Feature<Point>[] {
-		if (Object.keys(this.filters).length === 0) return features;
+	private filterFeature(feature: Feature<Point>): boolean {
+		if (Object.keys(this.filters).length === 0) return true;
+
+		const callsign = feature.get("callsign") as string | undefined;
 
 		if (this.filters.Airline && this.filters.Airline.length > 0) {
 			const filters = this.filters.Airline as SelectOptionType[];
-			features = features.filter((feature) => {
-				const callsign = feature.get("callsign") as string | undefined;
-				return filters?.some((filter) => filter.value === callsign?.slice(0, 3));
-			});
+			if (!filters.some((f) => f.value === callsign?.slice(0, 3))) {
+				return false;
+			}
 		}
 		if (this.filters["Aircraft Type"] && this.filters["Aircraft Type"].length > 0) {
+			const aircraftType = feature.get("aircraft") as string | undefined;
 			const filters = this.filters["Aircraft Type"] as SelectOptionType[];
-			features = features.filter((feature) => {
-				const aircraftType = feature.get("aircraft") as string | undefined;
-				return filters?.some((filter) => aircraftType?.includes(filter.value));
-			});
+			if (!filters.some((filter) => aircraftType?.includes(filter.value))) {
+				return false;
+			}
 		}
 		if (this.filters["Aircraft Registration"] && this.filters["Aircraft Registration"].length > 0) {
+			const registration = feature.get("ac_reg") as string | undefined;
 			const filters = this.filters["Aircraft Registration"] as SelectOptionType[];
-			features = features.filter((feature) => {
-				const registration = feature.get("ac_reg") as string | undefined;
-				return filters?.some((filter) => registration?.includes(filter.value));
-			});
+			if (!filters.some((filter) => registration?.includes(filter.value))) {
+				return false;
+			}
 		}
+
+		const route = feature.get("route") as string | undefined;
+
 		if (this.filters.Departure && this.filters.Departure.length > 0) {
 			const filters = this.filters.Departure as SelectOptionType[];
-			features = features.filter((feature) => {
-				const route = feature.get("route") as string | undefined;
-				return filters?.some((filter) => filter.value === route?.split(" -- ")[0]);
-			});
+			if (!filters.some((filter) => filter.value === route?.split(" -- ")[0])) {
+				return false;
+			}
 		}
 		if (this.filters.Arrival && this.filters.Arrival.length > 0) {
 			const filters = this.filters.Arrival as SelectOptionType[];
-			features = features.filter((feature) => {
-				const route = feature.get("route") as string | undefined;
-				return filters?.some((filter) => filter.value === route?.split(" -- ")[1]);
-			});
+			if (!filters.some((filter) => filter.value === route?.split(" -- ")[1])) {
+				return false;
+			}
 		}
 		if (this.filters.Any && this.filters.Any.length > 0) {
 			const filters = this.filters.Any as SelectOptionType[];
-			features = features.filter((feature) => {
-				const route = feature.get("route") as string | undefined;
-				return filters?.some((filter) => filter.value === route?.split(" -- ")[0] || filter.value === route?.split(" -- ")[1]);
-			});
+			if (!filters.some((filter) => filter.value === route?.split(" -- ")[0] || filter.value === route?.split(" -- ")[1])) {
+				return false;
+			}
 		}
 		if (this.filters.Callsign && this.filters.Callsign.length > 0) {
 			const filters = this.filters.Callsign as SelectOptionType[];
-			features = features.filter((feature) => {
-				const callsign = feature.get("callsign") as string | undefined;
-				return filters?.some((filter) => callsign?.includes(filter.value));
-			});
+			if (!filters.some((filter) => callsign?.includes(filter.value))) {
+				return false;
+			}
 		}
 		if (this.filters.Squawk && this.filters.Squawk.length > 0) {
+			const squawk = feature.get("transponder") as string | undefined;
 			const filters = this.filters.Squawk as SelectOptionType[];
-			features = features.filter((feature) => {
-				const squawk = feature.get("transponder") as string | undefined;
-				return filters?.some((filter) => filter.value === squawk);
-			});
+			if (!filters.some((filter) => filter.value === squawk)) {
+				return false;
+			}
 		}
 		if (this.filters["Flight Rules"] && this.filters["Flight Rules"].length > 0) {
+			const flightRules = feature.get("flight_rules") as string | undefined;
 			const filters = this.filters["Flight Rules"] as SelectOptionType[];
-			features = features.filter((feature) => {
-				const flightRules = feature.get("flight_rules") as string | undefined;
-				return filters?.some((filter) => filter.value === flightRules);
-			});
+			if (!filters.some((filter) => filter.value === flightRules)) {
+				return false;
+			}
 		}
 		if (this.filters["Barometric Altitude"] && this.filters["Barometric Altitude"].length > 0) {
+			const altitude = feature.get("altitude_ms") as number | undefined;
 			const [min, max] = this.filters["Barometric Altitude"] as number[];
-			features = features.filter((feature) => {
-				const altitude = feature.get("altitude_ms") as number | undefined;
-				return altitude !== undefined && altitude >= min && altitude <= max;
-			});
+			if (altitude === undefined || altitude < min || altitude > max) {
+				return false;
+			}
 		}
 		if (this.filters.Groundspeed && this.filters.Groundspeed.length > 0) {
+			const groundspeed = feature.get("groundspeed") as number | undefined;
 			const [min, max] = this.filters.Groundspeed as number[];
-			features = features.filter((feature) => {
-				const groundspeed = feature.get("groundspeed") as number | undefined;
-				return groundspeed !== undefined && groundspeed >= min && groundspeed <= max;
-			});
+			if (groundspeed === undefined || groundspeed < min || groundspeed > max) {
+				return false;
+			}
 		}
 
-		return features;
+		return true;
 	}
 
 	public setHighlighted(id: string): void {
@@ -173,11 +177,14 @@ export class PilotService {
 		for (const p of pilots) {
 			if (!p.coordinates) continue;
 
+			const { vx, vy } = this.calculateVelocities(p);
+
 			const props: PilotProperties = {
 				type: "pilot",
-				coord3857: p.coordinates,
 				clicked: false,
 				hovered: false,
+				vx,
+				vy,
 				...p,
 			};
 
@@ -192,6 +199,7 @@ export class PilotService {
 				minY: p.coordinates[1],
 				maxX: p.coordinates[0],
 				maxY: p.coordinates[1],
+				altitude_agl: p.altitude_agl || 0,
 				feature,
 			};
 
@@ -215,6 +223,12 @@ export class PilotService {
 				item.feature.set(k, p[k as keyof typeof p], true);
 			}
 
+			if (p.groundspeed && p.heading) {
+				const { vx, vy } = this.calculateVelocities(p);
+				item.feature.set("vx", vx, true);
+				item.feature.set("vy", vy, true);
+			}
+
 			if (p.coordinates) {
 				const geom = item.feature.getGeometry();
 				geom?.setCoordinates(p.coordinates);
@@ -234,11 +248,14 @@ export class PilotService {
 
 			pilotsInDelta.add(p.id);
 
+			const { vx, vy } = this.calculateVelocities(p);
+
 			const props: PilotProperties = {
 				type: "pilot",
-				coord3857: p.coordinates,
 				clicked: false,
 				hovered: false,
+				vx,
+				vy,
 				...p,
 			};
 			const feature = new Feature({
@@ -252,6 +269,7 @@ export class PilotService {
 				minY: p.coordinates[1],
 				maxX: p.coordinates[0],
 				maxY: p.coordinates[1],
+				altitude_agl: p.altitude_agl || 0,
 				feature,
 			};
 
@@ -284,11 +302,25 @@ export class PilotService {
 		return false;
 	}
 
-	public renderFeatures(extent: Extent, zoom: number) {
-		if (zoom > 12 && !this.viewInitialized) {
-			this.viewInitialized = true;
-			return;
+	private calculateVelocities(pilot: PilotShort): { vx: number; vy: number } {
+		const kts = pilot.groundspeed ?? 0;
+		const heading = pilot.heading ?? 0;
+
+		if (kts > 0) {
+			const speed = kts * 0.514444;
+			const rad = (heading * Math.PI) / 180;
+
+			return {
+				vx: Math.sin(rad) * speed,
+				vy: Math.cos(rad) * speed,
+			};
 		}
+		return { vx: 0, vy: 0 };
+	}
+
+	public renderFeatures(extent: Extent, resolution: number) {
+		if (this.renderPending) return;
+		this.renderPending = true;
 
 		if (this.isFocused) {
 			this.source.clear();
@@ -298,50 +330,90 @@ export class PilotService {
 					this.source.addFeature(item.feature);
 				}
 			});
+
+			this.renderPending = false;
 			return;
 		}
 
-		const [minX, minY, maxX, maxY] = extent;
-		const pilotsByExtent = this.rbush.search({ minX, minY, maxX, maxY });
-		const pilotsByAltitude = pilotsByExtent.sort((a, b) => (b.feature.get("altitude_agl") || 0) - (a.feature.get("altitude_agl") || 0));
+		const pilotsByExtent = this.rbush.search({
+			minX: extent[0],
+			minY: extent[1],
+			maxX: extent[2],
+			maxY: extent[3],
+		});
 
-		const features = pilotsByAltitude.map((f) => f.feature);
-		const newFeatures = this.filterFeatures(features).slice(0, 300);
+		const limited: RBushFeature[] = [];
+
+		for (const p of pilotsByExtent) {
+			if (resolution > 25 && p.altitude_agl <= 200) continue;
+			if (!this.filterFeature(p.feature)) continue;
+
+			limited.push(p);
+
+			if (limited.length > 300) {
+				limited.sort((a, b) => b.altitude_agl - a.altitude_agl);
+				limited.length = 300;
+			}
+		}
+
+		const newFeatures = limited.map((p) => p.feature);
+		const idSet = new Set(newFeatures.map((f) => f.getId()));
 
 		this.highlighted.forEach((id) => {
-			const exists = newFeatures.find((f) => f.getId() === `pilot_${id}`);
-			if (!exists) {
+			const fid = `pilot_${id}`;
+			if (!idSet.has(fid)) {
 				const item = this.map.get(id);
-				if (item) {
-					newFeatures.push(item.feature);
+				if (item) newFeatures.push(item.feature);
+			}
+		});
+
+		const next = new Set(newFeatures.map((f) => f.getId() as string));
+
+		this.rendered.forEach((id) => {
+			if (!next.has(id)) {
+				const f = this.source.getFeatureById(id);
+				if (f) {
+					this.source.removeFeature(f);
+					this.moving.delete(f);
 				}
 			}
 		});
 
-		this.source.clear();
-		this.source.addFeatures(newFeatures);
+		newFeatures.forEach((f) => {
+			const id = f.getId() as string;
+			if (!this.rendered.has(id)) {
+				this.source.addFeature(f);
+
+				const vx = f.get("vx");
+				const vy = f.get("vy");
+				if (vx !== 0 || vy !== 0) {
+					this.moving.add(f);
+				}
+			}
+		});
+
+		this.rendered = next;
+		this.renderPending = false;
 	}
 
 	public animateFeatures(elapsed: number): void {
-		const features = this.source.getFeatures() as Feature<Point>[];
+		const dt = elapsed / 1000;
 
-		features.forEach((feature) => {
-			const kts = (feature.get("groundspeed") as number) || 0;
-			if (kts <= 0) return;
+		for (const f of this.moving) {
+			const vx = f.get("vx");
+			const vy = f.get("vy");
+			if (!vx || !vy || (vx === 0 && vy === 0)) continue;
 
-			const heading = (feature.get("heading") as number) || 0;
-			const headingRad = (heading * Math.PI) / 180;
-			const meters = kts * 0.514444 * (elapsed / 1000);
+			const geom = f.getGeometry();
+			if (!geom) continue;
 
-			const [x, y] = feature.get("coord3857");
-			const dx = meters * Math.sin(headingRad);
-			const dy = meters * Math.cos(headingRad);
-			const nx = x + dx;
-			const ny = y + dy;
+			const coords = geom.getCoordinates();
 
-			feature.getGeometry()?.setCoordinates([nx, ny]);
-			feature.set("coord3857", [nx, ny], true);
-		});
+			coords[0] += vx * dt;
+			coords[1] += vy * dt;
+
+			geom.setCoordinates(coords);
+		}
 	}
 
 	public moveToFeature(id: string, view?: View | undefined): Feature<Point> | null {
@@ -370,8 +442,9 @@ export class PilotService {
 
 	public setSettings({ size, show }: { size?: number; show?: boolean }): void {
 		if (size) {
-			this.mainLayer?.updateStyleVariables({ size: size / 50 });
-			this.shadowLayer?.updateStyleVariables({ size: size / 50 });
+			this.styleVars.size = size;
+			this.mainLayer?.setStyle(getPilotStyle(this.styleVars));
+			this.shadowLayer?.setStyle(getShadowStyle(this.styleVars));
 		}
 		if (show !== undefined) {
 			this.mainLayer?.setVisible(show);

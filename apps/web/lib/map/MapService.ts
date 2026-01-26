@@ -59,7 +59,7 @@ export class MapService {
 	private storedAirports = new Map<string, AirportShort>();
 
 	private animationTimestamp = 0;
-	private animationFrame = 0;
+	private animationFrame?: number;
 
 	private followInterval: NodeJS.Timeout | null = null;
 
@@ -81,15 +81,18 @@ export class MapService {
 
 		let center = initialCenter;
 		let zoom = initialZoom;
+		let rotation = 0;
 
 		if (savedView) {
 			try {
 				const parsed = JSON.parse(savedView) as {
 					center: [number, number];
 					zoom: number;
+					rotation: number;
 				};
 				center = parsed.center;
 				zoom = parsed.zoom;
+				rotation = parsed.rotation;
 			} catch {
 				// fallback to default
 			}
@@ -116,6 +119,7 @@ export class MapService {
 				zoom,
 				maxZoom: 18,
 				minZoom: 3,
+				rotation,
 				extent: transformExtent([-190, -80, 190, 80], "EPSG:4326", "EPSG:3857"),
 			}),
 			controls: [],
@@ -181,7 +185,11 @@ export class MapService {
 
 	public addEventListeners() {
 		this.map?.on("moveend", this.onMoveEnd);
-		this.map?.on("pointermove", this.onPointerMove);
+
+		const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+		if (!isTouch) {
+			this.map?.on("pointermove", this.onPointerMove);
+		}
 		if (!this.options?.disableInteractions) {
 			this.map?.on("click", this.onClick);
 		}
@@ -190,18 +198,17 @@ export class MapService {
 	public removeEventListeners() {
 		this.map?.un("moveend", this.onMoveEnd);
 		this.map?.un("pointermove", this.onPointerMove);
-		if (!this.options?.disableInteractions) {
-			this.map?.un("click", this.onClick);
-		}
+		this.map?.un("click", this.onClick);
 	}
 
 	private onMoveEnd = (e: BaseEvent | Event) => {
 		const view: View = e.target.getView();
 		const center = toLonLat(view.getCenter() || [0, 0]);
 		const zoom = view.getZoom() || 2;
+		const rotation = view.getRotation() || 0;
 
 		this.renderFeatures();
-		localStorage.setItem("simradar21-map-view", JSON.stringify({ center, zoom }));
+		localStorage.setItem("simradar21-map-view", JSON.stringify({ center, zoom, rotation }));
 	};
 
 	private onPointerMove = async (e: MapBrowserEvent) => {
@@ -224,9 +231,12 @@ export class MapService {
 			return;
 		}
 
-		const feature = map.forEachFeatureAtPixel(pixel, (f) => f, {
-			layerFilter: (layer) => layer.get("type") === "airport_main" || layer.get("type") === "pilot_main" || layer.get("type") === "sector_label",
-			hitTolerance: 10,
+		const feature = map.forEachFeatureAtPixel(pixel, (feat) => feat, {
+			layerFilter: (layer) => {
+				const type = layer.get("type");
+				return type === "airport_main" || type === "pilot_main" || type === "sector_label";
+			},
+			hitTolerance: 5,
 		}) as Feature<Point> | undefined;
 
 		map.getTargetElement().style.cursor = feature ? "pointer" : "";
@@ -259,9 +269,12 @@ export class MapService {
 		const map = e.map;
 		const pixel = e.pixel;
 
-		const feature = map.forEachFeatureAtPixel(pixel, (f) => f, {
-			layerFilter: (layer) => layer.get("type") === "airport_main" || layer.get("type") === "pilot_main" || layer.get("type") === "sector_label",
-			hitTolerance: 10,
+		const feature = map.forEachFeatureAtPixel(pixel, (feat) => feat, {
+			layerFilter: (layer) => {
+				const type = layer.get("type");
+				return type === "airport_main" || type === "pilot_main" || type === "sector_label";
+			},
+			hitTolerance: 5,
 		}) as Feature<Point> | undefined;
 
 		if (feature !== this.clickedFeature && this.clickedOverlay) {
@@ -530,59 +543,52 @@ export class MapService {
 		if (!view) return;
 
 		const extent = view.calculateExtent();
-		const zoom = view.getZoom() || 2;
+		const resolution = view.getResolution() || 0;
 
-		this.pilotService.renderFeatures(extent, zoom);
-		this.airportService.renderFeatures(extent, zoom);
+		this.pilotService.renderFeatures(extent, resolution);
+		this.airportService.renderFeatures(extent, resolution);
 
 		this.emit();
 	}
 
 	private toggleAnimation(enabled: boolean): void {
 		if (!enabled) {
-			window.cancelAnimationFrame(this.animationFrame);
+			if (this.animationFrame) {
+				cancelAnimationFrame(this.animationFrame);
+				this.animationFrame = undefined;
+			}
 			return;
 		}
 
-		const animate = () => {
-			this.animateFeatures();
-			this.animationFrame = window.requestAnimationFrame(animate);
+		this.animationTimestamp = performance.now();
+
+		const tick = (now: number) => {
+			const elapsed = now - this.animationTimestamp;
+
+			const resolution = this.map?.getView().getResolution() ?? 0;
+			const target = Math.min(Math.max(resolution * 5, 200), 2000);
+
+			if (elapsed >= target) {
+				this.animateTick(elapsed);
+				this.animationTimestamp = now;
+			}
+
+			this.animationFrame = requestAnimationFrame(tick);
 		};
-		this.animationFrame = window.requestAnimationFrame(animate);
+		this.animationFrame = requestAnimationFrame(tick);
 	}
 
-	private animateFeatures(): void {
-		const resolution = this.map?.getView().getResolution() || 0;
-		let interval = 1000;
-		if (resolution > 1) {
-			interval = Math.min(Math.max(resolution * 5, 40), 1000);
+	private animateTick(elapsed: number): void {
+		this.pilotService.animateFeatures(elapsed);
+
+		if (this.clickedOverlay && this.clickedFeature?.getGeometry()) {
+			this.clickedOverlay.setPosition(this.clickedFeature.getGeometry()?.getCoordinates());
+		}
+		if (this.hoveredOverlay && this.hoveredFeature?.getGeometry()) {
+			this.hoveredOverlay.setPosition(this.hoveredFeature.getGeometry()?.getCoordinates());
 		}
 
-		const now = Date.now();
-		const elapsed = now - this.animationTimestamp;
-
-		if (elapsed > interval) {
-			this.pilotService.animateFeatures(elapsed);
-
-			if (this.clickedOverlay) {
-				if (this.clickedFeature) {
-					const geom = this.clickedFeature.getGeometry();
-					const coords = geom?.getCoordinates();
-					this.clickedOverlay.setPosition(coords);
-				}
-			}
-			if (this.hoveredOverlay) {
-				if (this.hoveredFeature) {
-					const geom = this.hoveredFeature.getGeometry();
-					const coords = geom?.getCoordinates();
-					this.hoveredOverlay.setPosition(coords);
-				}
-			}
-
-			this.trackService.animateFeatures(this.clickedFeature);
-
-			this.animationTimestamp = now;
-		}
+		this.trackService.animateFeatures(this.clickedFeature);
 	}
 
 	public setClickedFeature(type: string, id: string, init?: boolean): void {
