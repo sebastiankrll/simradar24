@@ -31,12 +31,15 @@ export class PilotService {
 	private rbush = new RBush<RBushFeature>();
 	private map = new Map<string, RBushFeature>();
 	private rendered = new Set<string>();
+	private renderPending = false;
 
 	private filters: Partial<Record<keyof FilterValues, SelectOptionType[] | number[]>> = {};
 	private highlighted = new Set<string>();
 	private focused = new Set<string>();
 	private isFocused = false;
 	// private viewInitialized = false;
+
+	private moving = new Set<Feature<Point>>();
 
 	private styleVars: PilotStyleVars = {};
 
@@ -174,11 +177,14 @@ export class PilotService {
 		for (const p of pilots) {
 			if (!p.coordinates) continue;
 
+			const { vx, vy } = this.calculateVelocities(p);
+
 			const props: PilotProperties = {
 				type: "pilot",
-				coord3857: p.coordinates,
 				clicked: false,
 				hovered: false,
+				vx,
+				vy,
 				...p,
 			};
 
@@ -217,6 +223,12 @@ export class PilotService {
 				item.feature.set(k, p[k as keyof typeof p], true);
 			}
 
+			if (p.groundspeed && p.heading) {
+				const { vx, vy } = this.calculateVelocities(p);
+				item.feature.set("vx", vx, true);
+				item.feature.set("vy", vy, true);
+			}
+
 			if (p.coordinates) {
 				const geom = item.feature.getGeometry();
 				geom?.setCoordinates(p.coordinates);
@@ -236,11 +248,14 @@ export class PilotService {
 
 			pilotsInDelta.add(p.id);
 
+			const { vx, vy } = this.calculateVelocities(p);
+
 			const props: PilotProperties = {
 				type: "pilot",
-				coord3857: p.coordinates,
 				clicked: false,
 				hovered: false,
+				vx,
+				vy,
 				...p,
 			};
 			const feature = new Feature({
@@ -287,7 +302,26 @@ export class PilotService {
 		return false;
 	}
 
+	private calculateVelocities(pilot: PilotShort): { vx: number; vy: number } {
+		const kts = pilot.groundspeed ?? 0;
+		const heading = pilot.heading ?? 0;
+
+		if (kts > 0) {
+			const speed = kts * 0.514444;
+			const rad = (heading * Math.PI) / 180;
+
+			return {
+				vx: Math.sin(rad) * speed,
+				vy: Math.cos(rad) * speed,
+			};
+		}
+		return { vx: 0, vy: 0 };
+	}
+
 	public renderFeatures(extent: Extent, resolution: number) {
+		if (this.renderPending) return;
+		this.renderPending = true;
+
 		if (this.isFocused) {
 			this.source.clear();
 			this.focused.forEach((id) => {
@@ -336,7 +370,10 @@ export class PilotService {
 		this.rendered.forEach((id) => {
 			if (!next.has(id)) {
 				const f = this.source.getFeatureById(id);
-				if (f) this.source.removeFeature(f);
+				if (f) {
+					this.source.removeFeature(f);
+					this.moving.delete(f);
+				}
 			}
 		});
 
@@ -344,32 +381,37 @@ export class PilotService {
 			const id = f.getId() as string;
 			if (!this.rendered.has(id)) {
 				this.source.addFeature(f);
+
+				const vx = f.get("vx");
+				const vy = f.get("vy");
+				if (vx !== 0 || vy !== 0) {
+					this.moving.add(f);
+				}
 			}
 		});
 
 		this.rendered = next;
+		this.renderPending = false;
 	}
 
 	public animateFeatures(elapsed: number): void {
-		const features = this.source.getFeatures() as Feature<Point>[];
+		const dt = elapsed / 1000;
 
-		features.forEach((feature) => {
-			const kts = (feature.get("groundspeed") as number) || 0;
-			if (kts <= 0) return;
+		for (const f of this.moving) {
+			const vx = f.get("vx");
+			const vy = f.get("vy");
+			if (!vx || !vy || (vx === 0 && vy === 0)) continue;
 
-			const heading = (feature.get("heading") as number) || 0;
-			const headingRad = (heading * Math.PI) / 180;
-			const meters = kts * 0.514444 * (elapsed / 1000);
+			const geom = f.getGeometry();
+			if (!geom) continue;
 
-			const [x, y] = feature.get("coord3857");
-			const dx = meters * Math.sin(headingRad);
-			const dy = meters * Math.cos(headingRad);
-			const nx = x + dx;
-			const ny = y + dy;
+			const coords = geom.getCoordinates();
 
-			feature.getGeometry()?.setCoordinates([nx, ny]);
-			feature.set("coord3857", [nx, ny], true);
-		});
+			coords[0] += vx * dt;
+			coords[1] += vy * dt;
+
+			geom.setCoordinates(coords);
+		}
 	}
 
 	public moveToFeature(id: string, view?: View | undefined): Feature<Point> | null {

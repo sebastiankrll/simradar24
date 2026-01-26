@@ -59,7 +59,7 @@ export class MapService {
 	private storedAirports = new Map<string, AirportShort>();
 
 	private animationTimestamp = 0;
-	private animationFrame = 0;
+	private animationFrame?: number;
 
 	private followInterval: NodeJS.Timeout | null = null;
 
@@ -553,49 +553,42 @@ export class MapService {
 
 	private toggleAnimation(enabled: boolean): void {
 		if (!enabled) {
-			window.cancelAnimationFrame(this.animationFrame);
+			if (this.animationFrame) {
+				cancelAnimationFrame(this.animationFrame);
+				this.animationFrame = undefined;
+			}
 			return;
 		}
 
-		const animate = () => {
-			this.animateFeatures();
-			this.animationFrame = window.requestAnimationFrame(animate);
+		this.animationTimestamp = performance.now();
+
+		const tick = (now: number) => {
+			const elapsed = now - this.animationTimestamp;
+
+			const resolution = this.map?.getView().getResolution() ?? 0;
+			const target = Math.min(Math.max(resolution * 5, 200), 2000);
+
+			if (elapsed >= target) {
+				this.animateTick(elapsed);
+				this.animationTimestamp = now;
+			}
+
+			this.animationFrame = requestAnimationFrame(tick);
 		};
-		this.animationFrame = window.requestAnimationFrame(animate);
+		this.animationFrame = requestAnimationFrame(tick);
 	}
 
-	private animateFeatures(): void {
-		const resolution = this.map?.getView().getResolution() || 0;
-		let interval = 1000;
-		if (resolution > 1) {
-			interval = Math.min(Math.max(resolution * 5, 40), 1000);
+	private animateTick(elapsed: number): void {
+		this.pilotService.animateFeatures(elapsed);
+
+		if (this.clickedOverlay && this.clickedFeature?.getGeometry()) {
+			this.clickedOverlay.setPosition(this.clickedFeature.getGeometry()?.getCoordinates());
+		}
+		if (this.hoveredOverlay && this.hoveredFeature?.getGeometry()) {
+			this.hoveredOverlay.setPosition(this.hoveredFeature.getGeometry()?.getCoordinates());
 		}
 
-		const now = Date.now();
-		const elapsed = now - this.animationTimestamp;
-
-		if (elapsed > interval) {
-			this.pilotService.animateFeatures(elapsed);
-
-			if (this.clickedOverlay) {
-				if (this.clickedFeature) {
-					const geom = this.clickedFeature.getGeometry();
-					const coords = geom?.getCoordinates();
-					this.clickedOverlay.setPosition(coords);
-				}
-			}
-			if (this.hoveredOverlay) {
-				if (this.hoveredFeature) {
-					const geom = this.hoveredFeature.getGeometry();
-					const coords = geom?.getCoordinates();
-					this.hoveredOverlay.setPosition(coords);
-				}
-			}
-
-			this.trackService.animateFeatures(this.clickedFeature);
-
-			this.animationTimestamp = now;
-		}
+		this.trackService.animateFeatures(this.clickedFeature);
 	}
 
 	public setClickedFeature(type: string, id: string, init?: boolean): void {
