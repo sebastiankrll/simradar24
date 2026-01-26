@@ -62,6 +62,7 @@ export class ControllerService {
 			properties: {
 				type: "sector_label",
 			},
+			declutter: true,
 			zIndex: 8,
 		});
 

@@ -81,15 +81,18 @@ export class MapService {
 
 		let center = initialCenter;
 		let zoom = initialZoom;
+		let rotation = 0;
 
 		if (savedView) {
 			try {
 				const parsed = JSON.parse(savedView) as {
 					center: [number, number];
 					zoom: number;
+					rotation: number;
 				};
 				center = parsed.center;
 				zoom = parsed.zoom;
+				rotation = parsed.rotation;
 			} catch {
 				// fallback to default
 			}
@@ -116,6 +119,7 @@ export class MapService {
 				zoom,
 				maxZoom: 18,
 				minZoom: 3,
+				rotation,
 				extent: transformExtent([-190, -80, 190, 80], "EPSG:4326", "EPSG:3857"),
 			}),
 			controls: [],
@@ -201,11 +205,10 @@ export class MapService {
 		const view: View = e.target.getView();
 		const center = toLonLat(view.getCenter() || [0, 0]);
 		const zoom = view.getZoom() || 2;
-		const resolution = view.getResolution() || 0;
-		console.log(zoom, resolution);
+		const rotation = view.getRotation() || 0;
 
 		this.renderFeatures();
-		localStorage.setItem("simradar21-map-view", JSON.stringify({ center, zoom }));
+		localStorage.setItem("simradar21-map-view", JSON.stringify({ center, zoom, rotation }));
 	};
 
 	private onPointerMove = async (e: MapBrowserEvent) => {

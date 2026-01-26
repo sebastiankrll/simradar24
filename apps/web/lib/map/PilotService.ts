@@ -46,6 +46,7 @@ export class PilotService {
 			properties: {
 				type: "pilot_main",
 			},
+			declutter: true,
 			zIndex: 5,
 		});
 		this.shadowLayer = new VectorLayer({
@@ -286,7 +287,7 @@ export class PilotService {
 	}
 
 	public renderFeatures(extent: Extent, resolution: number) {
-		if (resolution > 12 && !this.viewInitialized) {
+		if (resolution > 1000 && !this.viewInitialized) {
 			this.viewInitialized = true;
 			return;
 		}
@@ -304,7 +305,11 @@ export class PilotService {
 
 		const [minX, minY, maxX, maxY] = extent;
 		const pilotsByExtent = this.rbush.search({ minX, minY, maxX, maxY });
-		const pilotsByAltitude = pilotsByExtent.sort((a, b) => b.altitude_agl - a.altitude_agl);
+		let pilotsByAltitude = pilotsByExtent.sort((a, b) => b.altitude_agl - a.altitude_agl);
+
+		if (resolution > 25) {
+			pilotsByAltitude = pilotsByAltitude.filter((p) => p.altitude_agl > 200);
+		}
 
 		const features = pilotsByAltitude.map((f) => f.feature);
 		const newFeatures = this.filterFeatures(features).slice(0, 300);
