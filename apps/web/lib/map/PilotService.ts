@@ -330,6 +330,8 @@ export class PilotService {
 					this.source.addFeature(item.feature);
 				}
 			});
+
+			this.renderPending = false;
 			return;
 		}
 

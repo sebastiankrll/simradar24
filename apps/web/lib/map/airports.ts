@@ -12,7 +12,7 @@ export function getAirportSize(size: string): "s" | "m" | "l" {
 	}
 }
 
-export function getVisibleSizes(resolution: number): string[] {
+export function getVisibleSizes(resolution: number): ("s" | "m" | "l")[] {
 	if (resolution < 1000) return ["s", "m", "l"];
 	if (resolution < 1500) return ["m", "l"];
 	if (resolution < 3500) return ["l"];
