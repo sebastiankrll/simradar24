@@ -116,7 +116,9 @@ async function dxInitDatabases(setStatus?: StatusSetter): Promise<void> {
 }
 
 async function storeData<T, K extends keyof T>(data: T[], db: EntityTable<T, K>): Promise<void> {
-	db.bulkPut(data)
+	await db.clear();
+	await db
+		.bulkPut(data)
 		.then(() => {
 			console.log("Done adding data");
 		})
