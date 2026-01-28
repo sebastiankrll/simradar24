@@ -17,6 +17,8 @@ import styleDark from "./positron_dark.json";
 import styleLight from "./positron_light.json";
 import { Sunservice } from "./SunService";
 import { TrackService } from "./TrackService";
+import Select, { SelectEvent } from "ol/interaction/Select";
+import { pointerMove } from "ol/events/condition";
 
 type Options = {
 	onNavigate?: (href: string) => void;
@@ -49,8 +51,10 @@ export class MapService {
 	private hovering = false;
 	private hoveredFeature: Feature<Point> | null = null;
 	private clickedFeature: Feature<Point> | null = null;
-	private hoveredOverlay: Overlay | null = null;
+	private hoverOverlay: Overlay | null = null;
 	private clickedOverlay: Overlay | null = null;
+	private hoverSelect: Select | undefined;
+	private clickSelect: Select | undefined;
 
 	private lastExtent: Extent | null = null;
 	private lastSettings: Partial<SettingValues> = {};
@@ -188,7 +192,18 @@ export class MapService {
 
 		const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
 		if (!isTouch) {
-			this.map?.on("pointermove", this.onPointerMove);
+			this.hoverSelect = new Select({
+				condition: pointerMove,
+				hitTolerance: 5,
+				layers: (layer) => {
+					const type = layer.get("type");
+					return type === "airport_main" || type === "pilot_main" || type === "sector_label";
+				},
+				style: null,
+			});
+			this.map?.addInteraction(this.hoverSelect);
+			this.hoverSelect.on("select", this.onHoverSelect);
+			// this.map?.on("pointermove", this.onPointerMove);
 		}
 		if (!this.options?.disableInteractions) {
 			this.map?.on("click", this.onClick);
@@ -197,7 +212,12 @@ export class MapService {
 
 	public removeEventListeners() {
 		this.map?.un("moveend", this.onMoveEnd);
-		this.map?.un("pointermove", this.onPointerMove);
+		if (this.hoverSelect) {
+			this.hoverSelect.un("select", this.onHoverSelect);
+			this.map?.removeInteraction(this.hoverSelect);
+			this.hoverSelect = undefined;
+		}
+		// this.map?.un("pointermove", this.onPointerMove);
 		this.map?.un("click", this.onClick);
 	}
 
@@ -211,6 +231,34 @@ export class MapService {
 		localStorage.setItem("simradar21-map-view", JSON.stringify({ center, zoom, rotation }));
 	};
 
+	private onHoverSelect = async (e: SelectEvent) => {
+		if (this.hovering) return;
+		this.hovering = true;
+
+		const map = e.mapBrowserEvent.map;
+		const selected = e.selected[0] as Feature<Point>;
+		const deselected = e.deselected[0] as Feature<Point>;
+
+		map.getTargetElement().style.cursor = selected ? "pointer" : "";
+
+		if (deselected && this.hoverOverlay) {
+			map.removeOverlay(this.hoverOverlay);
+			this.hoverOverlay = null;
+			deselected.set("hovered", false);
+		}
+
+		if (selected) {
+			this.hoverOverlay = await createOverlay(selected, this.getCachedAirport(selected), this.getCachedController(selected));
+			map?.addOverlay(this.hoverOverlay);
+			selected.set("hovered", true);
+		}
+
+		this.controllerService.hoverSector(deselected, false, "hovered");
+		this.controllerService.hoverSector(selected, true, "hovered");
+
+		this.hovering = false;
+	};
+
 	private onPointerMove = async (e: MapBrowserEvent) => {
 		if (this.hovering) return;
 		this.hovering = true;
@@ -222,9 +270,9 @@ export class MapService {
 			map.getTargetElement().style.cursor = "";
 			this.hovering = false;
 
-			if (this.hoveredOverlay) {
-				map.removeOverlay(this.hoveredOverlay);
-				this.hoveredOverlay = null;
+			if (this.hoverOverlay) {
+				map.removeOverlay(this.hoverOverlay);
+				this.hoverOverlay = null;
 				this.hoveredFeature?.set("hovered", false);
 				this.hoveredFeature = null;
 			}
@@ -241,14 +289,14 @@ export class MapService {
 
 		map.getTargetElement().style.cursor = feature ? "pointer" : "";
 
-		if (feature !== this.hoveredFeature && this.hoveredOverlay) {
-			map.removeOverlay(this.hoveredOverlay);
-			this.hoveredOverlay = null;
+		if (feature !== this.hoveredFeature && this.hoverOverlay) {
+			map.removeOverlay(this.hoverOverlay);
+			this.hoverOverlay = null;
 		}
 
 		if (feature && feature !== this.hoveredFeature && feature !== this.clickedFeature) {
-			this.hoveredOverlay = await createOverlay(feature, this.getCachedAirport(feature), this.getCachedController(feature));
-			map?.addOverlay(this.hoveredOverlay);
+			this.hoverOverlay = await createOverlay(feature, this.getCachedAirport(feature), this.getCachedController(feature));
+			map?.addOverlay(this.hoverOverlay);
 		}
 
 		if (feature !== this.hoveredFeature) {
@@ -287,8 +335,8 @@ export class MapService {
 			this.clickedOverlay = await createOverlay(feature, this.getCachedAirport(feature), this.getCachedController(feature));
 			map?.addOverlay(this.clickedOverlay);
 
-			this.hoveredOverlay && map.removeOverlay(this.hoveredOverlay);
-			this.hoveredOverlay = null;
+			this.hoverOverlay && map.removeOverlay(this.hoverOverlay);
+			this.hoverOverlay = null;
 		}
 
 		if (feature !== this.clickedFeature) {
@@ -469,10 +517,10 @@ export class MapService {
 				this.getCachedController(this.clickedFeature),
 			);
 		}
-		if (this.hoveredFeature && this.hoveredOverlay) {
+		if (this.hoveredFeature && this.hoverOverlay) {
 			updateOverlay(
 				this.hoveredFeature,
-				this.hoveredOverlay,
+				this.hoverOverlay,
 				this.getCachedAirport(this.hoveredFeature),
 				this.getCachedController(this.hoveredFeature),
 			);
@@ -584,8 +632,8 @@ export class MapService {
 		if (this.clickedOverlay && this.clickedFeature?.getGeometry()) {
 			this.clickedOverlay.setPosition(this.clickedFeature.getGeometry()?.getCoordinates());
 		}
-		if (this.hoveredOverlay && this.hoveredFeature?.getGeometry()) {
-			this.hoveredOverlay.setPosition(this.hoveredFeature.getGeometry()?.getCoordinates());
+		if (this.hoverOverlay && this.hoveredFeature?.getGeometry()) {
+			this.hoverOverlay.setPosition(this.hoveredFeature.getGeometry()?.getCoordinates());
 		}
 
 		this.trackService.animateFeatures(this.clickedFeature);
@@ -630,8 +678,8 @@ export class MapService {
 			this.controllerService.hoverSector(this.hoveredFeature, false, "hovered");
 			this.hoveredFeature = null;
 
-			this.hoveredOverlay && this.map?.removeOverlay(this.hoveredOverlay);
-			this.hoveredOverlay = null;
+			this.hoverOverlay && this.map?.removeOverlay(this.hoverOverlay);
+			this.hoverOverlay = null;
 			return;
 		}
 
@@ -652,7 +700,7 @@ export class MapService {
 			this.hoveredFeature.set("hovered", true);
 			createOverlay(this.hoveredFeature, this.getCachedAirport(this.hoveredFeature), this.getCachedController(this.hoveredFeature)).then(
 				(overlay) => {
-					this.hoveredOverlay = overlay;
+					this.hoverOverlay = overlay;
 					this.map?.addOverlay(overlay);
 				},
 			);
