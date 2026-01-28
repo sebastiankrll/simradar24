@@ -85,14 +85,19 @@ export class AirportService {
 		this.renderPending = true;
 
 		if (this.isFocused) {
-			this.source.clear();
+			const newFeatures: Feature<Point>[] = [];
+
 			this.focused.forEach((id) => {
 				const feature = this.map.get(id);
 				if (feature) {
-					this.source.addFeature(feature);
+					newFeatures.push(feature);
 				}
 			});
 
+			this.source.clear();
+			this.source.addFeatures(newFeatures);
+
+			this.rendered = new Set(newFeatures.map((f) => f.getId() as string));
 			this.renderPending = false;
 			return;
 		}

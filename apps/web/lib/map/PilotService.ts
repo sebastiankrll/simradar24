@@ -323,14 +323,19 @@ export class PilotService {
 		this.renderPending = true;
 
 		if (this.isFocused) {
-			this.source.clear();
+			const newFeatures: Feature<Point>[] = [];
+
 			this.focused.forEach((id) => {
-				const item = this.map.get(id);
-				if (item) {
-					this.source.addFeature(item.feature);
+				const feature = this.map.get(id);
+				if (feature?.feature) {
+					newFeatures.push(feature.feature);
 				}
 			});
 
+			this.source.clear();
+			this.source.addFeatures(newFeatures);
+
+			this.rendered = new Set(newFeatures.map((f) => f.getId() as string));
 			this.renderPending = false;
 			return;
 		}

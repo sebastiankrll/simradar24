@@ -18,7 +18,8 @@ import styleLight from "./positron_light.json";
 import { Sunservice } from "./SunService";
 import { TrackService } from "./TrackService";
 import Select, { SelectEvent } from "ol/interaction/Select";
-import { pointerMove } from "ol/events/condition";
+import { click, pointerMove } from "ol/events/condition";
+import Layer from "ol/layer/Layer";
 
 type Options = {
 	onNavigate?: (href: string) => void;
@@ -191,22 +192,33 @@ export class MapService {
 		this.map?.on("moveend", this.onMoveEnd);
 
 		const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+		const layers = (layer: Layer) => {
+			const type = layer.get("type");
+			return type === "airport_main" || type === "pilot_main" || type === "sector_label";
+		};
+
 		if (!isTouch) {
 			this.hoverSelect = new Select({
 				condition: pointerMove,
 				hitTolerance: 5,
-				layers: (layer) => {
-					const type = layer.get("type");
-					return type === "airport_main" || type === "pilot_main" || type === "sector_label";
-				},
+				layers,
 				style: null,
 			});
 			this.map?.addInteraction(this.hoverSelect);
 			this.hoverSelect.on("select", this.onHoverSelect);
 			// this.map?.on("pointermove", this.onPointerMove);
 		}
+
 		if (!this.options?.disableInteractions) {
-			this.map?.on("click", this.onClick);
+			this.clickSelect = new Select({
+				condition: click,
+				hitTolerance: 5,
+				layers,
+				style: null,
+			});
+			this.map?.addInteraction(this.clickSelect);
+			this.clickSelect.on("select", this.onClickSelect);
+			// this.map?.on("click", this.onClick);
 		}
 	}
 
@@ -217,8 +229,13 @@ export class MapService {
 			this.map?.removeInteraction(this.hoverSelect);
 			this.hoverSelect = undefined;
 		}
+		if (this.clickSelect) {
+			this.clickSelect.un("select", this.onClickSelect);
+			this.map?.removeInteraction(this.clickSelect);
+			this.clickSelect = undefined;
+		}
 		// this.map?.un("pointermove", this.onPointerMove);
-		this.map?.un("click", this.onClick);
+		// this.map?.un("click", this.onClick);
 	}
 
 	private onMoveEnd = (e: BaseEvent | Event) => {
@@ -244,12 +261,14 @@ export class MapService {
 		if (deselected && this.hoverOverlay) {
 			map.removeOverlay(this.hoverOverlay);
 			this.hoverOverlay = null;
+
 			deselected.set("hovered", false);
 		}
 
 		if (selected) {
 			this.hoverOverlay = await createOverlay(selected, this.getCachedAirport(selected), this.getCachedController(selected));
 			map?.addOverlay(this.hoverOverlay);
+
 			selected.set("hovered", true);
 		}
 
@@ -311,6 +330,62 @@ export class MapService {
 		this.hoveredFeature = feature || null;
 
 		this.hovering = false;
+	};
+
+	private onClickSelect = async (e: SelectEvent) => {
+		const map = e.mapBrowserEvent.map;
+		const selected = e.selected[0] as Feature<Point>;
+		const deselected = e.deselected[0] as Feature<Point>;
+
+		if (deselected && this.clickedOverlay) {
+			map.removeOverlay(this.clickedOverlay);
+			this.clickedOverlay = null;
+
+			this.clearMap();
+
+			deselected.set("clicked", false);
+			this.clickedFeature = null;
+		}
+
+		if (selected) {
+			this.clickedOverlay = await createOverlay(selected, this.getCachedAirport(selected), this.getCachedController(selected));
+			map?.addOverlay(this.clickedOverlay);
+
+			selected.set("clicked", true);
+			this.clickedFeature = selected;
+
+			this.controllerService.hoverSector(selected, true, "clicked");
+
+			const type = selected.get("type") as string | undefined;
+			const id = selected.getId()?.toString() || null;
+
+			if (type === "pilot" && id) {
+				const strippedId = id.toString().replace(/^pilot_/, "");
+				this.options?.onNavigate?.(`/pilot/${strippedId}`);
+				this.pilotService.setHighlighted(strippedId);
+			}
+
+			if (type === "airport" && id) {
+				const strippedId = id.toString().replace(/^airport_/, "");
+				this.options?.onNavigate?.(`/airport/${strippedId}`);
+				this.airportService.setHighlighted(strippedId);
+			}
+
+			if ((type === "tracon" || type === "fir") && id) {
+				const strippedId = id.toString().replace(/^(sector)_/, "");
+				this.options?.onNavigate?.(`/sector/${strippedId}`);
+				this.controllerService.setHighlighted(strippedId);
+			}
+
+			this.unfocusFeatures();
+		}
+
+		if (!selected) {
+			this.clickedFeature?.set("clicked", false);
+			this.clickedFeature = null;
+
+			this.resetMap();
+		}
 	};
 
 	private onClick = async (e: MapBrowserEvent) => {
@@ -669,6 +744,8 @@ export class MapService {
 					this.map?.addOverlay(overlay);
 				},
 			);
+
+			this.clickSelect?.toggleFeature(this.clickedFeature);
 		}
 	}
 
@@ -773,6 +850,8 @@ export class MapService {
 		this.pilotService.unfocusFeatures();
 		this.airportService.unfocusFeatures();
 		this.toggleLayerVisibility(["airport", "pilot", "controller", "track"], true);
+		
+		this.renderFeatures();
 	}
 
 	public fitFeatures({ pilots, airports, rememberView = true }: { pilots?: string[]; airports?: string[]; rememberView?: boolean } = {}): void {
