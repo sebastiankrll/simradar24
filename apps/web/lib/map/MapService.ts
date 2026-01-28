@@ -2,10 +2,13 @@ import { MapLibreLayer } from "@geoblocks/ol-maplibre-layer";
 import type { StaticAirport } from "@sr24/types/db";
 import type { AirportDelta, AirportShort, ControllerDelta, ControllerMerged, PilotDelta, PilotShort, TrackPoint } from "@sr24/types/interface";
 import type { StyleSpecification } from "maplibre-gl";
-import { type Feature, type MapBrowserEvent, Map as OlMap, type Overlay, View } from "ol";
+import { type Feature, Map as OlMap, type Overlay, View } from "ol";
+import { click, pointerMove } from "ol/events/condition";
 import type BaseEvent from "ol/events/Event";
 import type { Extent } from "ol/extent";
 import type { Point } from "ol/geom";
+import Select, { type SelectEvent } from "ol/interaction/Select";
+import type Layer from "ol/layer/Layer";
 import { fromLonLat, toLonLat, transformExtent } from "ol/proj";
 import type { SelectOptionType } from "@/components/Select/Select";
 import type { FilterValues, SettingValues } from "@/types/zustand";
@@ -17,9 +20,6 @@ import styleDark from "./positron_dark.json";
 import styleLight from "./positron_light.json";
 import { Sunservice } from "./SunService";
 import { TrackService } from "./TrackService";
-import Select, { SelectEvent } from "ol/interaction/Select";
-import { click, pointerMove } from "ol/events/condition";
-import Layer from "ol/layer/Layer";
 
 type Options = {
 	onNavigate?: (href: string) => void;
@@ -49,7 +49,7 @@ export class MapService {
 	private controllerService = new ControllerService();
 	private trackService = new TrackService();
 
-	private hovering = false;
+	private hoverToken = 0;
 	private hoveredFeature: Feature<Point> | null = null;
 	private clickedFeature: Feature<Point> | null = null;
 	private hoverOverlay: Overlay | null = null;
@@ -206,7 +206,6 @@ export class MapService {
 			});
 			this.map?.addInteraction(this.hoverSelect);
 			this.hoverSelect.on("select", this.onHoverSelect);
-			// this.map?.on("pointermove", this.onPointerMove);
 		}
 
 		if (!this.options?.disableInteractions) {
@@ -218,7 +217,6 @@ export class MapService {
 			});
 			this.map?.addInteraction(this.clickSelect);
 			this.clickSelect.on("select", this.onClickSelect);
-			// this.map?.on("click", this.onClick);
 		}
 	}
 
@@ -234,8 +232,6 @@ export class MapService {
 			this.map?.removeInteraction(this.clickSelect);
 			this.clickSelect = undefined;
 		}
-		// this.map?.un("pointermove", this.onPointerMove);
-		// this.map?.un("click", this.onClick);
 	}
 
 	private onMoveEnd = (e: BaseEvent | Event) => {
@@ -249,87 +245,37 @@ export class MapService {
 	};
 
 	private onHoverSelect = async (e: SelectEvent) => {
-		if (this.hovering) return;
-		this.hovering = true;
+		const token = ++this.hoverToken;
 
 		const map = e.mapBrowserEvent.map;
 		const selected = e.selected[0] as Feature<Point>;
-		const deselected = e.deselected[0] as Feature<Point>;
 
 		map.getTargetElement().style.cursor = selected ? "pointer" : "";
 
-		if (deselected && this.hoverOverlay) {
-			map.removeOverlay(this.hoverOverlay);
-			this.hoverOverlay = null;
-
-			deselected.set("hovered", false);
-		}
-
-		if (selected) {
-			this.hoverOverlay = await createOverlay(selected, this.getCachedAirport(selected), this.getCachedController(selected));
-			map?.addOverlay(this.hoverOverlay);
-
-			selected.set("hovered", true);
-		}
-
-		this.controllerService.hoverSector(deselected, false, "hovered");
-		this.controllerService.hoverSector(selected, true, "hovered");
-
-		this.hovering = false;
-	};
-
-	private onPointerMove = async (e: MapBrowserEvent) => {
-		if (this.hovering) return;
-		this.hovering = true;
-
-		const map = e.map;
-		const pixel = e.pixel;
-
-		if (!(e.originalEvent.target instanceof HTMLCanvasElement) && this.clickedFeature) {
-			map.getTargetElement().style.cursor = "";
-			this.hovering = false;
-
-			if (this.hoverOverlay) {
-				map.removeOverlay(this.hoverOverlay);
-				this.hoverOverlay = null;
-				this.hoveredFeature?.set("hovered", false);
-				this.hoveredFeature = null;
-			}
-			return;
-		}
-
-		const feature = map.forEachFeatureAtPixel(pixel, (feat) => feat, {
-			layerFilter: (layer) => {
-				const type = layer.get("type");
-				return type === "airport_main" || type === "pilot_main" || type === "sector_label";
-			},
-			hitTolerance: 5,
-		}) as Feature<Point> | undefined;
-
-		map.getTargetElement().style.cursor = feature ? "pointer" : "";
-
-		if (feature !== this.hoveredFeature && this.hoverOverlay) {
+		if (this.hoverOverlay) {
 			map.removeOverlay(this.hoverOverlay);
 			this.hoverOverlay = null;
 		}
-
-		if (feature && feature !== this.hoveredFeature && feature !== this.clickedFeature) {
-			this.hoverOverlay = await createOverlay(feature, this.getCachedAirport(feature), this.getCachedController(feature));
-			map?.addOverlay(this.hoverOverlay);
-		}
-
-		if (feature !== this.hoveredFeature) {
+		if (this.hoveredFeature) {
+			this.hoveredFeature.set("hovered", false);
 			this.controllerService.hoverSector(this.hoveredFeature, false, "hovered");
-			this.hoveredFeature?.set("hovered", false);
 			this.hoveredFeature = null;
 		}
 
-		this.controllerService.hoverSector(feature, true, "hovered");
+		if (!selected) return;
 
-		feature?.set("hovered", true);
-		this.hoveredFeature = feature || null;
+		selected.set("hovered", true);
+		this.controllerService.hoverSector(selected, true, "hovered");
 
-		this.hovering = false;
+		const overlay = await createOverlay(selected, this.getCachedAirport(selected), this.getCachedController(selected));
+
+		if (token !== this.hoverToken) {
+			return;
+		}
+
+		this.hoveredFeature = selected;
+		this.hoverOverlay = overlay;
+		map.addOverlay(overlay);
 	};
 
 	private onClickSelect = async (e: SelectEvent) => {
@@ -386,74 +332,6 @@ export class MapService {
 
 			this.resetMap();
 		}
-	};
-
-	private onClick = async (e: MapBrowserEvent) => {
-		const map = e.map;
-		const pixel = e.pixel;
-
-		const feature = map.forEachFeatureAtPixel(pixel, (feat) => feat, {
-			layerFilter: (layer) => {
-				const type = layer.get("type");
-				return type === "airport_main" || type === "pilot_main" || type === "sector_label";
-			},
-			hitTolerance: 5,
-		}) as Feature<Point> | undefined;
-
-		if (feature !== this.clickedFeature && this.clickedOverlay) {
-			map.removeOverlay(this.clickedOverlay);
-			this.clickedOverlay = null;
-			this.clearMap();
-		}
-
-		if (feature && feature !== this.clickedFeature) {
-			this.clickedOverlay = await createOverlay(feature, this.getCachedAirport(feature), this.getCachedController(feature));
-			map?.addOverlay(this.clickedOverlay);
-
-			this.hoverOverlay && map.removeOverlay(this.hoverOverlay);
-			this.hoverOverlay = null;
-		}
-
-		if (feature !== this.clickedFeature) {
-			this.clickedFeature?.set("clicked", false);
-			this.clickedFeature = null;
-		}
-
-		if (!feature) {
-			this.options?.onNavigate?.(`/`);
-			return;
-		}
-
-		this.unfocusFeatures();
-
-		feature?.set("clicked", true);
-		this.clickedFeature = feature || null;
-
-		this.controllerService.hoverSector(feature, true, "clicked");
-
-		if (!this.clickedFeature) return;
-
-		const type = this.clickedFeature.get("type") as string | undefined;
-		const id = this.clickedFeature.getId()?.toString() || null;
-		if (type === "pilot" && id) {
-			const strippedId = id.toString().replace(/^pilot_/, "");
-			this.options?.onNavigate?.(`/pilot/${strippedId}`);
-			this.pilotService.setHighlighted(strippedId);
-		}
-
-		if (type === "airport" && id) {
-			const strippedId = id.toString().replace(/^airport_/, "");
-			this.options?.onNavigate?.(`/airport/${strippedId}`);
-			this.airportService.setHighlighted(strippedId);
-		}
-
-		if ((type === "tracon" || type === "fir") && id) {
-			const strippedId = id.toString().replace(/^(sector)_/, "");
-			this.options?.onNavigate?.(`/sector/${strippedId}`);
-			this.controllerService.setHighlighted(strippedId);
-		}
-
-		this.renderFeatures();
 	};
 
 	private clearMap(): void {
@@ -749,14 +627,16 @@ export class MapService {
 		}
 	}
 
-	public setHoveredFeature(type?: string, id?: string): void {
+	public async setHoveredFeature(type?: string, id?: string): Promise<void> {
 		if (!id && !type && this.hoveredFeature) {
 			this.hoveredFeature.set("hovered", false);
+
 			this.controllerService.hoverSector(this.hoveredFeature, false, "hovered");
 			this.hoveredFeature = null;
 
 			this.hoverOverlay && this.map?.removeOverlay(this.hoverOverlay);
 			this.hoverOverlay = null;
+
 			return;
 		}
 
@@ -775,7 +655,7 @@ export class MapService {
 
 		if (this.hoveredFeature) {
 			this.hoveredFeature.set("hovered", true);
-			createOverlay(this.hoveredFeature, this.getCachedAirport(this.hoveredFeature), this.getCachedController(this.hoveredFeature)).then(
+			await createOverlay(this.hoveredFeature, this.getCachedAirport(this.hoveredFeature), this.getCachedController(this.hoveredFeature)).then(
 				(overlay) => {
 					this.hoverOverlay = overlay;
 					this.map?.addOverlay(overlay);
@@ -850,7 +730,7 @@ export class MapService {
 		this.pilotService.unfocusFeatures();
 		this.airportService.unfocusFeatures();
 		this.toggleLayerVisibility(["airport", "pilot", "controller", "track"], true);
-		
+
 		this.renderFeatures();
 	}
 
