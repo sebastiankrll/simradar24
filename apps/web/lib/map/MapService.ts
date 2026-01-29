@@ -858,12 +858,12 @@ export class MapService {
 			this.lastExtent = null;
 		}
 
-		const type = this.clickedFeature?.get("type") as string | undefined;
-		if (type !== "pilot") return;
+		const clickFeature = this.clickFeatures.values().next().value as Feature<Point> | undefined;
+		const type = clickFeature?.get("type") as string | undefined;
+		if (type !== "pilot" || !clickFeature) return;
 
 		const follow = () => {
-			console.log("Following pilot...");
-			const geom = this.clickedFeature?.getGeometry();
+			const geom = clickFeature.getGeometry();
 			const coords = geom?.getCoordinates();
 			if (coords) {
 				view.animate({
