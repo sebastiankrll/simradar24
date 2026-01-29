@@ -27,7 +27,7 @@ export class ControllerService {
 	private labelLayer: VectorLayer | null = null;
 
 	private set = new Set<string>();
-	private highlighted: string | null = null;
+	private highlighted = new Set<string>();
 
 	private styleVars: ControllerStyleVars = {};
 
@@ -99,12 +99,16 @@ export class ControllerService {
 		}
 	}
 
-	public setHighlighted(id: string): void {
-		this.highlighted = id;
+	public addHighlighted(id: string): void {
+		this.highlighted.add(id);
+	}
+
+	public removeHighlighted(id: string): void {
+		this.highlighted.delete(id);
 	}
 
 	public clearHighlighted(): void {
-		this.highlighted = null;
+		this.highlighted.clear();
 	}
 
 	public async setFeatures(controllers: ControllerMerged[]) {
@@ -258,10 +262,14 @@ export class ControllerService {
 			this.set.delete(id);
 		}
 
-		if (this.highlighted && !this.set.has(`tracon_${this.highlighted}`) && !this.set.has(`fir_${this.highlighted}`)) {
-			toast.info(MessageBox, { data: { title: "Controller Disconnected", message: `The viewed controller has disconnected.` } });
-			this.highlighted = null;
-			return true;
+		if (this.highlighted.size > 0) {
+			for (const id of this.highlighted) {
+				if (!this.set.has(id)) {
+					toast.info(MessageBox, { data: { title: "Controller Disconnected", message: `The viewed controller has disconnected.` } });
+					this.highlighted.delete(id);
+					return true;
+				}
+			}
 		}
 
 		return false;
@@ -281,7 +289,7 @@ export class ControllerService {
 			zoom: 7,
 		});
 
-		this.setHighlighted(id);
+		this.addHighlighted(id);
 
 		return labelFeature || null;
 	}

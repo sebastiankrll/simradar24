@@ -1,14 +1,10 @@
-#map-control-hide {
+#map-controls-upper {
 	position: absolute;
 	right: 1rem;
 	top: 4rem;
 	display: flex;
-	flex-flow: column;
-	gap: 10px;
+	gap: 5px;
 	z-index: 1;
-	border-radius: 50%;
-	width: 34px;
-	height: 34px;
 }
 
 #map-controls {
@@ -30,10 +26,11 @@
 
 .map-control-item {
 	height: 2rem;
-	width: 2rem;
+	min-width: 2rem;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	color: var(--color-main-text);
 }
 
 .map-control-item use {

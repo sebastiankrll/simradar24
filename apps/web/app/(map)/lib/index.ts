@@ -42,6 +42,11 @@ export async function init(pathname: string): Promise<void> {
 	wsClient.addListener(handleMessage);
 
 	initFilters();
+
+	if (pathname.startsWith("/multi")) {
+		mapService.setMultiView(true, true);
+	}
+
 	if (pathname !== "") {
 		const type = pathname.split("/")[1];
 		const id = pathname.split("/")[2];

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import "./Controls.css";
 import { useState } from "react";
 import Icon from "@/components/Icon/Icon";
@@ -9,7 +9,10 @@ import { mapService } from "../lib";
 
 export default function Controls() {
 	const router = useRouter();
+	const pathname = usePathname();
+
 	const [isFullscreen, setIsFullscreen] = useState(false);
+	const [multiView, setMultiView] = useState(() => pathname.startsWith("/multi"));
 
 	const { active: filterActive } = useFiltersStore();
 	const { isHidden, setHidden } = useMapVisibilityStore();
@@ -46,9 +49,23 @@ export default function Controls() {
 
 	return (
 		<>
-			<button type="button" className="map-control-item" id="map-control-hide" onClick={() => setHidden(!isHidden)}>
-				<Icon name={isHidden ? "eye" : "eye-crossed"} size={22} />
-			</button>
+			<div id="map-controls-upper">
+				<button
+					type="button"
+					className="map-control-item"
+					id="map-control-multi"
+					style={{ padding: "0 4px", color: multiView ? "var(--color-green)" : "" }}
+					onClick={() => {
+						setMultiView((prev) => !prev);
+						mapService.setMultiView(!multiView);
+					}}
+				>
+					Multi View
+				</button>
+				<button type="button" className="map-control-item" id="map-control-hide" onClick={() => setHidden(!isHidden)}>
+					<Icon name={isHidden ? "eye" : "eye-crossed"} size={22} />
+				</button>
+			</div>
 			<div id="map-controls" className={isHidden ? "hidden" : ""}>
 				<button type="button" className="map-control-item" onClick={onFullscreen}>
 					<Icon name={isFullscreen ? "resize-decrease" : "resize-increase"} size={22} />

@@ -162,8 +162,12 @@ export class PilotService {
 		return true;
 	}
 
-	public setHighlighted(id: string): void {
+	public addHighlighted(id: string): void {
 		this.highlighted.add(id);
+	}
+
+	public removeHighlighted(id: string): void {
+		this.highlighted.delete(id);
 	}
 
 	public clearHighlighted(): void {
@@ -440,7 +444,7 @@ export class PilotService {
 			zoom: 10,
 		});
 
-		this.setHighlighted(id);
+		this.addHighlighted(id);
 
 		return feature || null;
 	}
