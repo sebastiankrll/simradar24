@@ -9,19 +9,21 @@ import Style from "ol/style/Style";
 import type { PilotProperties } from "@/types/ol";
 import { getStroke, getTrackPointColor } from "./tracks";
 
+type TrackCache = {
+	lastIndex: number;
+	lastCoords?: Coordinate;
+	lastStroke?: Stroke;
+	lastAltitudeAgl?: number;
+	animatedTrackFeature?: Feature<LineString>;
+};
+
 export class TrackService {
 	private source = new VectorSource({
 		useSpatialIndex: false,
 	});
 	private layer: VectorLayer | null = null;
 
-	public pilotId: string | null = null;
-
-	private lastIndex = 0;
-	private lastCoords: Coordinate = [0, 0];
-	private lastStroke: Stroke | undefined;
-	private lastAltitudeAgl: number | undefined;
-	private animatedTrackFeature: Feature<LineString> | null = null;
+	private map = new Map<string, TrackCache>();
 
 	public init(): VectorLayer {
 		this.layer = new VectorLayer({
@@ -34,15 +36,17 @@ export class TrackService {
 		return this.layer;
 	}
 
-	public setFeatures(trackPoints: TrackPoint[], id?: string): void {
-		this.source.clear();
+	public setFeatures(trackPoints: TrackPoint[], id: string): void {
 		if (trackPoints.length === 0) return;
 
-		const trackFeatures: Feature<LineString>[] = [];
+		const trackCache: TrackCache = {
+			lastIndex: 0,
+		};
+		const features: Feature<LineString>[] = [];
 
-		for (this.lastIndex = 0; this.lastIndex < trackPoints.length - 1; this.lastIndex++) {
-			const start = trackPoints[this.lastIndex];
-			const end = trackPoints[this.lastIndex + 1];
+		for (trackCache.lastIndex = 0; trackCache.lastIndex < trackPoints.length - 1; trackCache.lastIndex++) {
+			const start = trackPoints[trackCache.lastIndex];
+			const end = trackPoints[trackCache.lastIndex + 1];
 
 			const trackFeature = new Feature({
 				geometry: new LineString([start.coordinates, end.coordinates]),
@@ -55,75 +59,90 @@ export class TrackService {
 					stroke: stroke,
 				}),
 			);
-			trackFeature.setId(`track_${this.lastIndex}`);
-			trackFeatures.push(trackFeature);
+			trackFeature.setId(`track_${id}_${trackCache.lastIndex}`);
+			features.push(trackFeature);
 
-			if (this.lastIndex === trackPoints.length - 2) {
-				this.lastCoords = end.coordinates;
-				this.animatedTrackFeature = trackFeature;
-				this.lastStroke = stroke;
+			if (trackCache.lastIndex === trackPoints.length - 2) {
+				trackCache.lastCoords = end.coordinates;
+				trackCache.animatedTrackFeature = trackFeature;
+				trackCache.lastStroke = stroke;
 			}
 		}
 
-		this.source.addFeatures(trackFeatures);
-
-		this.pilotId = id || null;
+		this.source.addFeatures(features);
+		this.map.set(id, trackCache);
 	}
 
-	public updateFeatures(feature: Feature<Point> | null): void {
-		const type = feature?.get("type");
-		if (this.source.getFeatures().length === 0 || type !== "pilot") return;
+	public updateFeatures(feature: Feature<Point> | null, id: string): void {
+		const trackCache = this.map.get(id);
+		if (!trackCache) return;
 
 		const coordinates = feature?.getGeometry()?.getCoordinates();
-		if (!coordinates) return;
+		const lastCoords = trackCache.lastCoords;
+		if (!coordinates || !lastCoords) return;
 
-		if (this.animatedTrackFeature) {
-			const geom = this.animatedTrackFeature.getGeometry() as LineString;
+		if (trackCache.animatedTrackFeature) {
+			const geom = trackCache.animatedTrackFeature.getGeometry() as LineString;
 			const coords = geom.getCoordinates();
-			coords[1] = this.lastCoords;
+			coords[1] = lastCoords;
 			geom.setCoordinates(coords);
-			this.animatedTrackFeature.setGeometry(geom);
+			trackCache.animatedTrackFeature.setGeometry(geom);
 		}
 
 		const props: PilotProperties | undefined = feature?.get("properties");
 
 		const trackFeature = new Feature({
-			geometry: new LineString([this.lastCoords, coordinates]),
+			geometry: new LineString([lastCoords, coordinates]),
 			type: "track",
 		});
 		const stroke = props?.altitude_ms
 			? new Stroke({
-					color: getTrackPointColor(props.altitude_agl || this.lastAltitudeAgl, props.altitude_ms),
+					color: getTrackPointColor(props.altitude_agl || trackCache.lastAltitudeAgl, props.altitude_ms),
 					width: 3,
 				})
-			: this.lastStroke;
+			: trackCache.lastStroke;
 
 		const style = new Style({ stroke: stroke });
 		trackFeature.setStyle(style);
-		trackFeature.setId(`track_${this.pilotId}_${++this.lastIndex}`);
+		trackFeature.setId(`track_${id}_${++trackCache.lastIndex}`);
+
 		this.source.addFeature(trackFeature);
 
-		this.lastCoords = coordinates || this.lastCoords;
-		this.lastStroke = stroke;
-		this.lastAltitudeAgl = props?.altitude_agl;
-		this.animatedTrackFeature = trackFeature;
+		trackCache.lastCoords = coordinates || lastCoords;
+		trackCache.lastStroke = stroke;
+		trackCache.lastAltitudeAgl = props?.altitude_agl;
+		trackCache.animatedTrackFeature = trackFeature;
 	}
 
-	public animateFeatures(feature: Feature<Point> | null): void {
-		const type = feature?.get("type");
-		const pilotCoords = feature?.getGeometry()?.getCoordinates();
-		if (!this.animatedTrackFeature || this.source.getFeatures().length === 0 || !pilotCoords || type !== "pilot") return;
+	public removeFeatures(id: string): void {
+		this.source
+			.getFeatures()
+			.filter((f) => String(f.getId()).startsWith(`track_${id}_`))
+			.forEach((f) => void this.source.removeFeature(f));
 
-		const geom = this.animatedTrackFeature.getGeometry() as LineString;
+		this.map.delete(id);
+	}
+
+	public animateFeatures(id: string, feature: Feature<Point> | null): void {
+		const trackCache = this.map.get(id);
+		const pilotCoords = feature?.getGeometry()?.getCoordinates();
+		if (!trackCache?.animatedTrackFeature || this.source.getFeatures().length === 0 || !pilotCoords) return;
+
+		const geom = trackCache.animatedTrackFeature.getGeometry() as LineString;
 		const coords = geom.getCoordinates();
 		coords[1] = pilotCoords;
 		geom.setCoordinates(coords);
-		this.animatedTrackFeature.setGeometry(geom);
+		trackCache.animatedTrackFeature.setGeometry(geom);
 	}
 
 	public setSettings({ show }: { show?: boolean }): void {
 		if (show !== undefined) {
 			this.layer?.setVisible(show);
 		}
+	}
+
+	public clearFeatures(): void {
+		this.source.clear();
+		this.map.clear();
 	}
 }

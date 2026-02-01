@@ -322,6 +322,7 @@ export class MapService {
 				const strippedId = id.toString().replace(/^pilot_/, "");
 				this.navigate(strippedId, "pilot", isManual, "delete");
 				this.pilotService.removeHighlighted(strippedId);
+				this.trackService.removeFeatures(strippedId);
 			}
 
 			if (type === "airport" && id) {
@@ -400,7 +401,7 @@ export class MapService {
 		if (!isManual) return;
 
 		if (this.multiPath.size > 0) {
-			const path = Array.from(this.multiPath).join(",");
+			const path = Array.from(this.multiPath).join("%2C");
 			this.options?.onNavigate?.(`/multi/${path}`);
 		} else {
 			this.options?.onNavigate?.(`/multi`);
@@ -408,7 +409,7 @@ export class MapService {
 	}
 
 	private clearMap(): void {
-		this.trackService.setFeatures([]);
+		this.trackService.clearFeatures();
 
 		for (const feature of this.clickFeatures.values()) {
 			this.controllerService.hoverSector(feature, false, "clicked");
@@ -466,7 +467,7 @@ export class MapService {
 		if (controllers) {
 			await this.controllerService.setFeatures(controllers);
 		}
-		if (trackPoints) {
+		if (trackPoints && autoTrackId) {
 			this.trackService.setFeatures(trackPoints, autoTrackId);
 		}
 		if (sunTime) {
@@ -552,9 +553,10 @@ export class MapService {
 		if (this.options?.autoTrackPoints) {
 			for (const feature of this.clickFeatures.values()) {
 				const type = feature.get("type") as string | undefined;
-				if (type !== "pilot") continue;
+				const id = feature.getId()?.toString() || null;
+				if (type !== "pilot" || !id) continue;
 
-				this.trackService.updateFeatures(feature);
+				this.trackService.updateFeatures(feature, id.replace(/^pilot_/, ""));
 			}
 		}
 	}
@@ -659,20 +661,21 @@ export class MapService {
 
 		for (const feature of this.clickFeatures.values()) {
 			const id = feature.getId()?.toString() || null;
-			if (!id) continue;
+			const type = feature.get("type") as string | undefined;
+			if (type !== "pilot" || !id) continue;
 
 			const overlay = this.clickOverlays.get(id);
 			if (overlay) {
 				this.clickOverlays.set(id, overlay);
 				updateOverlay(feature, overlay, this.getCachedAirport(feature), this.getCachedController(feature));
 			}
+
+			this.trackService.animateFeatures(id, feature);
 		}
 
 		if (this.hoverOverlay && this.hoverFeature?.getGeometry()) {
 			this.hoverOverlay.setPosition(this.hoverFeature.getGeometry()?.getCoordinates());
 		}
-
-		this.trackService.animateFeatures(this.clickedFeature);
 	}
 
 	public setClickedFeature(type: string | undefined, id: string | undefined, init?: boolean): void {
@@ -685,7 +688,7 @@ export class MapService {
 		}
 
 		const view = this.options?.disableCenterOnPageLoad || this.multiView ? undefined : this.map?.getView();
-		const ids = this.multiView ? id.split(",") : [`${type}_${id}`];
+		const ids = this.multiView ? id.split("%2C") : [`${type}_${id}`];
 
 		for (const fullId of ids) {
 			const [t, i] = fullId.split("_");
