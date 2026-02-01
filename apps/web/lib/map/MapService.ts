@@ -216,6 +216,8 @@ export class MapService {
 			});
 			this.map?.addInteraction(this.hoverSelect);
 			this.hoverSelect.on("select", this.onHoverSelect);
+
+			this.map?.getTargetElement().addEventListener("mouseout", this.onHoverOut);
 		}
 
 		if (!this.options?.disableInteractions) {
@@ -225,7 +227,6 @@ export class MapService {
 				hitTolerance: MapService.HIT_TOLERANCE,
 				layers: MapService.LAYER_FILTER,
 				style: null,
-				multi: true,
 			});
 			this.map?.addInteraction(this.clickSelect);
 			this.clickSelect.on("select", this.onClickSelect);
@@ -240,6 +241,8 @@ export class MapService {
 			this.hoverSelect.un("select", this.onHoverSelect);
 			this.map?.removeInteraction(this.hoverSelect);
 			this.hoverSelect = undefined;
+
+			this.map?.getTargetElement().removeEventListener("mouseout", this.onHoverOut);
 		}
 		if (this.clickSelect) {
 			this.clickSelect.un("select", this.onClickSelect);
@@ -368,7 +371,7 @@ export class MapService {
 			if ((type === "tracon" || type === "fir") && id) {
 				const strippedId = id.toString().replace(/^(sector)_/, "");
 				this.navigate(strippedId, "sector", isManual, "add");
-				this.controllerService.addHighlighted(strippedId);
+				this.controllerService.addHighlighted(`${type}_${strippedId}`);
 			}
 		}
 
@@ -387,6 +390,21 @@ export class MapService {
 
 		if (!hit) {
 			this.resetMap();
+		}
+	};
+
+	private onHoverOut = () => {
+		this.hoverToken++;
+		const map = this.map;
+
+		if (this.hoverOverlay) {
+			map?.removeOverlay(this.hoverOverlay);
+			this.hoverOverlay = null;
+		}
+		if (this.hoverFeature) {
+			this.hoverFeature.set("hovered", false);
+			this.controllerService.hoverSector(this.hoverFeature, false, "hovered");
+			this.hoverFeature = null;
 		}
 	};
 

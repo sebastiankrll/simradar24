@@ -92,7 +92,7 @@ export async function mapPilots(vatsimData: VatsimData): Promise<PilotLong[]> {
 			const updatedFields = {
 				longitude: pilot.longitude,
 				latitude: pilot.latitude,
-				altitude_agl: transceiver?.heightAglM ? Math.round(transceiver.heightAglM * 3.28084) : pilot.altitude,
+				altitude_agl: transceiver?.heightAglM ? Math.round(transceiver.heightAglM * 3.28084) : 0,
 				altitude_ms: pilot.altitude,
 				groundspeed: pilot.groundspeed,
 				vertical_speed: 0,
